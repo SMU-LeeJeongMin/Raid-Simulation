@@ -1,0 +1,121 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1992a297296518a4d9afd686e273084b, type: 3}
+  m_Name: DB_CharacterLineup
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterLineupDatabase
+  characters:
+  - characterId: warrior
+    jobName: Warrior
+    roleName: Tanker
+    description: 'A class that withstands boss attacks with high HP and defense.
+
+      They
+      maintain aggro at the front of the party and protect their allies.'
+    characterPrefab: {fileID: 1189874255011212, guid: 007f5bdc3fac8f543b83ae60517cd050, type: 3}
+    raidPrefab: {fileID: 1189874255011212, guid: 007f5bdc3fac8f543b83ae60517cd050, type: 3}
+    useDirectClipPlayback: 1
+    restClip: {fileID: 7400000, guid: 92df8b5c2531b4f45a565e3ee513bd88, type: 3}
+    selectedClip: {fileID: 7400000, guid: a313e483479663e468572d3f7af8561b, type: 3}
+    disableRootMotionForPreview: 1
+    loopPreviewClips: 1
+    lockLineupTransform: 1
+    restStateName: Rest
+    selectedStateName: IdleA
+    lineupPositionOffset: {x: 0, y: 0, z: 0}
+    lineupEulerOffset: {x: 0, y: 0, z: 0}
+    lineupScale: {x: 1, y: 1, z: 1}
+    closeupCameraWorldOffset: {x: 0, y: 1.35, z: -2.8}
+    closeupLookAtWorldOffset: {x: 0, y: 1.15, z: 0}
+    addClickColliderIfMissing: 1
+    clickColliderCenter: {x: 0, y: 0.9, z: 0}
+    clickColliderHeight: 1.8
+    clickColliderRadius: 0.35
+  - characterId: mage
+    jobName: Mage
+    roleName: Ranged DPS
+    description: 'A class that deals massive damage to the boss with powerful magic
+      attacks.
+
+      Maintaining distance and precise skill timing are crucial.'
+    characterPrefab: {fileID: 1060029176277862, guid: 0021c63169f21074dae11255bb3a1ca8, type: 3}
+    raidPrefab: {fileID: 1060029176277862, guid: 0021c63169f21074dae11255bb3a1ca8, type: 3}
+    useDirectClipPlayback: 1
+    restClip: {fileID: 7400000, guid: 92df8b5c2531b4f45a565e3ee513bd88, type: 3}
+    selectedClip: {fileID: 7400000, guid: a313e483479663e468572d3f7af8561b, type: 3}
+    disableRootMotionForPreview: 1
+    loopPreviewClips: 1
+    lockLineupTransform: 1
+    restStateName: Rest
+    selectedStateName: IdleA
+    lineupPositionOffset: {x: 0, y: 0, z: 0}
+    lineupEulerOffset: {x: 0, y: 0, z: 0}
+    lineupScale: {x: 1, y: 1, z: 1}
+    closeupCameraWorldOffset: {x: 0, y: 1.35, z: -2.8}
+    closeupLookAtWorldOffset: {x: 0, y: 1.15, z: 0}
+    addClickColliderIfMissing: 1
+    clickColliderCenter: {x: 0, y: 0.9, z: 0}
+    clickColliderHeight: 1.8
+    clickColliderRadius: 0.35
+  - characterId: archer
+    jobName: Archer
+    roleName: Mechanic DPS
+    description: 'A class that handles combat mechanics with fast attacks and precise
+      timing.
+
+      They excel at interrupts, prioritizing targets, and positioning
+      themselves in safe zones.'
+    characterPrefab: {fileID: 1374048655880376, guid: f550eb006f102f74284ad1c72918963b, type: 3}
+    raidPrefab: {fileID: 1374048655880376, guid: f550eb006f102f74284ad1c72918963b, type: 3}
+    useDirectClipPlayback: 1
+    restClip: {fileID: 7400000, guid: 92df8b5c2531b4f45a565e3ee513bd88, type: 3}
+    selectedClip: {fileID: 7400000, guid: a313e483479663e468572d3f7af8561b, type: 3}
+    disableRootMotionForPreview: 1
+    loopPreviewClips: 1
+    lockLineupTransform: 1
+    restStateName: Rest
+    selectedStateName: IdleA
+    lineupPositionOffset: {x: 0, y: 0, z: 0}
+    lineupEulerOffset: {x: 0, y: 0, z: 0}
+    lineupScale: {x: 1, y: 1, z: 1}
+    closeupCameraWorldOffset: {x: 0, y: 1.35, z: -2.8}
+    closeupLookAtWorldOffset: {x: 0, y: 1.15, z: 0}
+    addClickColliderIfMissing: 1
+    clickColliderCenter: {x: 0, y: 0.9, z: 0}
+    clickColliderHeight: 1.8
+    clickColliderRadius: 0.35
+  - characterId: healer
+    jobName: Healer
+    roleName: Support
+    description: 'A class that helps the party sustain combat stability by healing
+      allies and providing shields.
+
+      They play a vital role in player survival
+      and crisis management.'
+    characterPrefab: {fileID: 1866470848349248, guid: 6a603219345fe5540879e665dfb0f264, type: 3}
+    raidPrefab: {fileID: 1866470848349248, guid: 6a603219345fe5540879e665dfb0f264, type: 3}
+    useDirectClipPlayback: 1
+    restClip: {fileID: 7400000, guid: 92df8b5c2531b4f45a565e3ee513bd88, type: 3}
+    selectedClip: {fileID: 7400000, guid: a313e483479663e468572d3f7af8561b, type: 3}
+    disableRootMotionForPreview: 1
+    loopPreviewClips: 1
+    lockLineupTransform: 1
+    restStateName: Rest
+    selectedStateName: IdleA
+    lineupPositionOffset: {x: 0, y: 0, z: 0}
+    lineupEulerOffset: {x: 0, y: 0, z: 0}
+    lineupScale: {x: 1, y: 1, z: 1}
+    closeupCameraWorldOffset: {x: 0, y: 1.35, z: -2.8}
+    closeupLookAtWorldOffset: {x: 0, y: 1.15, z: 0}
+    addClickColliderIfMissing: 1
+    clickColliderCenter: {x: 0, y: 0.9, z: 0}
+    clickColliderHeight: 1.8
+    clickColliderRadius: 0.35
