@@ -1,3 +1,6 @@
+// 선택 화면에 배치된 캐릭터 1명을 제어하는 스크립트
+// Rest/Selected 애니메이션 재생, 클릭용 Collider 생성, 위치 고정을 담당
+
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
@@ -23,6 +26,8 @@ public class CharacterLineupActor : MonoBehaviour
     private Quaternion initialLocalRotation;
     private Vector3 initialLocalScale;
 
+    // 캐릭터가 생성된 직후 호출
+    // DB 데이터를 연결하고, Animator/초기 Transform을 저장한 뒤 Rest 상태로 시작
     public void Initialize(int index, CharacterLineupEntry entry)
     {
         Index = index;
@@ -40,11 +45,13 @@ public class CharacterLineupActor : MonoBehaviour
         PlayRest();
     }
 
+    // 직접 재생 중인 AnimationClip이 끝났을 때 다시 처음부터 반복
     private void Update()
     {
         KeepClipLoopingIfNeeded();
     }
 
+    // 선택 화면에서 처음 위치/회전/크기를 유지
     private void LateUpdate()
     {
         if (Entry != null && Entry.lockLineupTransform)
@@ -55,6 +62,7 @@ public class CharacterLineupActor : MonoBehaviour
         }
     }
 
+    // 선택되지 않은 기본 대기 상태를 재생
     public void PlayRest()
     {
         selected = false;
@@ -68,6 +76,7 @@ public class CharacterLineupActor : MonoBehaviour
             PlayAnimatorState(Entry.restStateName, "Rest State");
     }
 
+    // 캐릭터가 선택되었을 때의 애니메이션을 재생
     public void PlaySelected()
     {
         selected = true;
@@ -81,6 +90,7 @@ public class CharacterLineupActor : MonoBehaviour
             PlayAnimatorState(Entry.selectedStateName, "Selected State");
     }
 
+    // AnimationClip을 직접 재생
     private void PlayClip(AnimationClip clip, string label)
     {
         if (animator == null || clip == null)
@@ -111,6 +121,7 @@ public class CharacterLineupActor : MonoBehaviour
         usingDirectClipPlayback = true;
     }
 
+    // AnimationClip이 비어 있을 때 사용하는 예비 재생 방식
     private void PlayAnimatorState(string stateName, string label)
     {
         StopDirectClipPlayback();
@@ -131,6 +142,7 @@ public class CharacterLineupActor : MonoBehaviour
         usingDirectClipPlayback = false;
     }
 
+    // Animator state 이름이 짧은 이름인지, Base Layer 경로가 필요한지 확인
     private string ResolvePlayableStateName(string stateName)
     {
         if (animator == null || string.IsNullOrEmpty(stateName))
@@ -150,6 +162,7 @@ public class CharacterLineupActor : MonoBehaviour
         return stateName;
     }
 
+    // AnimationClip 직접 재생에 필요한 PlayableGraph를 처음 한 번 생성
     private void CreateGraphIfNeeded()
     {
         if (graph.IsValid())
@@ -160,6 +173,7 @@ public class CharacterLineupActor : MonoBehaviour
         output = AnimationPlayableOutput.Create(graph, "Animation", animator);
     }
 
+    // 직접 Clip 재생을 중지
     private void StopDirectClipPlayback()
     {
         currentClip = null;
@@ -171,6 +185,7 @@ public class CharacterLineupActor : MonoBehaviour
             graph.Stop();
     }
 
+    // Clip의 Loop 설정과 관계없이 선택 화면에서 계속 반복 재생
     private void KeepClipLoopingIfNeeded()
     {
         if (Entry == null || !Entry.loopPreviewClips)
@@ -191,6 +206,7 @@ public class CharacterLineupActor : MonoBehaviour
         }
     }
 
+    // 캐릭터 프리팹에 Collider가 없으면 클릭 감지를 위해 CapsuleCollider를 자동으로 추가
     private void EnsureClickableCollider()
     {
         if (Entry == null || !Entry.addClickColliderIfMissing)
@@ -216,6 +232,7 @@ public class CharacterLineupActor : MonoBehaviour
         DestroyPlayableGraph();
     }
 
+    // 오브젝트가 사라질 때 PlayableGraph를 정리해서 메모리 누수 방지
     private void DestroyPlayableGraph()
     {
         if (graph.IsValid())

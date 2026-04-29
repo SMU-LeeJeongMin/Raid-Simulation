@@ -1,3 +1,5 @@
+// Raid 씬에서 이전 선택 화면에서 고른 캐릭터를 실제 플레이어로 생성
+
 using UnityEngine;
 
 public class RaidSelectedCharacterSpawner : MonoBehaviour
@@ -13,6 +15,7 @@ public class RaidSelectedCharacterSpawner : MonoBehaviour
         SpawnSelectedCharacter();
     }
 
+    // 저장된 선택 index를 읽고 해당 캐릭터 프리팹을 생성
     public GameObject SpawnSelectedCharacter()
     {
         if (database == null)

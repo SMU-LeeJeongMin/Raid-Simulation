@@ -1,3 +1,6 @@
+// 캐릭터 선택 화면에 필요한 4개 직업 정보를 담는 ScriptableObject
+// 프리팹, 설명 텍스트, 미리보기 애니메이션, 카메라 보정값 등을 Inspector에서 관리
+
 using System;
 using UnityEngine;
 
@@ -8,11 +11,13 @@ public class CharacterLineupDatabase : ScriptableObject
 
     public int Count => characters == null ? 0 : characters.Length;
 
+    // 요청한 index가 characters 배열 안에서 유효한지 확인
     public bool IsValidIndex(int index)
     {
         return characters != null && index >= 0 && index < characters.Length && characters[index] != null;
     }
 
+    // index에 해당하는 캐릭터 정보를 반환
     public CharacterLineupEntry Get(int index)
     {
         if (!IsValidIndex(index))
@@ -22,6 +27,8 @@ public class CharacterLineupDatabase : ScriptableObject
     }
 }
 
+// 캐릭터 하나의 선택 화면용 데이터
+// 직업명, 설명, 프리팹, 애니메이션 클립, 카메라/클릭 보정값
 [Serializable]
 public class CharacterLineupEntry
 {
@@ -38,29 +45,16 @@ public class CharacterLineupEntry
     public GameObject raidPrefab;
 
     [Header("Preview Animation - Recommended")]
-    [Tooltip("켜두면 Animator Controller의 자동 Transition을 무시하고 아래 AnimationClip을 직접 재생합니다. 캐릭터 선택 화면에서는 이 방식을 권장합니다.")]
     public bool useDirectClipPlayback = true;
-
-    [Tooltip("처음 4명이 서 있을 때 재생할 Rest AnimationClip입니다.")]
     public AnimationClip restClip;
-
-    [Tooltip("캐릭터를 선택했을 때 재생할 Idle/Selected AnimationClip입니다. 예: IdleA")]
     public AnimationClip selectedClip;
-
-    [Tooltip("선택 화면에서는 캐릭터가 걸어가거나 흔들리지 않도록 Root Motion을 끄는 것을 권장합니다.")]
     public bool disableRootMotionForPreview = true;
-
-    [Tooltip("AnimationClip이 Loop 설정되어 있지 않아도 선택 화면에서 반복 재생합니다.")]
     public bool loopPreviewClips = true;
-
-    [Tooltip("애니메이션 Root Motion이나 외부 스크립트 때문에 캐릭터 루트 Transform이 흔들릴 때 원래 위치/회전을 유지합니다.")]
     public bool lockLineupTransform = true;
 
     [Header("Preview Animation - State Fallback")]
-    [Tooltip("Direct Clip Playback을 끄거나 AnimationClip이 비어 있을 때 사용할 Animator State 이름입니다.")]
     public string restStateName = "Rest";
 
-    [Tooltip("Direct Clip Playback을 끄거나 AnimationClip이 비어 있을 때 사용할 선택 Animator State 이름입니다. 예: IdleA")]
     public string selectedStateName = "IdleA";
 
     [Header("Lineup Transform Adjustment")]

@@ -1,3 +1,6 @@
+// 캐릭터 선택 화면의 중심 컨트롤러
+// 4명의 캐릭터를 생성하고, 마우스 클릭 선택, 카메라 이동, UI 표시, Raid 씬 로드를 관리
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -49,18 +52,21 @@ public class CharacterLineupSelectionController : MonoBehaviour
             uiController.Initialize(this);
     }
 
+    // 시작 시 캐릭터 4명을 배치하고 전체 라인업 화면 상태로 초기화
     private void Start()
     {
         SpawnLineupCharacters();
         GoBackToLineup();
     }
 
+    // 매 프레임 마우스 클릭을 확인하고, 클릭된 캐릭터가 있으면 선택 처리
     private void Update()
     {
         if (WasLeftMouseButtonPressed(out Vector2 screenPosition))
             TrySelectActorFromScreenPosition(screenPosition);
     }
 
+    // New Input System 또는 Legacy Input에서 왼쪽 마우스 클릭을 감지
     private bool WasLeftMouseButtonPressed(out Vector2 screenPosition)
     {
         screenPosition = Vector2.zero;
@@ -83,6 +89,7 @@ public class CharacterLineupSelectionController : MonoBehaviour
 #endif
     }
 
+    // 화면 좌표에서 Raycast를 쏴서 클릭한 캐릭터를 찾기
     private void TrySelectActorFromScreenPosition(Vector2 screenPosition)
     {
         if (selectionCamera == null)
@@ -102,6 +109,8 @@ public class CharacterLineupSelectionController : MonoBehaviour
         SelectActor(actor);
     }
 
+
+    // DB에 등록된 캐릭터 프리팹을 SpawnPoint 위치에 생성
     private void SpawnLineupCharacters()
     {
         ClearSpawnedActors();
@@ -142,6 +151,7 @@ public class CharacterLineupSelectionController : MonoBehaviour
         }
     }
 
+    // 기존에 생성된 라인업 캐릭터들을 제거
     private void ClearSpawnedActors()
     {
         for (int i = actors.Count - 1; i >= 0; i--)
@@ -153,6 +163,7 @@ public class CharacterLineupSelectionController : MonoBehaviour
         actors.Clear();
     }
 
+    // 클릭된 캐릭터를 현재 선택 캐릭터로 설정
     private void SelectActor(CharacterLineupActor selectedActor)
     {
         if (selectedActor == null || selectedActor.Entry == null)
@@ -178,6 +189,7 @@ public class CharacterLineupSelectionController : MonoBehaviour
             uiController.ShowSelectedState(selectedActor.Entry);
     }
 
+    // Back 버튼
     public void GoBackToLineup()
     {
         selectedIndex = -1;
@@ -195,6 +207,7 @@ public class CharacterLineupSelectionController : MonoBehaviour
             uiController.HideSelectedState();
     }
 
+    // Select 버튼
     public void ConfirmSelectionAndLoadRaid()
     {
         if (database == null || !database.IsValidIndex(selectedIndex))
@@ -221,6 +234,7 @@ public class CharacterLineupSelectionController : MonoBehaviour
             SceneManager.LoadScene(raidSceneName);
     }
 
+    // Raid 씬을 비동기로 로드
     private IEnumerator LoadRaidSceneRoutine()
     {
         AsyncOperation operation = SceneManager.LoadSceneAsync(raidSceneName);

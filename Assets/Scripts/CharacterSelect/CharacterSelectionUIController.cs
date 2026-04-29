@@ -1,3 +1,5 @@
+// 캐릭터 선택 화면의 UI
+
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,8 +22,6 @@ public class CharacterSelectionUIController : MonoBehaviour
     public RectTransform rightShadow;
 
     [Header("Job Name Header")]
-    // RawImage 또는 Image 모두 연결할 수 있습니다.
-    // 직업 이름 자체는 이미지가 아니라 아래 jobNameText에 표시됩니다.
     public Graphic jobNameHeaderBackground;
     public TMP_Text jobNameText;
 
@@ -31,6 +31,7 @@ public class CharacterSelectionUIController : MonoBehaviour
 
     private CharacterLineupSelectionController owner;
 
+    // 선택 컨트롤러와 연결하고 Back/Select 버튼 클릭 이벤트를 등록
     public void Initialize(CharacterLineupSelectionController controller)
     {
         owner = controller;
@@ -52,6 +53,7 @@ public class CharacterSelectionUIController : MonoBehaviour
         HideSelectedState();
     }
 
+    // 캐릭터가 선택되었을 때 UI를 표시하고, 직업명/역할/설명 텍스트를 갱신
     public void ShowSelectedState(CharacterLineupEntry entry)
     {
         if (entry == null)
@@ -78,6 +80,7 @@ public class CharacterSelectionUIController : MonoBehaviour
         SetText(descriptionText, entry.description);
     }
 
+    // Back 버튼
     public void HideSelectedState()
     {
         SetSideShadowVisible(false);

@@ -1,3 +1,5 @@
+// 캐릭터 선택 화면의 카메라 이동
+
 using System.Collections;
 using UnityEngine;
 
@@ -12,19 +14,15 @@ public class CharacterSelectionCameraRig : MonoBehaviour
     public AnimationCurve moveCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
     [Header("Close-up Fine Tuning")]
-    [Tooltip("모든 캐릭터 클로즈업 카메라 위치를 한 번에 보정합니다. 카메라 자체를 낮추고 싶으면 Y를 음수로 내리세요.")]
     public Vector3 globalCloseupCameraWorldAdjustment = Vector3.zero;
-
-    [Tooltip("모든 캐릭터의 바라보는 지점을 한 번에 보정합니다. 캐릭터를 화면 위쪽에 놓고 싶으면 Y를 약간 낮춰보세요.")]
     public Vector3 globalCloseupLookAtWorldAdjustment = Vector3.zero;
-
-    [Tooltip("카메라 회전은 유지한 채 화면 구도를 보정합니다. 캐릭터를 화면 위쪽으로 올리고 싶으면 Y를 -0.1 ~ -0.4 정도로 설정하세요.")]
     public Vector3 closeupCameraLocalFramingOffset = Vector3.zero;
 
     private Coroutine moveRoutine;
     private Vector3 initialCameraPosition;
     private Quaternion initialCameraRotation;
 
+    // 카메라 참조를 찾고, 라인업 포인트가 없을 때를 대비해 초기 카메라 위치를 저장
     private void Awake()
     {
         if (targetCamera == null)
@@ -37,6 +35,7 @@ public class CharacterSelectionCameraRig : MonoBehaviour
         }
     }
 
+    // 카메라를 4명의 캐릭터가 모두 보이는 라인업 위치로 이동
     public void MoveToLineup()
     {
         if (targetCamera == null)
@@ -53,6 +52,8 @@ public class CharacterSelectionCameraRig : MonoBehaviour
         StartMove(targetPosition, targetRotation);
     }
 
+    // 선택된 캐릭터 기준으로 클로즈업 카메라 위치와 회전을 계산해 이동
+    // DB의 closeup offset과 Rig의 보정값을 함께 사용
     public void MoveToCharacter(CharacterLineupActor actor)
     {
         if (targetCamera == null || actor == null || actor.Entry == null)
@@ -72,6 +73,7 @@ public class CharacterSelectionCameraRig : MonoBehaviour
         StartMove(targetPosition, targetRotation);
     }
 
+    // 이미 진행 중인 카메라 이동이 있으면 중단하고 새 이동을 시작
     private void StartMove(Vector3 targetPosition, Quaternion targetRotation)
     {
         if (moveRoutine != null)
@@ -80,6 +82,7 @@ public class CharacterSelectionCameraRig : MonoBehaviour
         moveRoutine = StartCoroutine(MoveCameraRoutine(targetPosition, targetRotation));
     }
 
+    // Lerp/Slerp를 사용해 카메라 위치와 회전을 부드럽게 보간
     private IEnumerator MoveCameraRoutine(Vector3 targetPosition, Quaternion targetRotation)
     {
         Transform cameraTransform = targetCamera.transform;
