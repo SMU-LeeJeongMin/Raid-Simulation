@@ -1,0 +1,99 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68f20bb24d5a5c84f95e115f2bcf6f60, type: 3}
+  m_Name: DB_BasicAttackStats
+  m_EditorClassIdentifier: Assembly-CSharp::BasicAttackStatsDatabase
+  classStats:
+  - characterId: warrior
+    displayName: Warrior
+    damage: 85
+    attackDuration: 0.95
+    extraRecoveryTime: 0
+    hitNormalizedTime: 0.45
+    range: 1
+    hitRadius: 0.65
+    requireTargetInFront: 1
+    maxTargetAngle: 180
+    useHorizontalAutoTarget: 1
+    useColliderBoundsForAutoTarget: 1
+    autoTargetExtraRange: 0.35
+    attackClip: {fileID: 0}
+    animatorStateName: ATK0
+    returnStateName: IdleA
+    useDirectClipPlayback: 1
+    disableRootMotionDuringAttack: 1
+    lockMovementDuringAttack: 1
+    suppressMovementAnimationDuringAttack: 1
+    faceTargetOnAttack: 1
+  - characterId: archer
+    displayName: Archer
+    damage: 55
+    attackDuration: 0.6
+    extraRecoveryTime: 0
+    hitNormalizedTime: 0.45
+    range: 6
+    hitRadius: 0.45
+    requireTargetInFront: 1
+    maxTargetAngle: 180
+    useHorizontalAutoTarget: 1
+    useColliderBoundsForAutoTarget: 1
+    autoTargetExtraRange: 0.35
+    attackClip: {fileID: 0}
+    animatorStateName: Shoot
+    returnStateName: IdleA
+    useDirectClipPlayback: 1
+    disableRootMotionDuringAttack: 1
+    lockMovementDuringAttack: 1
+    suppressMovementAnimationDuringAttack: 1
+    faceTargetOnAttack: 1
+  - characterId: mage
+    displayName: Mage
+    damage: 70
+    attackDuration: 0.8
+    extraRecoveryTime: 0
+    hitNormalizedTime: 0.45
+    range: 5
+    hitRadius: 0.5
+    requireTargetInFront: 1
+    maxTargetAngle: 180
+    useHorizontalAutoTarget: 1
+    useColliderBoundsForAutoTarget: 1
+    autoTargetExtraRange: 0.35
+    attackClip: {fileID: 0}
+    animatorStateName: ATK0
+    returnStateName: IdleA
+    useDirectClipPlayback: 1
+    disableRootMotionDuringAttack: 1
+    lockMovementDuringAttack: 1
+    suppressMovementAnimationDuringAttack: 1
+    faceTargetOnAttack: 1
+  - characterId: healer
+    displayName: Healer
+    damage: 40
+    attackDuration: 1.05
+    extraRecoveryTime: 0
+    hitNormalizedTime: 0.45
+    range: 4
+    hitRadius: 0.45
+    requireTargetInFront: 1
+    maxTargetAngle: 180
+    useHorizontalAutoTarget: 1
+    useColliderBoundsForAutoTarget: 1
+    autoTargetExtraRange: 0.35
+    attackClip: {fileID: 0}
+    animatorStateName: ATK0
+    returnStateName: IdleA
+    useDirectClipPlayback: 1
+    disableRootMotionDuringAttack: 1
+    lockMovementDuringAttack: 1
+    suppressMovementAnimationDuringAttack: 1
+    faceTargetOnAttack: 1

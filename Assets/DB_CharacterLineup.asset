@@ -21,7 +21,7 @@ MonoBehaviour:
       They
       maintain aggro at the front of the party and protect their allies.'
     characterPrefab: {fileID: 1189874255011212, guid: 007f5bdc3fac8f543b83ae60517cd050, type: 3}
-    raidPrefab: {fileID: 1189874255011212, guid: 007f5bdc3fac8f543b83ae60517cd050, type: 3}
+    raidPrefab: {fileID: 1189874255011212, guid: 46a998a895f96454d9371a7e8dea69da, type: 3}
     useDirectClipPlayback: 1
     restClip: {fileID: 7400000, guid: 92df8b5c2531b4f45a565e3ee513bd88, type: 3}
     selectedClip: {fileID: 7400000, guid: a313e483479663e468572d3f7af8561b, type: 3}
@@ -47,7 +47,7 @@ MonoBehaviour:
 
       Maintaining distance and precise skill timing are crucial.'
     characterPrefab: {fileID: 1060029176277862, guid: 0021c63169f21074dae11255bb3a1ca8, type: 3}
-    raidPrefab: {fileID: 1060029176277862, guid: 0021c63169f21074dae11255bb3a1ca8, type: 3}
+    raidPrefab: {fileID: 1060029176277862, guid: 2bad6baf0d772c449b2db59cf817f0bb, type: 3}
     useDirectClipPlayback: 1
     restClip: {fileID: 7400000, guid: 92df8b5c2531b4f45a565e3ee513bd88, type: 3}
     selectedClip: {fileID: 7400000, guid: a313e483479663e468572d3f7af8561b, type: 3}
@@ -74,7 +74,7 @@ MonoBehaviour:
       They excel at interrupts, prioritizing targets, and positioning
       themselves in safe zones.'
     characterPrefab: {fileID: 1374048655880376, guid: f550eb006f102f74284ad1c72918963b, type: 3}
-    raidPrefab: {fileID: 1374048655880376, guid: f550eb006f102f74284ad1c72918963b, type: 3}
+    raidPrefab: {fileID: 1374048655880376, guid: df3dc53b2b616e645a61dbf1c852e4c7, type: 3}
     useDirectClipPlayback: 1
     restClip: {fileID: 7400000, guid: 92df8b5c2531b4f45a565e3ee513bd88, type: 3}
     selectedClip: {fileID: 7400000, guid: a313e483479663e468572d3f7af8561b, type: 3}
@@ -101,7 +101,7 @@ MonoBehaviour:
       They play a vital role in player survival
       and crisis management.'
     characterPrefab: {fileID: 1866470848349248, guid: 6a603219345fe5540879e665dfb0f264, type: 3}
-    raidPrefab: {fileID: 1866470848349248, guid: 6a603219345fe5540879e665dfb0f264, type: 3}
+    raidPrefab: {fileID: 1866470848349248, guid: 2a78324658c9c7e46a836a05dff0aa87, type: 3}
     useDirectClipPlayback: 1
     restClip: {fileID: 7400000, guid: 92df8b5c2531b4f45a565e3ee513bd88, type: 3}
     selectedClip: {fileID: 7400000, guid: a313e483479663e468572d3f7af8561b, type: 3}
