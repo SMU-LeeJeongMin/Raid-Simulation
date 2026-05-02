@@ -1476,6 +1476,9 @@ GameObject:
   - component: {fileID: 2150990327585149132}
   - component: {fileID: -2471770406712771245}
   - component: {fileID: -3300811480458338321}
+  - component: {fileID: 1722203181510930890}
+  - component: {fileID: 6997923730649779025}
+  - component: {fileID: -8181291190016967546}
   m_Layer: 0
   m_Name: Warrior
   m_TagString: Untagged
@@ -1636,9 +1639,93 @@ MonoBehaviour:
   fallbackAttackHeight: 0.8
   logAttack: 1
   drawAttackGizmo: 1
+  drawHorizontalAutoTargetGizmo: 1
   isAttacking: 0
   resolvedCharacterId: 
   currentAttackInfo: 
+  lastTargetingResult: 
+--- !u!114 &1722203181510930890
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1189874255011212}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7f4914d17fe2e449839cf3c980efd19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStatus
+  health: {fileID: 6997923730649779025}
+  mana: {fileID: -8181291190016967546}
+  classInfo: {fileID: 2150990327585149132}
+  createHealthIfMissing: 1
+  applyHealthOnAwake: 1
+  maxHealth: 2000
+  startingHealth: 2000
+  startWithFullHealth: 1
+  ignoreDamageAfterDeath: 1
+  destroyOnDeath: 0
+  logDamage: 0
+  createManaIfMissing: 1
+  applyManaOnAwake: 1
+  maxMana: 80
+  startingMana: 80
+  startWithFullMana: 1
+  regenerateMana: 1
+  manaRegenPerSecond: 3
+  manaRegenDelayAfterUse: 0.5
+  logManaChanges: 0
+--- !u!114 &6997923730649779025
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1189874255011212}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e791f78b376daeb4684e3b747923494b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Health
+  maxHealth: 1000
+  currentHealth: 1000
+  startWithFullHealth: 1
+  ignoreDamageAfterDeath: 1
+  destroyOnDeath: 0
+  destroyDelay: 3
+  logDamage: 0
+  onHealthChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onDamaged:
+    m_PersistentCalls:
+      m_Calls: []
+  onHealed:
+    m_PersistentCalls:
+      m_Calls: []
+  onDeath:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &-8181291190016967546
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1189874255011212}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b71badb94159f20498fc83841c63baa1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Mana
+  maxMana: 100
+  currentMana: 100
+  startWithFullMana: 1
+  regenerate: 1
+  regenPerSecond: 8
+  regenDelayAfterUse: 0.5
+  logChanges: 0
 --- !u!1 &1199782892718570
 GameObject:
   m_ObjectHideFlags: 0
