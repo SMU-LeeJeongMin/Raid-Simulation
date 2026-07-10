@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: b69487d0d1acf4b478b98a808f8fb195
+timeCreated: 1535020477
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Dark Skill/Materials/sn_zxb_ray19.mat
+  uploadId: 851134

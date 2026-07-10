@@ -1,11 +1,9 @@
+// HP 관리 공용 컴포넌트
+// Boss + Player + NPC + AddEnemy
+
 using UnityEngine;
 using UnityEngine.Events;
 
-/// <summary>
-/// HP를 관리하는 공용 컴포넌트입니다.
-/// 현재 단계에서는 BossDummy에 붙여서 보스 체력 테스트에 사용하고,
-/// 나중에는 플레이어/NPC/잡몹에도 재사용할 수 있습니다.
-/// </summary>
 public class Health : MonoBehaviour
 {
     [System.Serializable]
@@ -27,24 +25,27 @@ public class Health : MonoBehaviour
     public bool destroyOnDeath = false;
     public float destroyDelay = 3f;
 
-    [Header("Debug")]
-    public bool logDamage = false;
+    [Header("Damage Immunity")]
+    public bool damageImmune = false;
 
     [Header("Events")]
-    public HealthChangedEvent onHealthChanged;
-    public HealthAmountEvent onDamaged;
-    public HealthAmountEvent onHealed;
-    public HealthStateEvent onDeath;
+    public HealthChangedEvent onHealthChanged = new HealthChangedEvent();
+    public HealthAmountEvent onDamaged = new HealthAmountEvent();
+    public HealthAmountEvent onHealed = new HealthAmountEvent();
+    public HealthStateEvent onDeath = new HealthStateEvent();
 
     public float CurrentHealth => currentHealth;
     public float MaxHealth => maxHealth;
     public float NormalizedHealth => maxHealth <= 0f ? 0f : currentHealth / maxHealth;
     public bool IsDead { get; private set; }
+    public bool DamageImmune => damageImmune;
 
     private bool deathEventSent;
 
     private void Awake()
     {
+        EnsureEvents();
+
         if (startWithFullHealth)
             currentHealth = maxHealth;
         else
@@ -64,17 +65,28 @@ public class Health : MonoBehaviour
         currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
     }
 
-    /// <summary>
-    /// 대상에게 피해를 줍니다.
-    /// source는 피해를 준 오브젝트로, 지금은 비워도 되고 나중에 플레이어/스킬 추적에 사용합니다.
-    /// </summary>
+    public void EnsureEvents()
+    {
+        onHealthChanged ??= new HealthChangedEvent();
+        onDamaged ??= new HealthAmountEvent();
+        onHealed ??= new HealthAmountEvent();
+        onDeath ??= new HealthStateEvent();
+    }
+
     public void TakeDamage(float amount, GameObject source = null)
     {
+        EnsureEvents();
+
         if (amount <= 0f)
             return;
 
         if (deathEventSent && ignoreDamageAfterDeath)
             return;
+
+        if (damageImmune)
+        {
+            return;
+        }
 
         float previousHealth = currentHealth;
         currentHealth = Mathf.Max(0f, currentHealth - amount);
@@ -83,9 +95,6 @@ public class Health : MonoBehaviour
         if (actualDamage <= 0f)
             return;
 
-        if (logDamage)
-            Debug.Log($"[Health] {name} took {actualDamage:0.##} damage. HP: {currentHealth:0.##}/{maxHealth:0.##}", this);
-
         onDamaged?.Invoke(this, actualDamage, source);
         NotifyHealthChanged();
 
@@ -93,11 +102,10 @@ public class Health : MonoBehaviour
             Die();
     }
 
-    /// <summary>
-    /// 체력을 회복합니다. 지금 단계에서는 필수는 아니지만, 추후 힐러 NPC 구현 때 재사용합니다.
-    /// </summary>
     public void Heal(float amount, GameObject source = null)
     {
+        EnsureEvents();
+
         if (amount <= 0f || IsDead)
             return;
 
@@ -112,22 +120,23 @@ public class Health : MonoBehaviour
         NotifyHealthChanged();
     }
 
-    /// <summary>
-    /// 테스트나 에피소드 리셋 때 HP를 최대치로 되돌립니다.
-    /// </summary>
     public void ResetHealth()
     {
+        EnsureEvents();
         IsDead = false;
         deathEventSent = false;
         currentHealth = maxHealth;
         NotifyHealthChanged();
     }
 
-    /// <summary>
-    /// 외부에서 HP를 직접 지정할 때 사용합니다.
-    /// </summary>
+    public void SetDamageImmune(bool immune)
+    {
+        damageImmune = immune;
+    }
+
     public void SetHealth(float value)
     {
+        EnsureEvents();
         currentHealth = Mathf.Clamp(value, 0f, maxHealth);
 
         if (currentHealth > 0f)
@@ -143,6 +152,8 @@ public class Health : MonoBehaviour
 
     private void Die()
     {
+        EnsureEvents();
+
         if (deathEventSent)
             return;
 
@@ -159,6 +170,7 @@ public class Health : MonoBehaviour
 
     private void NotifyHealthChanged()
     {
+        EnsureEvents();
         onHealthChanged?.Invoke(this, currentHealth, maxHealth, NormalizedHealth);
     }
 }

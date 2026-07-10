@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 479111ea9d92fe24e8cc71e45283d865, type: 3}
+  m_Name: DB_BasicAttackVFX
+  m_EditorClassIdentifier: Assembly-CSharp::BasicAttackVFXDatabase
+  entries:
+  - characterId: warrior
+    displayName: Warrior
+    hitVFXPrefab: {fileID: 3826060704210947827, guid: a837064939f3bc64e8e11b3e126758a4, type: 3}
+    spawnHitVFX: 1
+    hitAnchorName: VFXHitAnchor
+    hitVFXOffset: {x: 0, y: 1.1, z: 0}
+    hitVFXEuler: {x: 0, y: 0, z: 0}
+    hitVFXScale: {x: 1, y: 1, z: 1}
+    attachHitVFXToTarget: 0
+    autoDestroyDelay: 3
+  - characterId: archer
+    displayName: Archer
+    hitVFXPrefab: {fileID: 1791545232242739438, guid: e00304e4d305d2844bab94a8d83f64c2, type: 3}
+    spawnHitVFX: 1
+    hitAnchorName: VFXHitAnchor
+    hitVFXOffset: {x: 0, y: 0, z: 0}
+    hitVFXEuler: {x: 0, y: 0, z: 0}
+    hitVFXScale: {x: 1, y: 1, z: 1}
+    attachHitVFXToTarget: 0
+    autoDestroyDelay: 3
+  - characterId: mage
+    displayName: Mage
+    hitVFXPrefab: {fileID: 5325705802284358827, guid: e6c32e0cb9d482141abe81907664731d, type: 3}
+    spawnHitVFX: 1
+    hitAnchorName: VFXHitAnchor
+    hitVFXOffset: {x: 0, y: 1.2, z: 0}
+    hitVFXEuler: {x: 0, y: 0, z: 0}
+    hitVFXScale: {x: 1, y: 1, z: 1}
+    attachHitVFXToTarget: 0
+    autoDestroyDelay: 3
+  - characterId: healer
+    displayName: Healer
+    hitVFXPrefab: {fileID: 5593773337190986786, guid: 9fed68c207dc77d44b2212b2f9e1879c, type: 3}
+    spawnHitVFX: 1
+    hitAnchorName: VFXHitAnchor
+    hitVFXOffset: {x: 0, y: 1.2, z: 0}
+    hitVFXEuler: {x: 0, y: 0, z: 0}
+    hitVFXScale: {x: 1, y: 1, z: 1}
+    attachHitVFXToTarget: 0
+    autoDestroyDelay: 3

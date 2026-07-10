@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 7689294dd44422c42bba57a6b1ae7c05
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: fx_textures_flare_materials.unity3d
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Lightning Skill/Materials/flare02_blue_3.mat
+  uploadId: 851134

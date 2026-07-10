@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 0fed7ef6ee096d14fb296c21dd85f696
+timeCreated: 1542626213
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: fx_textures_flare_materials.unity3d
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Fire Skill/Materials/God_hit01_particle.mat
+  uploadId: 851134

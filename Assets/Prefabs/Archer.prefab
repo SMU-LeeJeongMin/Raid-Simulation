@@ -2546,6 +2546,11 @@ GameObject:
   - component: {fileID: 5183690723618798096}
   - component: {fileID: -2145679943175708824}
   - component: {fileID: -3122646124221551260}
+  - component: {fileID: -6711784210449945508}
+  - component: {fileID: 3808852786039851813}
+  - component: {fileID: -8377793372811041275}
+  - component: {fileID: 9176530150240199221}
+  - component: {fileID: -6046565899056841897}
   m_Layer: 0
   m_Name: Archer
   m_TagString: Untagged
@@ -2634,6 +2639,7 @@ MonoBehaviour:
   characterId: archer
   jobName: Archer
   roleName: Mechanic DPS
+  portraitSprite: {fileID: 21300000, guid: 698e9688dd6e5c545b91a1a46aaa267f, type: 3}
 --- !u!114 &-5279003794169280949
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2696,6 +2702,10 @@ MonoBehaviour:
   animator: {fileID: 0}
   attackOrigin: {fileID: 4437988059002368}
   playerMovement: {fileID: -5279003794169280949}
+  VFXPlayer: {fileID: -6711784210449945508}
+  ultimateGauge: {fileID: 0}
+  gainUltimateOnBasicAttackHit: 1
+  fallbackUltimateGainOnHit: 4
   useLeftMouseButton: 1
   useKeyboardNumber1: 1
   ignoreInputWhenPointerIsOverUI: 1
@@ -2703,10 +2713,18 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   triggerInteraction: 2
+  leftClickSelectsTarget: 1
+  attackOnLeftClickWithoutTarget: 0
+  prioritizeSelectedTarget: 1
+  targetSelectionCamera: {fileID: 0}
+  targetSelectionRayDistance: 1000
+  selectedTarget: {fileID: 0}
+  selectedTargetName: 
+  blockBasicAttackWhileBossFlying: 1
   fallbackAttackHeight: 0.8
-  logAttack: 1
   drawAttackGizmo: 1
   drawHorizontalAutoTargetGizmo: 1
+  externalActionLock: 0
   isAttacking: 0
   resolvedCharacterId: 
   currentAttackInfo: 
@@ -2725,6 +2743,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStatus
   health: {fileID: -2145679943175708824}
   mana: {fileID: -3122646124221551260}
+  shield: {fileID: 0}
+  ultimateGauge: {fileID: 0}
   classInfo: {fileID: 6182033290715742897}
   createHealthIfMissing: 1
   applyHealthOnAwake: 1
@@ -2743,6 +2763,26 @@ MonoBehaviour:
   manaRegenPerSecond: 3
   manaRegenDelayAfterUse: 0.5
   logManaChanges: 0
+  createShieldIfMissing: 1
+  logShieldChanges: 1
+  createUltimateGaugeIfMissing: 1
+  applyUltimateOnAwake: 1
+  maxUltimateGauge: 100
+  startFullUltimateForTesting: 0
+  logUltimateChanges: 1
+  playDeathAnimation: 1
+  deathClip: {fileID: 7400000, guid: d1e952b055ddd014eb38ac6f9e486a6b, type: 3}
+  deathStateName: Death
+  useDirectDeathClipPlayback: 1
+  freezeOnFinalDeathPose: 1
+  disableControlOnDeath: 1
+  disableCharacterControllerOnDeath: 1
+  disableNavMeshAgentOnDeath: 1
+  makeRigidbodiesKinematicOnDeath: 1
+  disableCollidersOnDeath: 0
+  keepTriggerCollidersOnDeath: 1
+  logDeath: 1
+  deathHandled: 0
 --- !u!114 &-2145679943175708824
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2761,6 +2801,8 @@ MonoBehaviour:
   ignoreDamageAfterDeath: 1
   destroyOnDeath: 0
   destroyDelay: 3
+  damageImmune: 0
+  logImmuneDamage: 0
   logDamage: 0
   onHealthChanged:
     m_PersistentCalls:
@@ -2792,7 +2834,105 @@ MonoBehaviour:
   regenerate: 1
   regenPerSecond: 8
   regenDelayAfterUse: 0.5
-  logChanges: 0
+--- !u!114 &-6711784210449945508
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1374048655880376}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26d22968c99452044bf247da6d035f5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BasicAttackVFXPlayer
+  VFXDatabase: {fileID: 11400000, guid: 5d2b3fb21f792fa4b8a47ac846d3a806, type: 2}
+  classInfo: {fileID: 6182033290715742897}
+  fallbackTargetHeight: 1.1
+--- !u!114 &3808852786039851813
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1374048655880376}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4149ded8241258478d98771ac4f1142, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillController
+  skillDatabase: {fileID: 11400000, guid: 41dc8c5e1fd5bf146850fdbbc0d86c25, type: 2}
+  classInfo: {fileID: 6182033290715742897}
+  characterIdOverride: 
+  animator: {fileID: 0}
+  playerMovement: {fileID: -5279003794169280949}
+  basicAttack: {fileID: 6096986115658958538}
+  playerStatus: {fileID: 5183690723618798096}
+  mana: {fileID: -3122646124221551260}
+  ultimateGauge: {fileID: 9176530150240199221}
+  VFXPlayer: {fileID: -8377793372811041275}
+  blockOffensiveSkillsWhileBossFlying: 1
+  useKeyboardInput: 1
+  ignoreInputWhenPointerIsOverUI: 1
+  skill1Key: 42
+  skill2Key: 43
+  ultimateKey: 44
+  forceOneShotSkillAnimation: 1
+  findAnimationClipByStateName: 1
+  warnWhenSkillClipMissing: 1
+  resolvedCharacterId: 
+  skillInProgress: 0
+  currentSkillInfo: 
+  currentSkillAnimationInfo: 
+  skill1ReadyTime: 0
+  skill2ReadyTime: 0
+  ultimateReadyTime: 0
+  activeSkillSlot: 0
+--- !u!114 &-8377793372811041275
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1374048655880376}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86d5db8581d59094dbc88a17035d1150, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillVFXPlayer
+  castOrigin: {fileID: 4437988059002368}
+  classInfo: {fileID: 6182033290715742897}
+  fallbackCasterHeight: 0.9
+  fallbackTargetHeight: 1.1
+--- !u!114 &9176530150240199221
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1374048655880376}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b74c73dcf830d6c4d87e6e5e7bd4a366, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerUltimateGauge
+  maxGauge: 100
+  currentGauge: 0
+  startFullForTesting: 1
+--- !u!114 &-6046565899056841897
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1374048655880376}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 680fbd35713f4b94a88677dd6fafee6f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShieldResource
+  currentShield: 0
+  shieldExpireTime: 0
 --- !u!1 &1378542575408906
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 78c9e152274f79441a71932909d060a4
+timeCreated: 1479210751
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: fx_textures_slash_materials.unity3d
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Ice Skill/Materials/slash_L01.mat
+  uploadId: 851134

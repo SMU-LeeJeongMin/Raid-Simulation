@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: cf57bfbd611b2ef49a5b4b89a7576327
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: fx_textures_line_rotate_materials.unity3d
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Lightning Skill/Materials/lb_20f_r
+    10.mat
+  uploadId: 851134

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: e8de63b6192bf714dbe93bbb1131c2c7
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: fx_textures_glow_materials.unity3d
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Lightning Skill/Materials/glowa_ball_grey_3.mat
+  uploadId: 851134

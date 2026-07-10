@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 98fab1524ba0c9543aa66b7d867980ca
+timeCreated: 1485226416
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: fx_textures_rune_materials.unity3d
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Ice Skill/Materials/Rune17.mat
+  uploadId: 851134

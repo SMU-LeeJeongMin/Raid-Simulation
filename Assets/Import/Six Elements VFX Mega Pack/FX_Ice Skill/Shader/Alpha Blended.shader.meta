@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 969c58b77bfb529429fef2882e25c889
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  preprocessorOverride: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Ice Skill/Shader/Alpha Blended.shader
+  uploadId: 851134

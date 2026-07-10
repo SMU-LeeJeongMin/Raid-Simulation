@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: f555b099f53713d43992bcbb91520847
+timeCreated: 1528979677
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Fire Skill/Materials/glow_point2_yellow_02.mat
+  uploadId: 851134

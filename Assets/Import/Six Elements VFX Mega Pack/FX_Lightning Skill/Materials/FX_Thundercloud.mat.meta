@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: ae34c91da8c90614e81a15f81997a9f2
+timeCreated: 1517539930
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Lightning Skill/Materials/FX_Thundercloud.mat
+  uploadId: 851134

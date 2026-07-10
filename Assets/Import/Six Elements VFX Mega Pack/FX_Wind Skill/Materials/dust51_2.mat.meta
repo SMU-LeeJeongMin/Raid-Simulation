@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d583864932fa1a64390cb8c7ab3be26d
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: fx_textures_dust_materials.unity3d
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Wind Skill/Materials/dust51_2.mat
+  uploadId: 851134

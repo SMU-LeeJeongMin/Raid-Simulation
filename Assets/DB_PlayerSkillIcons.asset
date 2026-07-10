@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceee6aa100038b847b82147041863e34, type: 3}
+  m_Name: DB_PlayerSkillIcons
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillIconDatabase
+  iconSets:
+  - characterId: warrior
+    displayName: Warrior
+    skill1Icon: {fileID: 21300000, guid: 2d7f183dc3d6cb141b5aad1c008d6b0a, type: 3}
+    skill2Icon: {fileID: 21300000, guid: d64f0f31b760b7c40baab07579092e35, type: 3}
+    ultimateIcon: {fileID: 21300000, guid: 2133b9bfae63c1041b613b3d82ebaed1, type: 3}
+  - characterId: archer
+    displayName: Archer
+    skill1Icon: {fileID: 21300000, guid: b1ae895cf27960242a28d20c4e992264, type: 3}
+    skill2Icon: {fileID: 21300000, guid: f325ec36598f75945bc1e874d6ffc8cd, type: 3}
+    ultimateIcon: {fileID: 21300000, guid: a5fd1d58956287142a1eed8d3b6dee7e, type: 3}
+  - characterId: mage
+    displayName: Mage
+    skill1Icon: {fileID: 21300000, guid: d239e0e03c6d3e943b4bdad039162a1f, type: 3}
+    skill2Icon: {fileID: 21300000, guid: 30f16efab2decc041b5843f6a34e4150, type: 3}
+    ultimateIcon: {fileID: 21300000, guid: 49d9048e4222b724b8aa21f7830d2f5f, type: 3}
+  - characterId: healer
+    displayName: Healer
+    skill1Icon: {fileID: 21300000, guid: 4ec158ac12598fb438f750a7d2c9adb7, type: 3}
+    skill2Icon: {fileID: 21300000, guid: 181ff38024d84d3448bd14261fe63dc4, type: 3}
+    ultimateIcon: {fileID: 21300000, guid: 9500c433353485640bd06a7de3d371ea, type: 3}

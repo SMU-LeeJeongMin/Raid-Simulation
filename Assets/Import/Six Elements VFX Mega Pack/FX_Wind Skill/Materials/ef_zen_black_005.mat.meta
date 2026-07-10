@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 5b90dfb02d7cdfc4f993a3ef9e81723f
+timeCreated: 1526384794
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Wind Skill/Materials/ef_zen_black_005.mat
+  uploadId: 851134

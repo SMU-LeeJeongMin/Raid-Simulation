@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d75f106c33a959c49af9306f665c8e50
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: fx_textures_line_materials.unity3d
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Ice Skill/Materials/line03_blue_4.mat
+  uploadId: 851134

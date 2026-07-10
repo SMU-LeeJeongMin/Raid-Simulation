@@ -1,0 +1,1020 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56261e9230629f04c9025d46473aca13, type: 3}
+  m_Name: DB_PlayerSkills
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillDatabase
+  skillSets:
+  - characterId: warrior
+    displayName: Warrior
+    skill1:
+      skillId: warrior_slash
+      displayName: "\uAC80\uC73C\uB85C \uBCA0\uAE30"
+      slot: 0
+      effectType: 0
+      manaCost: 20
+      ultimateCost: 0
+      cooldown: 4
+      ultimateGainOnUse: 12
+      animationClip: {fileID: 7400000, guid: 66d6e931fba18384eb02381bec3bce88, type: 3}
+      animatorStateName: ATK1
+      useDirectClipPlayback: 1
+      actionDuration: 0.85
+      effectDelayNormalized: 0.45
+      extraRecoveryTime: 0
+      lockMovementDuringSkill: 1
+      suppressMovementAnimationDuringSkill: 1
+      lockBasicAttackDuringSkill: 1
+      lockOtherSkillsDuringSkill: 1
+      faceTargetOnSkill: 1
+      movementSpeedMultiplier: 1
+      damage: 160
+      tickDamage: 30
+      multiHitCount: 1
+      multiHitInterval: 0.1
+      duration: 0
+      tickInterval: 1
+      healAmount: 50
+      tickHealAmount: 50
+      shieldAmount: 50
+      shieldDuration: 10
+      castVFXPrefab: {fileID: 5948348765637165832, guid: b03c64a7ed997bc48abbfdb8d5aaa858, type: 3}
+      attachCastVFXToCaster: 1
+      castVFXOffset: {x: 0, y: 0.9, z: 0.3}
+      castVFXRotationMode: 1
+      castVFXEuler: {x: 0, y: 0, z: 5}
+      castVFXScale: {x: 0.7, y: 0.7, z: 0.7}
+      castVFXAutoDestroyDelay: 3
+      targetVFXPrefab: {fileID: 0}
+      targetVFXAtCaster: 0
+      targetAnchorName: VFXHitAnchor
+      targetVFXOffset: {x: 3, y: 0, z: 1}
+      targetVFXRotationMode: 2
+      targetVFXEuler: {x: 0, y: 0, z: 0}
+      targetVFXScale: {x: 0.7, y: 0.7, z: 0.7}
+      targetVFXAutoDestroyDelay: 3
+      useProjectileVFX: 0
+      applyDamageOnProjectileImpact: 0
+      projectileVFXPrefab: {fileID: 0}
+      projectileRenderMode: 0
+      projectileStartPoint: 0
+      projectileVFXStartOffset: {x: 0, y: 0.9, z: 0.4}
+      projectileVFXRotationMode: 2
+      projectileVFXEuler: {x: 0, y: 0, z: 0}
+      projectileVFXScale: {x: 1, y: 1, z: 1}
+      projectileSpeed: 12
+      projectileMaxLifetime: 2
+      projectileLookAtTarget: 1
+      spawnTargetVFXOnProjectileImpact: 1
+      projectileLineAxis: 2
+      projectileLineLengthScale: 1
+      projectileLineThicknessScale: 1
+      projectileLineVisibleDuration: 0.35
+      projectileLineImpactDelay: -1
+      persistentVFXPrefab: {fileID: 0}
+      persistentVFXAtCaster: 0
+      persistentVFXOffset: {x: 0, y: 0, z: 0}
+      persistentVFXRotationMode: 0
+      persistentVFXEuler: {x: 0, y: 0, z: 0}
+      persistentVFXScale: {x: 1, y: 1, z: 1}
+      persistentVFXDuration: 3
+      allyVFXPrefab: {fileID: 0}
+      allyVFXAnchorName: VFXHitAnchor
+      allyVFXOffset: {x: 0, y: 1, z: 0}
+      allyVFXEuler: {x: 0, y: 0, z: 0}
+      allyVFXScale: {x: 1, y: 1, z: 1}
+      allyVFXAutoDestroyDelay: 3
+      auraVFXPrefab: {fileID: 0}
+      attachAuraVFXToCaster: 1
+      auraVFXOffset: {x: 0, y: 0, z: 0}
+      auraVFXEuler: {x: 0, y: 0, z: 0}
+      auraVFXScale: {x: 1, y: 1, z: 1}
+      auraVFXAutoDestroyDelay: 5
+    skill2:
+      skillId: warrior_whirlwind
+      displayName: "\uAC80 \uD68C\uC624\uB9AC"
+      slot: 1
+      effectType: 1
+      manaCost: 30
+      ultimateCost: 0
+      cooldown: 8
+      ultimateGainOnUse: 18
+      animationClip: {fileID: 7400000, guid: 8759c2ee09f38734b9f8feff97297fd4, type: 3}
+      animatorStateName: ATK2
+      useDirectClipPlayback: 1
+      actionDuration: 1
+      effectDelayNormalized: 0.5
+      extraRecoveryTime: 0
+      lockMovementDuringSkill: 1
+      suppressMovementAnimationDuringSkill: 1
+      lockBasicAttackDuringSkill: 1
+      lockOtherSkillsDuringSkill: 1
+      faceTargetOnSkill: 1
+      movementSpeedMultiplier: 1
+      damage: 240
+      tickDamage: 80
+      multiHitCount: 1
+      multiHitInterval: 0.1
+      duration: 3
+      tickInterval: 1
+      healAmount: 50
+      tickHealAmount: 50
+      shieldAmount: 50
+      shieldDuration: 10
+      castVFXPrefab: {fileID: 0}
+      attachCastVFXToCaster: 1
+      castVFXOffset: {x: 0, y: 0.9, z: 0.3}
+      castVFXRotationMode: 1
+      castVFXEuler: {x: 0, y: 0, z: 0}
+      castVFXScale: {x: 1, y: 1, z: 1}
+      castVFXAutoDestroyDelay: 3
+      targetVFXPrefab: {fileID: 4297842659697493505, guid: 01d7f969ea087264999d466695415a99, type: 3}
+      targetVFXAtCaster: 0
+      targetAnchorName: VFXHitAnchor
+      targetVFXOffset: {x: 0, y: 0, z: 0}
+      targetVFXRotationMode: 0
+      targetVFXEuler: {x: 0, y: 0, z: 0}
+      targetVFXScale: {x: 0.7, y: 0.7, z: 0.7}
+      targetVFXAutoDestroyDelay: 3
+      useProjectileVFX: 0
+      applyDamageOnProjectileImpact: 0
+      projectileVFXPrefab: {fileID: 0}
+      projectileRenderMode: 0
+      projectileStartPoint: 0
+      projectileVFXStartOffset: {x: 0, y: 0.9, z: 0.4}
+      projectileVFXRotationMode: 2
+      projectileVFXEuler: {x: 0, y: 0, z: 0}
+      projectileVFXScale: {x: 1, y: 1, z: 1}
+      projectileSpeed: 12
+      projectileMaxLifetime: 2
+      projectileLookAtTarget: 1
+      spawnTargetVFXOnProjectileImpact: 1
+      projectileLineAxis: 2
+      projectileLineLengthScale: 1
+      projectileLineThicknessScale: 1
+      projectileLineVisibleDuration: 0.35
+      projectileLineImpactDelay: -1
+      persistentVFXPrefab: {fileID: 0}
+      persistentVFXAtCaster: 0
+      persistentVFXOffset: {x: 0, y: 0, z: 0}
+      persistentVFXRotationMode: 0
+      persistentVFXEuler: {x: 0, y: 0, z: 0}
+      persistentVFXScale: {x: 1, y: 1, z: 1}
+      persistentVFXDuration: 3
+      allyVFXPrefab: {fileID: 0}
+      allyVFXAnchorName: VFXHitAnchor
+      allyVFXOffset: {x: 0, y: 1, z: 0}
+      allyVFXEuler: {x: 0, y: 0, z: 0}
+      allyVFXScale: {x: 1, y: 1, z: 1}
+      allyVFXAutoDestroyDelay: 3
+      auraVFXPrefab: {fileID: 0}
+      attachAuraVFXToCaster: 1
+      auraVFXOffset: {x: 0, y: 0, z: 0}
+      auraVFXEuler: {x: 0, y: 0, z: 0}
+      auraVFXScale: {x: 1, y: 1, z: 1}
+      auraVFXAutoDestroyDelay: 5
+    ultimate:
+      skillId: warrior_ultimate_blade_burst
+      displayName: "\uAC80\uAE30 \uD3ED\uBC1C"
+      slot: 2
+      effectType: 2
+      manaCost: 50
+      ultimateCost: 100
+      cooldown: 40
+      ultimateGainOnUse: 0
+      animationClip: {fileID: 7400000, guid: a1101064477cd334097208cfb752aa4e, type: 3}
+      animatorStateName: ATK3
+      useDirectClipPlayback: 1
+      actionDuration: 1.35
+      effectDelayNormalized: 0.25
+      extraRecoveryTime: 0
+      lockMovementDuringSkill: 1
+      suppressMovementAnimationDuringSkill: 1
+      lockBasicAttackDuringSkill: 1
+      lockOtherSkillsDuringSkill: 1
+      faceTargetOnSkill: 1
+      movementSpeedMultiplier: 1
+      damage: 120
+      tickDamage: 30
+      multiHitCount: 5
+      multiHitInterval: 0.13
+      duration: 0
+      tickInterval: 1
+      healAmount: 50
+      tickHealAmount: 50
+      shieldAmount: 50
+      shieldDuration: 10
+      castVFXPrefab: {fileID: 0}
+      attachCastVFXToCaster: 1
+      castVFXOffset: {x: 0, y: 0.9, z: 0.3}
+      castVFXRotationMode: 1
+      castVFXEuler: {x: 0, y: 0, z: 0}
+      castVFXScale: {x: 1, y: 1, z: 1}
+      castVFXAutoDestroyDelay: 3
+      targetVFXPrefab: {fileID: 3826060704210947827, guid: a837064939f3bc64e8e11b3e126758a4, type: 3}
+      targetVFXAtCaster: 0
+      targetAnchorName: VFXHitAnchor
+      targetVFXOffset: {x: 0, y: 0, z: 0}
+      targetVFXRotationMode: 0
+      targetVFXEuler: {x: 0, y: 0, z: 0}
+      targetVFXScale: {x: 1, y: 1, z: 1}
+      targetVFXAutoDestroyDelay: 3
+      useProjectileVFX: 1
+      applyDamageOnProjectileImpact: 1
+      projectileVFXPrefab: {fileID: 6530050470957634559, guid: 822d6346685614d4d8d34ff0aaf2d44b, type: 3}
+      projectileRenderMode: 0
+      projectileStartPoint: 0
+      projectileVFXStartOffset: {x: 0, y: 0.9, z: 0.4}
+      projectileVFXRotationMode: 2
+      projectileVFXEuler: {x: 0, y: 90, z: 0}
+      projectileVFXScale: {x: 1, y: 1, z: 1}
+      projectileSpeed: 12
+      projectileMaxLifetime: 2
+      projectileLookAtTarget: 1
+      spawnTargetVFXOnProjectileImpact: 1
+      projectileLineAxis: 2
+      projectileLineLengthScale: 1
+      projectileLineThicknessScale: 1
+      projectileLineVisibleDuration: 0.35
+      projectileLineImpactDelay: -1
+      persistentVFXPrefab: {fileID: 0}
+      persistentVFXAtCaster: 0
+      persistentVFXOffset: {x: 0, y: 0, z: 0}
+      persistentVFXRotationMode: 0
+      persistentVFXEuler: {x: 0, y: 0, z: 0}
+      persistentVFXScale: {x: 1, y: 1, z: 1}
+      persistentVFXDuration: 3
+      allyVFXPrefab: {fileID: 0}
+      allyVFXAnchorName: VFXHitAnchor
+      allyVFXOffset: {x: 0, y: 1, z: 0}
+      allyVFXEuler: {x: 0, y: 0, z: 0}
+      allyVFXScale: {x: 1, y: 1, z: 1}
+      allyVFXAutoDestroyDelay: 3
+      auraVFXPrefab: {fileID: 0}
+      attachAuraVFXToCaster: 1
+      auraVFXOffset: {x: 0, y: 0, z: 0}
+      auraVFXEuler: {x: 0, y: 0, z: 0}
+      auraVFXScale: {x: 1, y: 1, z: 1}
+      auraVFXAutoDestroyDelay: 5
+  - characterId: archer
+    displayName: Archer
+    skill1:
+      skillId: archer_arrow_rain
+      displayName: "\uD654\uC0B4\uBE44"
+      slot: 0
+      effectType: 1
+      manaCost: 25
+      ultimateCost: 0
+      cooldown: 8
+      ultimateGainOnUse: 15
+      animationClip: {fileID: 7400000, guid: 66d6e931fba18384eb02381bec3bce88, type: 3}
+      animatorStateName: ATK1
+      useDirectClipPlayback: 1
+      actionDuration: 0.7
+      effectDelayNormalized: 0.2
+      extraRecoveryTime: 0
+      lockMovementDuringSkill: 1
+      suppressMovementAnimationDuringSkill: 1
+      lockBasicAttackDuringSkill: 1
+      lockOtherSkillsDuringSkill: 1
+      faceTargetOnSkill: 1
+      movementSpeedMultiplier: 1
+      damage: 0
+      tickDamage: 60
+      multiHitCount: 1
+      multiHitInterval: 0.1
+      duration: 1.5
+      tickInterval: 0.5
+      healAmount: 50
+      tickHealAmount: 50
+      shieldAmount: 50
+      shieldDuration: 10
+      castVFXPrefab: {fileID: 0}
+      attachCastVFXToCaster: 1
+      castVFXOffset: {x: 0, y: 0.9, z: 0.3}
+      castVFXRotationMode: 1
+      castVFXEuler: {x: 0, y: 0, z: 0}
+      castVFXScale: {x: 1, y: 1, z: 1}
+      castVFXAutoDestroyDelay: 3
+      targetVFXPrefab: {fileID: 1248971713473092039, guid: e4d21e8d07b4f4347a7ef530ef0cfd83, type: 3}
+      targetVFXAtCaster: 0
+      targetAnchorName: VFXHitAnchor
+      targetVFXOffset: {x: 0, y: 0, z: 0}
+      targetVFXRotationMode: 0
+      targetVFXEuler: {x: 0, y: 0, z: 0}
+      targetVFXScale: {x: 2, y: 2, z: 2}
+      targetVFXAutoDestroyDelay: 2
+      useProjectileVFX: 0
+      applyDamageOnProjectileImpact: 0
+      projectileVFXPrefab: {fileID: 0}
+      projectileRenderMode: 0
+      projectileStartPoint: 0
+      projectileVFXStartOffset: {x: 0, y: 0.9, z: 0.4}
+      projectileVFXRotationMode: 2
+      projectileVFXEuler: {x: 0, y: 0, z: 0}
+      projectileVFXScale: {x: 1, y: 1, z: 1}
+      projectileSpeed: 12
+      projectileMaxLifetime: 2
+      projectileLookAtTarget: 1
+      spawnTargetVFXOnProjectileImpact: 1
+      projectileLineAxis: 2
+      projectileLineLengthScale: 1
+      projectileLineThicknessScale: 1
+      projectileLineVisibleDuration: 0.35
+      projectileLineImpactDelay: -1
+      persistentVFXPrefab: {fileID: 5052023223517617838, guid: a5a60df006ef79944bad471c2f7203cf, type: 3}
+      persistentVFXAtCaster: 0
+      persistentVFXOffset: {x: 0, y: 0, z: 0}
+      persistentVFXRotationMode: 0
+      persistentVFXEuler: {x: 0, y: 0, z: 0}
+      persistentVFXScale: {x: 1, y: 1, z: 1}
+      persistentVFXDuration: 3
+      allyVFXPrefab: {fileID: 0}
+      allyVFXAnchorName: VFXHitAnchor
+      allyVFXOffset: {x: 0, y: 1, z: 0}
+      allyVFXEuler: {x: 0, y: 0, z: 0}
+      allyVFXScale: {x: 1, y: 1, z: 1}
+      allyVFXAutoDestroyDelay: 3
+      auraVFXPrefab: {fileID: 0}
+      attachAuraVFXToCaster: 1
+      auraVFXOffset: {x: 0, y: 0, z: 0}
+      auraVFXEuler: {x: 0, y: 0, z: 0}
+      auraVFXScale: {x: 1, y: 1, z: 1}
+      auraVFXAutoDestroyDelay: 5
+    skill2:
+      skillId: archer_charged_explosion
+      displayName: "\uCC28\uC9D5 \uD6C4 \uD3ED\uD30C"
+      slot: 1
+      effectType: 0
+      manaCost: 35
+      ultimateCost: 0
+      cooldown: 12
+      ultimateGainOnUse: 22
+      animationClip: {fileID: 7400000, guid: 8759c2ee09f38734b9f8feff97297fd4, type: 3}
+      animatorStateName: ATK2
+      useDirectClipPlayback: 1
+      actionDuration: 2
+      effectDelayNormalized: 0.95
+      extraRecoveryTime: 0
+      lockMovementDuringSkill: 1
+      suppressMovementAnimationDuringSkill: 1
+      lockBasicAttackDuringSkill: 1
+      lockOtherSkillsDuringSkill: 1
+      faceTargetOnSkill: 1
+      movementSpeedMultiplier: 1
+      damage: 300
+      tickDamage: 30
+      multiHitCount: 1
+      multiHitInterval: 0.1
+      duration: 0
+      tickInterval: 1
+      healAmount: 50
+      tickHealAmount: 50
+      shieldAmount: 50
+      shieldDuration: 10
+      castVFXPrefab: {fileID: 4311185558581538580, guid: 4b0a5c9e1bcc7fa41bde023ad16a4f69, type: 3}
+      attachCastVFXToCaster: 1
+      castVFXOffset: {x: 0, y: 0.9, z: 0.3}
+      castVFXRotationMode: 1
+      castVFXEuler: {x: 0, y: 0, z: 0}
+      castVFXScale: {x: 1, y: 1, z: 1}
+      castVFXAutoDestroyDelay: 2.2
+      targetVFXPrefab: {fileID: 2245897706934489841, guid: 07022f066dee4ab42ad694c8dc3bfa12, type: 3}
+      targetVFXAtCaster: 0
+      targetAnchorName: VFXHitAnchor
+      targetVFXOffset: {x: 0, y: 0, z: 0}
+      targetVFXRotationMode: 0
+      targetVFXEuler: {x: 0, y: 0, z: 0}
+      targetVFXScale: {x: 1.5, y: 1.5, z: 1.5}
+      targetVFXAutoDestroyDelay: 3
+      useProjectileVFX: 0
+      applyDamageOnProjectileImpact: 0
+      projectileVFXPrefab: {fileID: 0}
+      projectileRenderMode: 0
+      projectileStartPoint: 0
+      projectileVFXStartOffset: {x: 0, y: 0.9, z: 0.4}
+      projectileVFXRotationMode: 2
+      projectileVFXEuler: {x: 0, y: 0, z: 0}
+      projectileVFXScale: {x: 1, y: 1, z: 1}
+      projectileSpeed: 12
+      projectileMaxLifetime: 2
+      projectileLookAtTarget: 1
+      spawnTargetVFXOnProjectileImpact: 1
+      projectileLineAxis: 2
+      projectileLineLengthScale: 1
+      projectileLineThicknessScale: 1
+      projectileLineVisibleDuration: 0.35
+      projectileLineImpactDelay: -1
+      persistentVFXPrefab: {fileID: 0}
+      persistentVFXAtCaster: 0
+      persistentVFXOffset: {x: 0, y: 0, z: 0}
+      persistentVFXRotationMode: 0
+      persistentVFXEuler: {x: 0, y: 0, z: 0}
+      persistentVFXScale: {x: 1, y: 1, z: 1}
+      persistentVFXDuration: 3
+      allyVFXPrefab: {fileID: 0}
+      allyVFXAnchorName: VFXHitAnchor
+      allyVFXOffset: {x: 0, y: 1, z: 0}
+      allyVFXEuler: {x: 0, y: 0, z: 0}
+      allyVFXScale: {x: 1, y: 1, z: 1}
+      allyVFXAutoDestroyDelay: 3
+      auraVFXPrefab: {fileID: 0}
+      attachAuraVFXToCaster: 1
+      auraVFXOffset: {x: 0, y: 0, z: 0}
+      auraVFXEuler: {x: 0, y: 0, z: 0}
+      auraVFXScale: {x: 1, y: 1, z: 1}
+      auraVFXAutoDestroyDelay: 5
+    ultimate:
+      skillId: archer_tornado
+      displayName: "\uD1A0\uB124\uC774\uB3C4"
+      slot: 2
+      effectType: 1
+      manaCost: 50
+      ultimateCost: 100
+      cooldown: 40
+      ultimateGainOnUse: 10
+      animationClip: {fileID: 7400000, guid: a1101064477cd334097208cfb752aa4e, type: 3}
+      animatorStateName: ATK3
+      useDirectClipPlayback: 1
+      actionDuration: 1.2
+      effectDelayNormalized: 0.35
+      extraRecoveryTime: 0
+      lockMovementDuringSkill: 1
+      suppressMovementAnimationDuringSkill: 1
+      lockBasicAttackDuringSkill: 1
+      lockOtherSkillsDuringSkill: 1
+      faceTargetOnSkill: 1
+      movementSpeedMultiplier: 1
+      damage: 100
+      tickDamage: 90
+      multiHitCount: 1
+      multiHitInterval: 0.1
+      duration: 5
+      tickInterval: 0.5
+      healAmount: 50
+      tickHealAmount: 50
+      shieldAmount: 50
+      shieldDuration: 10
+      castVFXPrefab: {fileID: 0}
+      attachCastVFXToCaster: 1
+      castVFXOffset: {x: 0, y: 0.9, z: 0.3}
+      castVFXRotationMode: 1
+      castVFXEuler: {x: 0, y: 0, z: 0}
+      castVFXScale: {x: 1, y: 1, z: 1}
+      castVFXAutoDestroyDelay: 3
+      targetVFXPrefab: {fileID: 0}
+      targetVFXAtCaster: 0
+      targetAnchorName: VFXHitAnchor
+      targetVFXOffset: {x: 0, y: 0, z: 0}
+      targetVFXRotationMode: 0
+      targetVFXEuler: {x: 0, y: 0, z: 0}
+      targetVFXScale: {x: 1, y: 1, z: 1}
+      targetVFXAutoDestroyDelay: 4
+      useProjectileVFX: 0
+      applyDamageOnProjectileImpact: 0
+      projectileVFXPrefab: {fileID: 0}
+      projectileRenderMode: 0
+      projectileStartPoint: 0
+      projectileVFXStartOffset: {x: 0, y: 0.9, z: 0.4}
+      projectileVFXRotationMode: 2
+      projectileVFXEuler: {x: 0, y: 0, z: 0}
+      projectileVFXScale: {x: 1, y: 1, z: 1}
+      projectileSpeed: 12
+      projectileMaxLifetime: 2
+      projectileLookAtTarget: 1
+      spawnTargetVFXOnProjectileImpact: 1
+      projectileLineAxis: 2
+      projectileLineLengthScale: 1
+      projectileLineThicknessScale: 1
+      projectileLineVisibleDuration: 0.35
+      projectileLineImpactDelay: -1
+      persistentVFXPrefab: {fileID: 2819592954905116740, guid: 97adb8a311e4f3c4587ce0050f46bfa0, type: 3}
+      persistentVFXAtCaster: 0
+      persistentVFXOffset: {x: 0, y: 0, z: 0}
+      persistentVFXRotationMode: 0
+      persistentVFXEuler: {x: 0, y: 0, z: 0}
+      persistentVFXScale: {x: 2, y: 2, z: 2}
+      persistentVFXDuration: 3
+      allyVFXPrefab: {fileID: 0}
+      allyVFXAnchorName: VFXHitAnchor
+      allyVFXOffset: {x: 0, y: 1, z: 0}
+      allyVFXEuler: {x: 0, y: 0, z: 0}
+      allyVFXScale: {x: 1, y: 1, z: 1}
+      allyVFXAutoDestroyDelay: 3
+      auraVFXPrefab: {fileID: 0}
+      attachAuraVFXToCaster: 1
+      auraVFXOffset: {x: 0, y: 0, z: 0}
+      auraVFXEuler: {x: 0, y: 0, z: 0}
+      auraVFXScale: {x: 1, y: 1, z: 1}
+      auraVFXAutoDestroyDelay: 5
+  - characterId: mage
+    displayName: Mage
+    skill1:
+      skillId: mage_ground_fire
+      displayName: "\uC544\uB798\uC5D0\uC11C \uBFDC\uC5B4\uC838 \uB098\uC624\uB294
+        \uBD88"
+      slot: 0
+      effectType: 1
+      manaCost: 30
+      ultimateCost: 0
+      cooldown: 8
+      ultimateGainOnUse: 16
+      animationClip: {fileID: 7400000, guid: 66d6e931fba18384eb02381bec3bce88, type: 3}
+      animatorStateName: ATK1
+      useDirectClipPlayback: 1
+      actionDuration: 0.7
+      effectDelayNormalized: 0.2
+      extraRecoveryTime: 0
+      lockMovementDuringSkill: 1
+      suppressMovementAnimationDuringSkill: 1
+      lockBasicAttackDuringSkill: 1
+      lockOtherSkillsDuringSkill: 1
+      faceTargetOnSkill: 1
+      movementSpeedMultiplier: 1
+      damage: 100
+      tickDamage: 45
+      multiHitCount: 1
+      multiHitInterval: 0.1
+      duration: 1.5
+      tickInterval: 0.5
+      healAmount: 50
+      tickHealAmount: 50
+      shieldAmount: 50
+      shieldDuration: 10
+      castVFXPrefab: {fileID: 0}
+      attachCastVFXToCaster: 1
+      castVFXOffset: {x: 0, y: 0.9, z: 0.3}
+      castVFXRotationMode: 1
+      castVFXEuler: {x: 0, y: 0, z: 0}
+      castVFXScale: {x: 1, y: 1, z: 1}
+      castVFXAutoDestroyDelay: 3
+      targetVFXPrefab: {fileID: 0}
+      targetVFXAtCaster: 0
+      targetAnchorName: VFXHitAnchor
+      targetVFXOffset: {x: 0, y: 0, z: 0}
+      targetVFXRotationMode: 0
+      targetVFXEuler: {x: 0, y: 0, z: 0}
+      targetVFXScale: {x: 1, y: 1, z: 1}
+      targetVFXAutoDestroyDelay: 3
+      useProjectileVFX: 0
+      applyDamageOnProjectileImpact: 0
+      projectileVFXPrefab: {fileID: 0}
+      projectileRenderMode: 0
+      projectileStartPoint: 0
+      projectileVFXStartOffset: {x: 0, y: 0.9, z: 0.4}
+      projectileVFXRotationMode: 2
+      projectileVFXEuler: {x: 0, y: 0, z: 0}
+      projectileVFXScale: {x: 1, y: 1, z: 1}
+      projectileSpeed: 12
+      projectileMaxLifetime: 2
+      projectileLookAtTarget: 1
+      spawnTargetVFXOnProjectileImpact: 1
+      projectileLineAxis: 2
+      projectileLineLengthScale: 1
+      projectileLineThicknessScale: 1
+      projectileLineVisibleDuration: 0.35
+      projectileLineImpactDelay: -1
+      persistentVFXPrefab: {fileID: 1361435439058630141, guid: 79f9a31615293194bab9d86a4bdaa771, type: 3}
+      persistentVFXAtCaster: 0
+      persistentVFXOffset: {x: 0, y: 0, z: 0}
+      persistentVFXRotationMode: 0
+      persistentVFXEuler: {x: 0, y: 0, z: 0}
+      persistentVFXScale: {x: 0.7, y: 0.7, z: 0.7}
+      persistentVFXDuration: 3
+      allyVFXPrefab: {fileID: 0}
+      allyVFXAnchorName: VFXHitAnchor
+      allyVFXOffset: {x: 0, y: 1, z: 0}
+      allyVFXEuler: {x: 0, y: 0, z: 0}
+      allyVFXScale: {x: 1, y: 1, z: 1}
+      allyVFXAutoDestroyDelay: 3
+      auraVFXPrefab: {fileID: 0}
+      attachAuraVFXToCaster: 1
+      auraVFXOffset: {x: 0, y: 0, z: 0}
+      auraVFXEuler: {x: 0, y: 0, z: 0}
+      auraVFXScale: {x: 1, y: 1, z: 1}
+      auraVFXAutoDestroyDelay: 5
+    skill2:
+      skillId: mage_line_fire
+      displayName: "\uC77C\uC9C1\uC120 \uBD88 \uBFDC\uAE30"
+      slot: 1
+      effectType: 1
+      manaCost: 40
+      ultimateCost: 0
+      cooldown: 12
+      ultimateGainOnUse: 24
+      animationClip: {fileID: 7400000, guid: 8759c2ee09f38734b9f8feff97297fd4, type: 3}
+      animatorStateName: ATK2
+      useDirectClipPlayback: 1
+      actionDuration: 1.2
+      effectDelayNormalized: 0.25
+      extraRecoveryTime: 0
+      lockMovementDuringSkill: 1
+      suppressMovementAnimationDuringSkill: 1
+      lockBasicAttackDuringSkill: 1
+      lockOtherSkillsDuringSkill: 1
+      faceTargetOnSkill: 1
+      movementSpeedMultiplier: 1
+      damage: 100
+      tickDamage: 55
+      multiHitCount: 1
+      multiHitInterval: 0.1
+      duration: 2.5
+      tickInterval: 0.5
+      healAmount: 50
+      tickHealAmount: 50
+      shieldAmount: 50
+      shieldDuration: 10
+      castVFXPrefab: {fileID: 0}
+      attachCastVFXToCaster: 1
+      castVFXOffset: {x: 0, y: 0.9, z: 0.3}
+      castVFXRotationMode: 1
+      castVFXEuler: {x: 0, y: 0, z: 0}
+      castVFXScale: {x: 1, y: 1, z: 1}
+      castVFXAutoDestroyDelay: 3
+      targetVFXPrefab: {fileID: 0}
+      targetVFXAtCaster: 1
+      targetAnchorName: VFXHitAnchor
+      targetVFXOffset: {x: 0, y: 0, z: 0}
+      targetVFXRotationMode: 0
+      targetVFXEuler: {x: 0, y: 0, z: 0}
+      targetVFXScale: {x: 1, y: 1, z: 1}
+      targetVFXAutoDestroyDelay: 3
+      useProjectileVFX: 0
+      applyDamageOnProjectileImpact: 0
+      projectileVFXPrefab: {fileID: 0}
+      projectileRenderMode: 0
+      projectileStartPoint: 0
+      projectileVFXStartOffset: {x: 0, y: 0.9, z: 0.4}
+      projectileVFXRotationMode: 2
+      projectileVFXEuler: {x: 0, y: 0, z: 0}
+      projectileVFXScale: {x: 1, y: 1, z: 1}
+      projectileSpeed: 12
+      projectileMaxLifetime: 2
+      projectileLookAtTarget: 1
+      spawnTargetVFXOnProjectileImpact: 1
+      projectileLineAxis: 2
+      projectileLineLengthScale: 1
+      projectileLineThicknessScale: 1
+      projectileLineVisibleDuration: 0.35
+      projectileLineImpactDelay: -1
+      persistentVFXPrefab: {fileID: 943104138989298083, guid: 2856f3fa1a3d80d44bd961f8b7ed584a, type: 3}
+      persistentVFXAtCaster: 1
+      persistentVFXOffset: {x: 0, y: 0, z: 0}
+      persistentVFXRotationMode: 1
+      persistentVFXEuler: {x: 0, y: 180, z: 0}
+      persistentVFXScale: {x: 0.7, y: 0.7, z: 0.7}
+      persistentVFXDuration: 2.5
+      allyVFXPrefab: {fileID: 0}
+      allyVFXAnchorName: VFXHitAnchor
+      allyVFXOffset: {x: 0, y: 1, z: 0}
+      allyVFXEuler: {x: 0, y: 0, z: 0}
+      allyVFXScale: {x: 1, y: 1, z: 1}
+      allyVFXAutoDestroyDelay: 3
+      auraVFXPrefab: {fileID: 0}
+      attachAuraVFXToCaster: 1
+      auraVFXOffset: {x: 0, y: 0, z: 0}
+      auraVFXEuler: {x: 0, y: 0, z: 0}
+      auraVFXScale: {x: 1, y: 1, z: 1}
+      auraVFXAutoDestroyDelay: 5
+    ultimate:
+      skillId: mage_meteor
+      displayName: "\uBA54\uD14C\uC624"
+      slot: 2
+      effectType: 0
+      manaCost: 60
+      ultimateCost: 100
+      cooldown: 45
+      ultimateGainOnUse: 10
+      animationClip: {fileID: 7400000, guid: a1101064477cd334097208cfb752aa4e, type: 3}
+      animatorStateName: ATK3
+      useDirectClipPlayback: 1
+      actionDuration: 1.8
+      effectDelayNormalized: 0.85
+      extraRecoveryTime: 0
+      lockMovementDuringSkill: 1
+      suppressMovementAnimationDuringSkill: 1
+      lockBasicAttackDuringSkill: 1
+      lockOtherSkillsDuringSkill: 1
+      faceTargetOnSkill: 1
+      movementSpeedMultiplier: 1
+      damage: 550
+      tickDamage: 30
+      multiHitCount: 1
+      multiHitInterval: 0.1
+      duration: 0
+      tickInterval: 1
+      healAmount: 50
+      tickHealAmount: 50
+      shieldAmount: 50
+      shieldDuration: 10
+      castVFXPrefab: {fileID: 0}
+      attachCastVFXToCaster: 1
+      castVFXOffset: {x: 0, y: 0.9, z: 0.3}
+      castVFXRotationMode: 1
+      castVFXEuler: {x: 0, y: 0, z: 0}
+      castVFXScale: {x: 1, y: 1, z: 1}
+      castVFXAutoDestroyDelay: 2
+      targetVFXPrefab: {fileID: 7486039674543254459, guid: c3c079ba5b19a164c9981ff5febaaf96, type: 3}
+      targetVFXAtCaster: 0
+      targetAnchorName: VFXHitAnchor
+      targetVFXOffset: {x: 0, y: 0, z: 0}
+      targetVFXRotationMode: 0
+      targetVFXEuler: {x: 0, y: 0, z: 0}
+      targetVFXScale: {x: 1, y: 1, z: 1}
+      targetVFXAutoDestroyDelay: 4
+      useProjectileVFX: 1
+      applyDamageOnProjectileImpact: 1
+      projectileVFXPrefab: {fileID: 1599916293069912692, guid: c8d25dcfaf22f224ea40ad69164e7f1b, type: 3}
+      projectileRenderMode: 0
+      projectileStartPoint: 0
+      projectileVFXStartOffset: {x: 0, y: 0.9, z: 0.4}
+      projectileVFXRotationMode: 2
+      projectileVFXEuler: {x: 0, y: 0, z: 0}
+      projectileVFXScale: {x: 0.7, y: 0.7, z: 0.7}
+      projectileSpeed: 12
+      projectileMaxLifetime: 2
+      projectileLookAtTarget: 1
+      spawnTargetVFXOnProjectileImpact: 1
+      projectileLineAxis: 2
+      projectileLineLengthScale: 1
+      projectileLineThicknessScale: 1
+      projectileLineVisibleDuration: 0.35
+      projectileLineImpactDelay: -1
+      persistentVFXPrefab: {fileID: 0}
+      persistentVFXAtCaster: 0
+      persistentVFXOffset: {x: 0, y: 0, z: 0}
+      persistentVFXRotationMode: 0
+      persistentVFXEuler: {x: 0, y: 0, z: 0}
+      persistentVFXScale: {x: 1, y: 1, z: 1}
+      persistentVFXDuration: 3
+      allyVFXPrefab: {fileID: 0}
+      allyVFXAnchorName: VFXHitAnchor
+      allyVFXOffset: {x: 0, y: 1, z: 0}
+      allyVFXEuler: {x: 0, y: 0, z: 0}
+      allyVFXScale: {x: 1, y: 1, z: 1}
+      allyVFXAutoDestroyDelay: 3
+      auraVFXPrefab: {fileID: 0}
+      attachAuraVFXToCaster: 1
+      auraVFXOffset: {x: 0, y: 0, z: 0}
+      auraVFXEuler: {x: 0, y: 0, z: 0}
+      auraVFXScale: {x: 1, y: 1, z: 1}
+      auraVFXAutoDestroyDelay: 5
+  - characterId: healer
+    displayName: Healer
+    skill1:
+      skillId: healer_heal
+      displayName: "\uD790"
+      slot: 0
+      effectType: 3
+      manaCost: 25
+      ultimateCost: 0
+      cooldown: 5
+      ultimateGainOnUse: 14
+      animationClip: {fileID: 7400000, guid: 66d6e931fba18384eb02381bec3bce88, type: 3}
+      animatorStateName: ATK1
+      useDirectClipPlayback: 1
+      actionDuration: 0.85
+      effectDelayNormalized: 0.45
+      extraRecoveryTime: 0
+      lockMovementDuringSkill: 1
+      suppressMovementAnimationDuringSkill: 1
+      lockBasicAttackDuringSkill: 1
+      lockOtherSkillsDuringSkill: 1
+      faceTargetOnSkill: 1
+      movementSpeedMultiplier: 1
+      damage: 100
+      tickDamage: 30
+      multiHitCount: 1
+      multiHitInterval: 0.1
+      duration: 0
+      tickInterval: 1
+      healAmount: 80
+      tickHealAmount: 50
+      shieldAmount: 50
+      shieldDuration: 10
+      castVFXPrefab: {fileID: 6376553379470859019, guid: 30209363b157e4a46a046bac025510ac, type: 3}
+      attachCastVFXToCaster: 1
+      castVFXOffset: {x: 0, y: 0.9, z: 0.3}
+      castVFXRotationMode: 1
+      castVFXEuler: {x: 0, y: 0, z: 0}
+      castVFXScale: {x: 0.7, y: 0.7, z: 0.7}
+      castVFXAutoDestroyDelay: 2
+      targetVFXPrefab: {fileID: 0}
+      targetVFXAtCaster: 0
+      targetAnchorName: VFXHitAnchor
+      targetVFXOffset: {x: 0, y: 0, z: 0}
+      targetVFXRotationMode: 0
+      targetVFXEuler: {x: 0, y: 0, z: 0}
+      targetVFXScale: {x: 1, y: 1, z: 1}
+      targetVFXAutoDestroyDelay: 3
+      useProjectileVFX: 0
+      applyDamageOnProjectileImpact: 0
+      projectileVFXPrefab: {fileID: 0}
+      projectileRenderMode: 0
+      projectileStartPoint: 0
+      projectileVFXStartOffset: {x: 0, y: 0.9, z: 0.4}
+      projectileVFXRotationMode: 2
+      projectileVFXEuler: {x: 0, y: 0, z: 0}
+      projectileVFXScale: {x: 1, y: 1, z: 1}
+      projectileSpeed: 12
+      projectileMaxLifetime: 2
+      projectileLookAtTarget: 1
+      spawnTargetVFXOnProjectileImpact: 1
+      projectileLineAxis: 2
+      projectileLineLengthScale: 1
+      projectileLineThicknessScale: 1
+      projectileLineVisibleDuration: 0.35
+      projectileLineImpactDelay: -1
+      persistentVFXPrefab: {fileID: 0}
+      persistentVFXAtCaster: 0
+      persistentVFXOffset: {x: 0, y: 0, z: 0}
+      persistentVFXRotationMode: 0
+      persistentVFXEuler: {x: 0, y: 0, z: 0}
+      persistentVFXScale: {x: 1, y: 1, z: 1}
+      persistentVFXDuration: 3
+      allyVFXPrefab: {fileID: 7070299086376111605, guid: 0704f5b5aa55add4f875389d20488c90, type: 3}
+      allyVFXAnchorName: VFXHitAnchor
+      allyVFXOffset: {x: 0, y: 1, z: 0}
+      allyVFXEuler: {x: 0, y: 0, z: 0}
+      allyVFXScale: {x: 0.5, y: 0.5, z: 0.5}
+      allyVFXAutoDestroyDelay: 3
+      auraVFXPrefab: {fileID: 0}
+      attachAuraVFXToCaster: 1
+      auraVFXOffset: {x: 0, y: 0, z: 0}
+      auraVFXEuler: {x: 0, y: 0, z: 0}
+      auraVFXScale: {x: 1, y: 1, z: 1}
+      auraVFXAutoDestroyDelay: 5
+    skill2:
+      skillId: healer_shield
+      displayName: "\uC274\uB4DC"
+      slot: 1
+      effectType: 4
+      manaCost: 35
+      ultimateCost: 0
+      cooldown: 12
+      ultimateGainOnUse: 22
+      animationClip: {fileID: 7400000, guid: 8759c2ee09f38734b9f8feff97297fd4, type: 3}
+      animatorStateName: ATK2
+      useDirectClipPlayback: 1
+      actionDuration: 1
+      effectDelayNormalized: 0.45
+      extraRecoveryTime: 0
+      lockMovementDuringSkill: 1
+      suppressMovementAnimationDuringSkill: 1
+      lockBasicAttackDuringSkill: 1
+      lockOtherSkillsDuringSkill: 1
+      faceTargetOnSkill: 1
+      movementSpeedMultiplier: 1
+      damage: 100
+      tickDamage: 30
+      multiHitCount: 1
+      multiHitInterval: 0.1
+      duration: 0
+      tickInterval: 1
+      healAmount: 50
+      tickHealAmount: 50
+      shieldAmount: 100
+      shieldDuration: 10
+      castVFXPrefab: {fileID: 4538202871341555306, guid: 2e6a29aec776c254cb291bc26914795c, type: 3}
+      attachCastVFXToCaster: 1
+      castVFXOffset: {x: 0, y: 0.9, z: 0.3}
+      castVFXRotationMode: 1
+      castVFXEuler: {x: 0, y: 0, z: 0}
+      castVFXScale: {x: 0.7, y: 0.7, z: 0.7}
+      castVFXAutoDestroyDelay: 2
+      targetVFXPrefab: {fileID: 0}
+      targetVFXAtCaster: 0
+      targetAnchorName: VFXHitAnchor
+      targetVFXOffset: {x: 0, y: 0, z: 0}
+      targetVFXRotationMode: 0
+      targetVFXEuler: {x: 0, y: 0, z: 0}
+      targetVFXScale: {x: 1, y: 1, z: 1}
+      targetVFXAutoDestroyDelay: 3
+      useProjectileVFX: 0
+      applyDamageOnProjectileImpact: 0
+      projectileVFXPrefab: {fileID: 0}
+      projectileRenderMode: 0
+      projectileStartPoint: 0
+      projectileVFXStartOffset: {x: 0, y: 0.9, z: 0.4}
+      projectileVFXRotationMode: 2
+      projectileVFXEuler: {x: 0, y: 0, z: 0}
+      projectileVFXScale: {x: 1, y: 1, z: 1}
+      projectileSpeed: 12
+      projectileMaxLifetime: 2
+      projectileLookAtTarget: 1
+      spawnTargetVFXOnProjectileImpact: 1
+      projectileLineAxis: 2
+      projectileLineLengthScale: 1
+      projectileLineThicknessScale: 1
+      projectileLineVisibleDuration: 0.35
+      projectileLineImpactDelay: -1
+      persistentVFXPrefab: {fileID: 0}
+      persistentVFXAtCaster: 0
+      persistentVFXOffset: {x: 0, y: 0, z: 0}
+      persistentVFXRotationMode: 0
+      persistentVFXEuler: {x: 0, y: 0, z: 0}
+      persistentVFXScale: {x: 1, y: 1, z: 1}
+      persistentVFXDuration: 3
+      allyVFXPrefab: {fileID: 8646340528995289852, guid: 2046c8e196e8219439feee4c4df9edb5, type: 3}
+      allyVFXAnchorName: VFXHitAnchor
+      allyVFXOffset: {x: 0, y: 1, z: 0}
+      allyVFXEuler: {x: 0, y: 0, z: 0}
+      allyVFXScale: {x: 0.5, y: 0.5, z: 0.5}
+      allyVFXAutoDestroyDelay: 1.5
+      auraVFXPrefab: {fileID: 0}
+      attachAuraVFXToCaster: 1
+      auraVFXOffset: {x: 0, y: 0, z: 0}
+      auraVFXEuler: {x: 0, y: 0, z: 0}
+      auraVFXScale: {x: 1, y: 1, z: 1}
+      auraVFXAutoDestroyDelay: 5
+    ultimate:
+      skillId: healer_ultimate_angelic_heal
+      displayName: "\uAD11\uC5ED \uD790"
+      slot: 2
+      effectType: 5
+      manaCost: 60
+      ultimateCost: 100
+      cooldown: 45
+      ultimateGainOnUse: 10
+      animationClip: {fileID: 7400000, guid: a1101064477cd334097208cfb752aa4e, type: 3}
+      animatorStateName: ATK3
+      useDirectClipPlayback: 1
+      actionDuration: 5
+      effectDelayNormalized: 0.05
+      extraRecoveryTime: 0
+      lockMovementDuringSkill: 0
+      suppressMovementAnimationDuringSkill: 0
+      lockBasicAttackDuringSkill: 1
+      lockOtherSkillsDuringSkill: 1
+      faceTargetOnSkill: 1
+      movementSpeedMultiplier: 1.35
+      damage: 100
+      tickDamage: 30
+      multiHitCount: 1
+      multiHitInterval: 0.1
+      duration: 5
+      tickInterval: 1
+      healAmount: 50
+      tickHealAmount: 80
+      shieldAmount: 50
+      shieldDuration: 10
+      castVFXPrefab: {fileID: 0}
+      attachCastVFXToCaster: 1
+      castVFXOffset: {x: 0, y: 0.9, z: 0.3}
+      castVFXRotationMode: 1
+      castVFXEuler: {x: 0, y: 0, z: 0}
+      castVFXScale: {x: 1, y: 1, z: 1}
+      castVFXAutoDestroyDelay: 5
+      targetVFXPrefab: {fileID: 0}
+      targetVFXAtCaster: 0
+      targetAnchorName: VFXHitAnchor
+      targetVFXOffset: {x: 0, y: 0, z: 0}
+      targetVFXRotationMode: 0
+      targetVFXEuler: {x: 0, y: 0, z: 0}
+      targetVFXScale: {x: 1, y: 1, z: 1}
+      targetVFXAutoDestroyDelay: 3
+      useProjectileVFX: 0
+      applyDamageOnProjectileImpact: 0
+      projectileVFXPrefab: {fileID: 0}
+      projectileRenderMode: 0
+      projectileStartPoint: 0
+      projectileVFXStartOffset: {x: 0, y: 0.9, z: 0.4}
+      projectileVFXRotationMode: 2
+      projectileVFXEuler: {x: 0, y: 0, z: 0}
+      projectileVFXScale: {x: 1, y: 1, z: 1}
+      projectileSpeed: 12
+      projectileMaxLifetime: 2
+      projectileLookAtTarget: 1
+      spawnTargetVFXOnProjectileImpact: 1
+      projectileLineAxis: 2
+      projectileLineLengthScale: 1
+      projectileLineThicknessScale: 1
+      projectileLineVisibleDuration: 0.35
+      projectileLineImpactDelay: -1
+      persistentVFXPrefab: {fileID: 0}
+      persistentVFXAtCaster: 0
+      persistentVFXOffset: {x: 0, y: 0, z: 0}
+      persistentVFXRotationMode: 0
+      persistentVFXEuler: {x: 0, y: 0, z: 0}
+      persistentVFXScale: {x: 1, y: 1, z: 1}
+      persistentVFXDuration: 3
+      allyVFXPrefab: {fileID: 2298437245697116014, guid: 0eda17d99bf956445823a6b63e3fac22, type: 3}
+      allyVFXAnchorName: VFXHitAnchor
+      allyVFXOffset: {x: 0, y: 1, z: 0}
+      allyVFXEuler: {x: 0, y: 0, z: 0}
+      allyVFXScale: {x: 0.5, y: 0.5, z: 0.5}
+      allyVFXAutoDestroyDelay: 2
+      auraVFXPrefab: {fileID: 7287259655978290660, guid: b27d51bd444a8994d883eebbb9bbd0b3, type: 3}
+      attachAuraVFXToCaster: 1
+      auraVFXOffset: {x: 0, y: 0, z: 0}
+      auraVFXEuler: {x: 0, y: 0, z: 0}
+      auraVFXScale: {x: 0.7, y: 0.7, z: 0.7}
+      auraVFXAutoDestroyDelay: 5.5

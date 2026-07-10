@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: b3eb52574b1379f489ce45ee942c4212
+timeCreated: 1435135139
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: fx_textures_line_rotate_materials.unity3d
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Ice Skill/Materials/lb_20f_r 7.mat
+  uploadId: 851134

@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: c046c05993f2c564284b0742afd55f78
+timeCreated: 1433485164
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: fx_textures_light_materials.unity3d
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Lightning Skill/Materials/Electric_Splat_Hit_02.mat
+  uploadId: 851134

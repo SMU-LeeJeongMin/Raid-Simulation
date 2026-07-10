@@ -13,9 +13,6 @@ public class Mana : MonoBehaviour
     [Min(0f)] public float regenPerSecond = 8f;
     [Min(0f)] public float regenDelayAfterUse = 0.5f;
 
-    [Header("Debug")]
-    public bool logChanges = false;
-
     private float nextRegenAllowedTime;
 
     public float CurrentMana => currentMana;
@@ -59,16 +56,11 @@ public class Mana : MonoBehaviour
 
         if (currentMana < amount)
         {
-            if (logChanges)
-                Debug.Log($"[Mana] {name} cannot consume {amount:0.##}. MP {currentMana:0.##}/{maxMana:0.##}", this);
             return false;
         }
 
         currentMana = Mathf.Clamp(currentMana - amount, 0f, maxMana);
         nextRegenAllowedTime = Time.time + regenDelayAfterUse;
-
-        if (logChanges)
-            Debug.Log($"[Mana] {name} consumed {amount:0.##}. MP {currentMana:0.##}/{maxMana:0.##}", this);
 
         return true;
     }
@@ -81,9 +73,6 @@ public class Mana : MonoBehaviour
 
         float before = currentMana;
         currentMana = Mathf.Clamp(currentMana + amount, 0f, maxMana);
-
-        if (logChanges && !Mathf.Approximately(before, currentMana))
-            Debug.Log($"[Mana] {name} restored {amount:0.##}. MP {currentMana:0.##}/{maxMana:0.##}", this);
     }
 
     public void Refill()

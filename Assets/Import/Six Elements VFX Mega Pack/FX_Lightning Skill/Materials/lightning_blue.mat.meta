@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 9fd5ed76f3a2b5a44b80507ef637e92b
+timeCreated: 1557315445
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: fx_textures_light_materials.unity3d
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Lightning Skill/Materials/lightning_blue.mat
+  uploadId: 851134

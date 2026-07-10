@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 2a24f0788e11fc645958aaa781f099c3
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  userData: 
+  assetBundleName: builtin_builtin_shader.unity3d
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Wind Skill/Shader/Mobile-Particle-Alpha.shader
+  uploadId: 851134

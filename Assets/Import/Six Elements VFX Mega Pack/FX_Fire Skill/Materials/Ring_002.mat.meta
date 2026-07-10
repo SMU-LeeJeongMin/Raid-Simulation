@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 6944a2771c1da6545ac435156531a1a9
+timeCreated: 1536752747
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Fire Skill/Materials/Ring_002.mat
+  uploadId: 851134

@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: d3e4b422af5872a4e82a49440eee3762
+timeCreated: 1477970902
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: fx_textures_particle_materials.unity3d
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Light Skill/Materials/tf-63.mat
+  uploadId: 851134

@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 9b31120b20a35c04f8e2bc281be36fde
+timeCreated: 1551434169
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Light Skill/Animator/FX_Arrow.anim
+  uploadId: 851134

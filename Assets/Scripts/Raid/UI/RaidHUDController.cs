@@ -64,8 +64,6 @@ public class RaidHUDController : MonoBehaviour
         GameObject playerObject = FindPlayerObject();
         if (playerObject == null)
         {
-            if (logBinding)
-                Debug.LogWarning("[RaidHUDController] Player object was not found yet. UI binding will retry.", this);
             return false;
         }
 
@@ -73,14 +71,10 @@ public class RaidHUDController : MonoBehaviour
         if (status == null && addPlayerStatusIfMissing)
         {
             status = playerObject.AddComponent<PlayerStatus>();
-            if (logBinding)
-                Debug.LogWarning($"[RaidHUDController] PlayerStatus was missing on '{playerObject.name}', so it was added automatically. For cleaner setup, add PlayerStatus to the Raid prefab.", playerObject);
         }
 
         if (status == null)
         {
-            if (logBinding)
-                Debug.LogWarning($"[RaidHUDController] PlayerStatus is missing on '{playerObject.name}'.", playerObject);
             return false;
         }
 
@@ -89,9 +83,6 @@ public class RaidHUDController : MonoBehaviour
         playerStatusUI.Bind(status);
 
         bool bound = status.Health != null && status.Mana != null;
-        if (logBinding)
-            Debug.Log($"[RaidHUDController] Player UI bound to '{playerObject.name}'. Health={(status.Health != null)}, Mana={(status.Mana != null)}", playerObject);
-
         return bound;
     }
 
@@ -132,8 +123,6 @@ public class RaidHUDController : MonoBehaviour
         if (boss == null)
         {
             bossHealthUI.Bind((Health)null, null, null, string.Empty);
-            if (logBinding)
-                Debug.LogWarning("[RaidHUDController] BossDummyController was not found yet. Boss UI binding will retry. Assign Boss_DragonDummy's BossDummyController manually if needed.", this);
             return false;
         }
 
@@ -141,8 +130,6 @@ public class RaidHUDController : MonoBehaviour
         if (health == null)
         {
             bossHealthUI.Bind((Health)null, null, null, string.Empty);
-            if (logBinding)
-                Debug.LogWarning($"[RaidHUDController] Health was not found on boss '{boss.name}'.", boss);
             return false;
         }
 
@@ -154,7 +141,6 @@ public class RaidHUDController : MonoBehaviour
         if (logBinding)
         {
             string anchorName = validAnchor != null ? validAnchor.name : "None";
-            Debug.Log($"[RaidHUDController] Boss UI bound to '{boss.name}'. FollowTarget='{boss.transform.name}', Anchor='{anchorName}'.", boss);
         }
 
         return true;
@@ -168,12 +154,6 @@ public class RaidHUDController : MonoBehaviour
         bool isBossChild = bossHeadTarget == bossController.transform || bossHeadTarget.IsChildOf(bossController.transform);
         if (isBossChild)
             return bossHeadTarget;
-
-        if (logBinding)
-        {
-            Debug.LogWarning($"[RaidHUDController] Boss Head Target '{bossHeadTarget.name}' is not a child of boss '{bossController.name}'. It will be ignored to prevent the boss HP bar from following the player.", bossHeadTarget);
-        }
-
         return null;
     }
 }

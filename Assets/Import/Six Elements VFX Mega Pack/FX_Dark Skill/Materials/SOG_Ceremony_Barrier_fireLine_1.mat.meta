@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 8c8ffc7a472873e43b8f7e7848f52db9
+timeCreated: 1526287339
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Dark Skill/Materials/SOG_Ceremony_Barrier_fireLine_1.mat
+  uploadId: 851134

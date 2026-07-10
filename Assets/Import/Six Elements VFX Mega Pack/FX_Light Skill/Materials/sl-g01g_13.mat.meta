@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 16df485cfdc6a154eb97e603889fc2ef
+timeCreated: 1467861852
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: fx_textures_line_rotate_materials.unity3d
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Light Skill/Materials/sl-g01g_13.mat
+  uploadId: 851134

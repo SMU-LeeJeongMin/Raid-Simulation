@@ -57,6 +57,14 @@ public class RaidCameraFollow : MonoBehaviour
 
     private Vector3 positionVelocity;
 
+    public bool BossCameraActive => bossCameraActive;
+    public float BossCameraBlend => bossCameraBlend;
+
+    public bool IsBossCameraActive(float minimumBlend = 0.1f)
+    {
+        return bossCameraActive || bossCameraBlend >= minimumBlend;
+    }
+
     private void LateUpdate()
     {
         if (target == null)
@@ -165,15 +173,18 @@ public class RaidCameraFollow : MonoBehaviour
 
     private Vector3 CalculateLookAtPosition()
     {
-        Vector3 effectiveTargetOffset = Vector3.Lerp(targetOffset, bossTargetOffset, bossCameraBlend);
-        Vector3 playerLookAt = target.position + effectiveTargetOffset;
+        Vector3 normalLook = target.position + targetOffset;
+        Vector3 bossLook = normalLook;
 
-        if (bossTarget == null || bossCameraBlend <= 0.001f || bossLookAtWeight <= 0f)
-            return playerLookAt;
+        if (bossTarget != null)
+        {
+            Vector3 playerBossOffset = Vector3.Lerp(targetOffset, bossTargetOffset, bossCameraBlend);
+            Vector3 playerLook = target.position + playerBossOffset;
+            Vector3 bossFocus = bossTarget.position + bossLookAtOffset;
+            bossLook = Vector3.Lerp(playerLook, bossFocus, bossLookAtWeight * bossCameraBlend);
+        }
 
-        Vector3 bossLookAt = bossTarget.position + bossLookAtOffset;
-        float weight = Mathf.Clamp01(bossLookAtWeight * bossCameraBlend);
-        return Vector3.Lerp(playerLookAt, bossLookAt, weight);
+        return Vector3.Lerp(normalLook, bossLook, bossCameraBlend);
     }
 
     private Vector3 CalculateDesiredPosition(Vector3 lookAtPosition)
@@ -181,15 +192,25 @@ public class RaidCameraFollow : MonoBehaviour
         currentCameraDistance = Mathf.Lerp(distance, bossDistance, bossCameraBlend);
         currentCameraHeight = Mathf.Lerp(height, bossHeight, bossCameraBlend);
 
-        float effectiveYaw = yaw;
-        if (overrideYawInBossMode)
-            effectiveYaw = Mathf.LerpAngle(yaw, bossYaw, bossCameraBlend);
-
-        Quaternion cameraBaseRotation = GetCameraBaseRotation(effectiveYaw);
+        Quaternion cameraBaseRotation = GetCameraBaseRotation();
         return lookAtPosition + cameraBaseRotation * new Vector3(0f, currentCameraHeight, -currentCameraDistance);
     }
 
-    // 카메라가 벽 밖으로 나가면 캐릭터 쪽으로 줌인합니다.
+    private Quaternion GetCameraBaseRotation()
+    {
+        if (useTargetForward && target != null)
+        {
+            float targetYaw = target.eulerAngles.y + targetYawOffset;
+            if (overrideYawInBossMode)
+                targetYaw = Mathf.LerpAngle(targetYaw, bossYaw, bossCameraBlend);
+
+            return Quaternion.Euler(0f, targetYaw, 0f);
+        }
+
+        float finalYaw = overrideYawInBossMode ? Mathf.LerpAngle(yaw, bossYaw, bossCameraBlend) : yaw;
+        return Quaternion.Euler(0f, finalYaw, 0f);
+    }
+
     private Vector3 ResolveWallCollision(Vector3 lookAtPosition, Vector3 desiredPosition)
     {
         if (!enableWallCollision)
@@ -221,12 +242,10 @@ public class RaidCameraFollow : MonoBehaviour
             if (hitCollider == null)
                 continue;
 
-            // 플레이어 자신의 CharacterController/Collider에 맞아서 줌인되는 것을 방지
-            if (IsColliderPartOfTransform(hitCollider, target))
+            if (IsColliderPartOfTarget(hitCollider))
                 continue;
 
-            // 보스 Collider에 맞아서 불필요하게 줌인되는 것을 방지
-            if (ignoreBossCollidersForWallCollision && IsColliderPartOfTransform(hitCollider, bossTarget))
+            if (ignoreBossCollidersForWallCollision && IsColliderPartOfBoss(hitCollider))
                 continue;
 
             if (hits[i].distance < nearestValidDistance)
@@ -236,59 +255,44 @@ public class RaidCameraFollow : MonoBehaviour
         if (float.IsPositiveInfinity(nearestValidDistance))
             return desiredPosition;
 
-        float correctedDistance = Mathf.Clamp(
-            nearestValidDistance - collisionPadding,
-            Mathf.Max(0.05f, minCollisionDistance),
-            desiredDistance
-        );
-
+        float correctedDistance = Mathf.Max(minCollisionDistance, nearestValidDistance - collisionPadding);
         return lookAtPosition + direction * correctedDistance;
     }
 
-    private bool IsColliderPartOfTransform(Collider collider, Transform owner)
+    private bool IsColliderPartOfTarget(Collider collider)
     {
-        if (owner == null || collider == null)
-            return false;
+        return target != null && collider.transform.root == target.root;
+    }
 
-        return collider.transform == owner || collider.transform.IsChildOf(owner);
+    private bool IsColliderPartOfBoss(Collider collider)
+    {
+        return bossTarget != null && collider.transform.root == bossTarget.root;
     }
 
     private void RotateToLookAt(Vector3 lookAtPosition)
     {
-        Vector3 lookDirection = lookAtPosition - transform.position;
-        if (lookDirection.sqrMagnitude < 0.0001f)
+        Vector3 direction = lookAtPosition - transform.position;
+        if (direction.sqrMagnitude < 0.0001f)
             return;
 
-        Quaternion desiredRotation = Quaternion.LookRotation(lookDirection.normalized, Vector3.up);
+        Quaternion targetRotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
         transform.rotation = Quaternion.Slerp(
             transform.rotation,
-            desiredRotation,
-            rotationSmoothSpeed * Time.deltaTime
+            targetRotation,
+            1f - Mathf.Exp(-rotationSmoothSpeed * Time.deltaTime)
         );
     }
 
-    private Quaternion GetCameraBaseRotation(float effectiveYaw)
-    {
-        if (useTargetForward && target != null)
-            return Quaternion.Euler(0f, target.eulerAngles.y + targetYawOffset, 0f);
-
-        return Quaternion.Euler(0f, effectiveYaw, 0f);
-    }
-
-    // 카메라를 보간 없이 즉시 타겟 주변 위치로 이동
-    public void SnapToTarget()
+    private void SnapToTarget()
     {
         if (target == null)
             return;
 
         TryFindBossIfNeeded();
         UpdateBossCameraState();
-
         Vector3 lookAtPosition = CalculateLookAtPosition();
         Vector3 desiredPosition = CalculateDesiredPosition(lookAtPosition);
         transform.position = ResolveWallCollision(lookAtPosition, desiredPosition);
         RotateToLookAt(lookAtPosition);
-
-        positionVelocity = Vector3.zero;
     }
 }

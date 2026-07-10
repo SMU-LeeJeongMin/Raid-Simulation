@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: 8131238d6f70b2d4c8a7043704fd7063
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 305085
+  packageName: "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0P\0"
+  packageVersion: 1.0
+  assetPath: Assets/GameVFX_Beam Collection/Materials/yellow_line.mat
+  uploadId: 716630
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Light Skill/Materials/yellow_line.mat
+  uploadId: 851134

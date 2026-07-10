@@ -1,11 +1,11 @@
 // 플레이어 기본 공격
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.EventSystems;
 using UnityEngine.Playables;
+using UnityEngine.Serialization;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -21,6 +21,13 @@ public class PlayerBasicAttack : MonoBehaviour
     public Animator animator;
     public Transform attackOrigin;
     public PlayerMovement playerMovement;
+    [FormerlySerializedAs("vfxPlayer")]
+    public BasicAttackVFXPlayer VFXPlayer;
+    public PlayerUltimateGauge ultimateGauge;
+
+    [Header("Ultimate Gain")]
+    public bool gainUltimateOnBasicAttackHit = true;
+    [Min(0f)] public float fallbackUltimateGainOnHit = 4f;
 
     [Header("Input")]
     public bool useLeftMouseButton = true;
@@ -31,6 +38,10 @@ public class PlayerBasicAttack : MonoBehaviour
     public LayerMask targetMask = ~0;
     public QueryTriggerInteraction triggerInteraction = QueryTriggerInteraction.Collide;
 
+    [Header("Boss Phase Rules")]
+    [FormerlySerializedAs("blockBasicAttackWhileBossFlying")]
+    public bool skipFlyingBossTarget = true;
+
     [Header("Fallback Origin")]
     public float fallbackAttackHeight = 0.8f;
 
@@ -40,6 +51,7 @@ public class PlayerBasicAttack : MonoBehaviour
     public bool drawHorizontalAutoTargetGizmo = true;
 
     [Header("Runtime Debug")]
+    [SerializeField] private bool externalActionLock;
     [SerializeField] private bool isAttacking;
     [SerializeField] private string resolvedCharacterId;
     [SerializeField] private string currentAttackInfo;
@@ -74,6 +86,12 @@ public class PlayerBasicAttack : MonoBehaviour
 
         if (playerMovement == null)
             playerMovement = GetComponent<PlayerMovement>();
+
+        if (VFXPlayer == null)
+            VFXPlayer = GetComponent<BasicAttackVFXPlayer>();
+
+        if (ultimateGauge == null)
+            ultimateGauge = GetComponent<PlayerUltimateGauge>();
 
         RefreshStats();
     }
@@ -139,10 +157,11 @@ public class PlayerBasicAttack : MonoBehaviour
         return mousePressed || keyPressed;
 #endif
     }
-
-    // 공격 중이거나 공격 쿨타임이 남아 있으면 입력 무시
     public bool TryBasicAttack()
     {
+        if (externalActionLock)
+            return false;
+
         if (isAttacking)
             return false;
 
@@ -154,6 +173,22 @@ public class PlayerBasicAttack : MonoBehaviour
         return true;
     }
 
+    public void SetExternalActionLock(bool locked)
+    {
+        externalActionLock = locked;
+    }
+
+    public DamageReceiver FindTargetForSkill()
+    {
+        RefreshStats();
+        return FindBestTarget(currentStats);
+    }
+
+    public Vector3 GetTargetAimPositionForSkill(DamageReceiver target)
+    {
+        return GetTargetAimPosition(target);
+    }
+
     private IEnumerator BasicAttackRoutine(BasicAttackStats stats)
     {
         if (stats == null)
@@ -161,39 +196,40 @@ public class PlayerBasicAttack : MonoBehaviour
 
         isAttacking = true;
 
-        DamageReceiver targetAtStart = FindBestTarget(stats);
-        if (targetAtStart != null && stats.faceTargetOnAttack)
-            FaceTarget(GetTargetAimPosition(targetAtStart));
+        try
+        {
+            DamageReceiver targetAtStart = FindBestTarget(stats);
+            if (targetAtStart != null && stats.faceTargetOnAttack)
+                FaceTarget(GetTargetAimPosition(targetAtStart));
 
-        float attackDuration = Mathf.Max(0.05f, stats.attackDuration);
-        float hitTime = Mathf.Clamp01(stats.hitNormalizedTime) * attackDuration;
-        float totalLockTime = attackDuration + Mathf.Max(0f, stats.extraRecoveryTime);
-        nextAttackAllowedTime = Time.time + totalLockTime;
+            float attackDuration = Mathf.Max(0.05f, stats.attackDuration);
+            float hitTime = Mathf.Clamp01(stats.hitNormalizedTime) * attackDuration;
+            float totalLockTime = attackDuration + Mathf.Max(0f, stats.extraRecoveryTime);
+            nextAttackAllowedTime = Time.time + totalLockTime;
 
-        PrepareAnimatorForAttack(stats);
-        SetMovementStateForAttack(stats, true);
-        PlayAttackAnimation(stats, attackDuration);
+            PrepareAnimatorForAttack(stats);
+            SetMovementStateForAttack(stats, true);
+            PlayAttackAnimation(stats, attackDuration);
 
-        string animationName = stats.attackClip != null ? stats.attackClip.name : stats.animatorStateName;
-        currentAttackInfo = $"{stats.displayName} {animationName} damage={stats.damage:0.##}, duration={attackDuration:0.###}s";
+            string animationName = stats.attackClip != null ? stats.attackClip.name : stats.animatorStateName;
+            currentAttackInfo = $"{stats.displayName} {animationName} damage={stats.damage:0.##}, duration={attackDuration:0.###}s";
 
-        if (logAttack)
-            Debug.Log($"[PlayerBasicAttack] {name} attack start. {currentAttackInfo}", this);
+            if (hitTime > 0f)
+                yield return new WaitForSeconds(hitTime);
 
-        if (hitTime > 0f)
-            yield return new WaitForSeconds(hitTime);
+            ApplyBasicAttackDamage(stats, targetAtStart);
 
-        ApplyBasicAttackDamage(stats, targetAtStart);
-
-        float remaining = Mathf.Max(0f, totalLockTime - hitTime);
-        if (remaining > 0f)
-            yield return new WaitForSeconds(remaining);
-
-        StopDirectAttackClipIfNeeded();
-        RestoreAnimatorAfterAttack(stats);
-        SetMovementStateForAttack(stats, false);
-
-        isAttacking = false;
+            float remaining = Mathf.Max(0f, totalLockTime - hitTime);
+            if (remaining > 0f)
+                yield return new WaitForSeconds(remaining);
+        }
+        finally
+        {
+            StopDirectAttackClipIfNeeded();
+            RestoreAnimatorAfterAttack(stats);
+            SetMovementStateForAttack(stats, false);
+            isAttacking = false;
+        }
     }
 
     private void PrepareAnimatorForAttack(BasicAttackStats stats)
@@ -307,21 +343,62 @@ public class PlayerBasicAttack : MonoBehaviour
 
     private void ApplyBasicAttackDamage(BasicAttackStats stats, DamageReceiver targetAtStart)
     {
+        if (stats == null)
+            return;
+
         DamageReceiver target = FindBestTarget(stats);
-        if (target == null)
+        if (!IsReceiverValidAtHit(target))
             target = targetAtStart;
 
-        if (target == null)
+        if (!IsReceiverValidAtHit(target))
         {
+            RaidMetricsEvents.ReportBasicAttackMiss(this, stats, "no_valid_target_at_hit_timing");
             if (logAttack)
-                Debug.Log("[PlayerBasicAttack] Basic attack missed. No target in horizontal range.", this);
+                Debug.Log("[PlayerBasicAttack] Basic attack missed. No valid target at hit timing.", this);
             return;
         }
 
         target.ReceiveDamage(stats.damage, gameObject);
+        RaidMetricsEvents.ReportBasicAttackHit(this, stats, target);
 
-        if (logAttack)
-            Debug.Log($"[PlayerBasicAttack] Hit {GetTargetLogName(target)}. Damage={stats.damage:0.##}. Targeting={lastTargetingResult}", target);
+        if (gainUltimateOnBasicAttackHit && ultimateGauge != null)
+        {
+            float gain = stats.ultimateGainOnHit > 0f ? stats.ultimateGainOnHit : fallbackUltimateGainOnHit;
+            ultimateGauge.Gain(gain);
+        }
+
+        if (VFXPlayer != null)
+            VFXPlayer.PlayAttackHit(stats, target);
+    }
+
+    private bool IsReceiverValidAtHit(DamageReceiver receiver)
+    {
+        if (receiver == null)
+            return false;
+
+        if (receiver.transform.root == transform.root)
+            return false;
+
+        if (receiver.targetHealth == null)
+            receiver.targetHealth = receiver.GetComponentInParent<Health>();
+
+        Health targetHealth = receiver.targetHealth;
+        if (targetHealth == null || targetHealth.IsDead)
+            return false;
+
+        if (targetHealth.transform.root == transform.root)
+            return false;
+
+        if (targetHealth.DamageImmune)
+            return false;
+
+        if (skipFlyingBossTarget && IsFlyingBossHealth(targetHealth))
+            return false;
+
+        if (!IsAllowedByTargetMask(receiver, targetHealth))
+            return false;
+
+        return true;
     }
 
     private DamageReceiver FindBestTarget(BasicAttackStats stats)
@@ -343,6 +420,7 @@ public class PlayerBasicAttack : MonoBehaviour
         float bestScore = float.MaxValue;
         HashSet<Health> visitedHealth = new HashSet<Health>();
 
+        // 1. 기존 물리 판정: 실제 공격선이 Collider에 닿는 경우.
         RaycastHit[] sphereHits = Physics.SphereCastAll(origin, stats.hitRadius, forward, stats.range, targetMask, triggerInteraction);
         for (int i = 0; i < sphereHits.Length; i++)
             TrySetBestTargetFromCollider(sphereHits[i].collider, origin, forward, stats, ref best, ref bestScore, visitedHealth, "SphereCast");
@@ -351,6 +429,7 @@ public class PlayerBasicAttack : MonoBehaviour
         for (int i = 0; i < overlapHits.Length; i++)
             TrySetBestTargetFromCollider(overlapHits[i], origin, forward, stats, ref best, ref bestScore, visitedHealth, "OverlapSphere");
 
+        // 2. RPG식 자동 타겟팅: Collider에 직접 닿지 않아도 XZ 평면상 사거리 안이면 맞음
         if (stats.useHorizontalAutoTarget)
             ScanSceneTargetsHorizontally(origin, forward, stats, ref best, ref bestScore, visitedHealth);
 
@@ -385,13 +464,11 @@ public class PlayerBasicAttack : MonoBehaviour
         ref float bestScore,
         HashSet<Health> visitedHealth)
     {
-        DamageReceiver[] receivers =
-            FindObjectsByType<DamageReceiver>(FindObjectsInactive.Include);
+        DamageReceiver[] receivers = FindObjectsByType<DamageReceiver>();
         for (int i = 0; i < receivers.Length; i++)
             TrySetBestTargetFromReceiver(receivers[i], origin, forward, stats, ref best, ref bestScore, visitedHealth, "HorizontalAutoTarget-DamageReceiver");
 
-        Health[] healths =
-            FindObjectsByType<Health>(FindObjectsInactive.Include);
+        Health[] healths = FindObjectsByType<Health>();
         for (int i = 0; i < healths.Length; i++)
         {
             Health health = healths[i];
@@ -449,6 +526,12 @@ public class PlayerBasicAttack : MonoBehaviour
 
         Health targetHealth = receiver.targetHealth;
         if (targetHealth == null || targetHealth.IsDead)
+            return;
+
+        if (targetHealth.DamageImmune)
+            return;
+
+        if (skipFlyingBossTarget && IsFlyingBossHealth(targetHealth))
             return;
 
         if (targetHealth.transform.root == transform.root)
@@ -641,10 +724,16 @@ public class PlayerBasicAttack : MonoBehaviour
         if (animator.HasState(0, fullHash))
             return baseLayerPath;
 
-        if (warnIfMissing)
-            Debug.LogWarning($"[PlayerBasicAttack] Animator state not found: {stateName}. If you use Direct Clip Playback with Attack Clip assigned, this warning can be ignored.", this);
-
         return string.Empty;
+    }
+
+    private bool IsFlyingBossHealth(Health targetHealth)
+    {
+        if (targetHealth == null)
+            return false;
+
+        BossSkillPatternController boss = targetHealth.GetComponentInParent<BossSkillPatternController>();
+        return boss != null && boss.IsFlying;
     }
 
     private void OnDisable()
@@ -657,6 +746,7 @@ public class PlayerBasicAttack : MonoBehaviour
             playerMovement.SetAnimationSuppressed(false);
         }
 
+        externalActionLock = false;
         isAttacking = false;
     }
 

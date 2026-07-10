@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 4394c20bd18383f45b4fc8997a0242ac
+timeCreated: 1532414115
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Ice Skill/Materials/waveofLight_damage
+    6.mat
+  uploadId: 851134

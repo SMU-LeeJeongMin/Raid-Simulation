@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d8d52549fe88ac34b9ed657d9a0dc22d
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: fx_textures_particle_materials.unity3d
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Wind Skill/Materials/Spark.mat
+  uploadId: 851134

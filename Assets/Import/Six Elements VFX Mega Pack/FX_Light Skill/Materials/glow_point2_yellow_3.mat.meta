@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 6f3f034bd7aa3f14ca900b4546a6bc9a
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: fx_textures_glow_materials.unity3d
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Light Skill/Materials/glow_point2_yellow_3.mat
+  uploadId: 851134

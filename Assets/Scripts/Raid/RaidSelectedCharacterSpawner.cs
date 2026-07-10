@@ -1,9 +1,7 @@
+// Raid 씬에서 선택 화면에서 고른 캐릭터를 생성
+
 using UnityEngine;
 
-/// <summary>
-/// Raid 씬에서 선택 화면에서 고른 캐릭터를 생성하고,
-/// PlayerMovement, CharacterController, 카메라 추적 대상을 자동으로 연결합니다.
-/// </summary>
 public class RaidSelectedCharacterSpawner : MonoBehaviour
 {
     public enum SpawnHeightMode
@@ -19,7 +17,6 @@ public class RaidSelectedCharacterSpawner : MonoBehaviour
     public bool useFallbackFirstCharacter = true;
 
     [Header("Spawn Height")]
-    [Tooltip("2층/계단이 있는 맵에서는 TreatSpawnPointAsGround를 권장합니다.")]
     public SpawnHeightMode spawnHeightMode = SpawnHeightMode.TreatSpawnPointAsGround;
     public LayerMask groundMask = ~0;
     public float maxSnapUpDistance = 0.5f;
@@ -58,7 +55,6 @@ public class RaidSelectedCharacterSpawner : MonoBehaviour
 
         if (database == null)
         {
-            Debug.LogError("[RaidSelectedCharacterSpawner] Database is not assigned.");
             return null;
         }
 
@@ -67,7 +63,6 @@ public class RaidSelectedCharacterSpawner : MonoBehaviour
         {
             if (!useFallbackFirstCharacter || !database.IsValidIndex(0))
             {
-                Debug.LogError($"[RaidSelectedCharacterSpawner] Invalid selected index: {selectedIndex}");
                 return null;
             }
 
@@ -79,7 +74,6 @@ public class RaidSelectedCharacterSpawner : MonoBehaviour
 
         if (prefab == null)
         {
-            Debug.LogError($"[RaidSelectedCharacterSpawner] Missing prefab for: {entry.jobName}");
             return null;
         }
 

@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 25aed23224f247c4fa03cca0da8b5efb
+timeCreated: 1531105510
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Dark Skill/Materials/yuan_00001.mat
+  uploadId: 851134

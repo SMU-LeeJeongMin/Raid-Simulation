@@ -1479,6 +1479,11 @@ GameObject:
   - component: {fileID: 1722203181510930890}
   - component: {fileID: 6997923730649779025}
   - component: {fileID: -8181291190016967546}
+  - component: {fileID: 3752566315694508173}
+  - component: {fileID: -1966097934974018367}
+  - component: {fileID: -1904015669931751755}
+  - component: {fileID: 6257220964526020626}
+  - component: {fileID: 507953123089811989}
   m_Layer: 0
   m_Name: Warrior
   m_TagString: Untagged
@@ -1567,6 +1572,7 @@ MonoBehaviour:
   characterId: warrior
   jobName: Warrior
   roleName: Tank
+  portraitSprite: {fileID: 21300000, guid: d6f0fc548bed01f41836ab547edb706a, type: 3}
 --- !u!114 &-2471770406712771245
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1629,6 +1635,10 @@ MonoBehaviour:
   animator: {fileID: 0}
   attackOrigin: {fileID: 4109714994798658}
   playerMovement: {fileID: -2471770406712771245}
+  VFXPlayer: {fileID: 3752566315694508173}
+  ultimateGauge: {fileID: 0}
+  gainUltimateOnBasicAttackHit: 1
+  fallbackUltimateGainOnHit: 4
   useLeftMouseButton: 1
   useKeyboardNumber1: 1
   ignoreInputWhenPointerIsOverUI: 1
@@ -1640,6 +1650,7 @@ MonoBehaviour:
   logAttack: 1
   drawAttackGizmo: 1
   drawHorizontalAutoTargetGizmo: 1
+  externalActionLock: 0
   isAttacking: 0
   resolvedCharacterId: 
   currentAttackInfo: 
@@ -1658,6 +1669,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStatus
   health: {fileID: 6997923730649779025}
   mana: {fileID: -8181291190016967546}
+  shield: {fileID: 0}
+  ultimateGauge: {fileID: 0}
   classInfo: {fileID: 2150990327585149132}
   createHealthIfMissing: 1
   applyHealthOnAwake: 1
@@ -1676,6 +1689,26 @@ MonoBehaviour:
   manaRegenPerSecond: 3
   manaRegenDelayAfterUse: 0.5
   logManaChanges: 0
+  createShieldIfMissing: 1
+  logShieldChanges: 1
+  createUltimateGaugeIfMissing: 1
+  applyUltimateOnAwake: 1
+  maxUltimateGauge: 100
+  startFullUltimateForTesting: 0
+  logUltimateChanges: 1
+  playDeathAnimation: 1
+  deathClip: {fileID: 7400000, guid: d1e952b055ddd014eb38ac6f9e486a6b, type: 3}
+  deathStateName: Death
+  useDirectDeathClipPlayback: 1
+  freezeOnFinalDeathPose: 1
+  disableControlOnDeath: 1
+  disableCharacterControllerOnDeath: 1
+  disableNavMeshAgentOnDeath: 1
+  makeRigidbodiesKinematicOnDeath: 1
+  disableCollidersOnDeath: 0
+  keepTriggerCollidersOnDeath: 1
+  logDeath: 1
+  deathHandled: 0
 --- !u!114 &6997923730649779025
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1726,6 +1759,109 @@ MonoBehaviour:
   regenPerSecond: 8
   regenDelayAfterUse: 0.5
   logChanges: 0
+--- !u!114 &3752566315694508173
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1189874255011212}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26d22968c99452044bf247da6d035f5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BasicAttackVFXPlayer
+  VFXDatabase: {fileID: 11400000, guid: 5d2b3fb21f792fa4b8a47ac846d3a806, type: 2}
+  classInfo: {fileID: 2150990327585149132}
+  fallbackTargetHeight: 1.1
+  logVFX: 0
+--- !u!114 &-1966097934974018367
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1189874255011212}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4149ded8241258478d98771ac4f1142, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillController
+  skillDatabase: {fileID: 11400000, guid: 41dc8c5e1fd5bf146850fdbbc0d86c25, type: 2}
+  classInfo: {fileID: 2150990327585149132}
+  characterIdOverride: 
+  animator: {fileID: 0}
+  playerMovement: {fileID: -2471770406712771245}
+  basicAttack: {fileID: -3300811480458338321}
+  playerStatus: {fileID: 1722203181510930890}
+  mana: {fileID: -8181291190016967546}
+  ultimateGauge: {fileID: 6257220964526020626}
+  VFXPlayer: {fileID: -1904015669931751755}
+  useKeyboardInput: 1
+  ignoreInputWhenPointerIsOverUI: 1
+  skill1Key: 42
+  skill2Key: 43
+  ultimateKey: 44
+  logSkill: 1
+  forceOneShotSkillAnimation: 1
+  findAnimationClipByStateName: 1
+  warnWhenSkillClipMissing: 1
+  resolvedCharacterId: 
+  skillInProgress: 0
+  currentSkillInfo: 
+  currentSkillAnimationInfo: 
+  skill1ReadyTime: 0
+  skill2ReadyTime: 0
+  ultimateReadyTime: 0
+  activeSkillSlot: 0
+--- !u!114 &-1904015669931751755
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1189874255011212}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86d5db8581d59094dbc88a17035d1150, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillVFXPlayer
+  castOrigin: {fileID: 4109714994798658}
+  classInfo: {fileID: 2150990327585149132}
+  fallbackCasterHeight: 0.9
+  fallbackTargetHeight: 1.1
+  logVFX: 1
+--- !u!114 &6257220964526020626
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1189874255011212}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b74c73dcf830d6c4d87e6e5e7bd4a366, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerUltimateGauge
+  maxGauge: 100
+  currentGauge: 0
+  startFullForTesting: 1
+  logChanges: 1
+--- !u!114 &507953123089811989
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1189874255011212}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 680fbd35713f4b94a88677dd6fafee6f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShieldResource
+  currentShield: 0
+  shieldExpireTime: 0
+  logChanges: 1
 --- !u!1 &1199782892718570
 GameObject:
   m_ObjectHideFlags: 0

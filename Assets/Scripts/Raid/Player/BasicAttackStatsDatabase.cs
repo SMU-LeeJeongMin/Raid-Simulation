@@ -37,6 +37,7 @@ public class BasicAttackStatsDatabase : ScriptableObject
                 characterId = "warrior",
                 displayName = "Warrior",
                 damage = 85f,
+                ultimateGainOnHit = 4f,
                 attackDuration = 0.95f,
                 extraRecoveryTime = 0f,
                 hitNormalizedTime = 0.45f,
@@ -60,6 +61,7 @@ public class BasicAttackStatsDatabase : ScriptableObject
                 characterId = "archer",
                 displayName = "Archer",
                 damage = 55f,
+                ultimateGainOnHit = 3f,
                 attackDuration = 0.60f,
                 extraRecoveryTime = 0f,
                 hitNormalizedTime = 0.45f,
@@ -83,6 +85,7 @@ public class BasicAttackStatsDatabase : ScriptableObject
                 characterId = "mage",
                 displayName = "Mage",
                 damage = 70f,
+                ultimateGainOnHit = 4f,
                 attackDuration = 0.80f,
                 extraRecoveryTime = 0f,
                 hitNormalizedTime = 0.45f,
@@ -106,6 +109,7 @@ public class BasicAttackStatsDatabase : ScriptableObject
                 characterId = "healer",
                 displayName = "Healer",
                 damage = 40f,
+                ultimateGainOnHit = 4f,
                 attackDuration = 1.05f,
                 extraRecoveryTime = 0f,
                 hitNormalizedTime = 0.45f,
@@ -142,6 +146,9 @@ public class BasicAttackStats
 
     [Header("Damage")]
     [Min(0f)] public float damage = 50f;
+
+    [Header("Ultimate Gauge")]
+    [Min(0f)] public float ultimateGainOnHit = 4f;
 
     [Header("Timing")]
     [Min(0.05f)] public float attackDuration = 0.8f;

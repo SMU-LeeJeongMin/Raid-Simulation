@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 59e48e6e01df0c441ab6438b48307683
+timeCreated: 1520944924
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Sci-fi Sword/material/pd_65.mat
+  uploadId: 851134

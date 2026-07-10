@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: be6b51f8b4f3e6a408982889477039fe
+timeCreated: 1530849178
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Dark Skill/Materials/Smoke_P01.mat
+  uploadId: 851134

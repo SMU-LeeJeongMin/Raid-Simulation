@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 58fd99ed6f382d6449bea7a107def1f0
+timeCreated: 1534752891
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Dark Skill/Materials/Particle_Soft_01.mat
+  uploadId: 851134

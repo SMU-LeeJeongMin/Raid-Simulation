@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: cc92956ec8fad9b4c8da6746e2748afa
+timeCreated: 1440568938
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: fx_textures_glow_materials.unity3d
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Ice Skill/Materials/glow_blue_01.mat
+  uploadId: 851134

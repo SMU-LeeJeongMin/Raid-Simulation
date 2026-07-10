@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 5776695da6d11a940ae74d38a6cac844
+timeCreated: 1514470997
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: fx_textures_glow_materials.unity3d
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Ice Skill/Materials/glow_point1_green
+    1.mat
+  uploadId: 851134

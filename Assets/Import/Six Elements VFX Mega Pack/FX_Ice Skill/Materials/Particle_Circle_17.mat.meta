@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: b5798c9e79f4ecd40b09f3f7254ce9a2
+timeCreated: 1534233880
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: fx_textures_ring_materials.unity3d
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Ice Skill/Materials/Particle_Circle_17.mat
+  uploadId: 851134

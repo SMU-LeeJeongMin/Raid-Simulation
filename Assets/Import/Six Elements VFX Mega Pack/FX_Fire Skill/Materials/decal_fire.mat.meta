@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 3e04f873025d2db42b08bdc34166290c
+timeCreated: 1528880745
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313529
+  packageName: Game VFX - Six Elements VFX Mega Pack(URP)
+  packageVersion: 1.03
+  assetPath: Assets/Six Elements VFX Mega Pack/FX_Fire Skill/Materials/decal_fire.mat
+  uploadId: 851134

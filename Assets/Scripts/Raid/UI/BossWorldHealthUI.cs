@@ -44,9 +44,6 @@ public class BossWorldHealthUI : MonoBehaviour
     public LayerMask occlusionMask = ~0;
     public float occlusionSphereRadius = 0.05f;
 
-    [Header("Debug")]
-    public bool logPositionDebug = false;
-
     private Canvas parentCanvas;
     private RectTransform canvasRect;
     private CanvasGroup canvasGroup;
