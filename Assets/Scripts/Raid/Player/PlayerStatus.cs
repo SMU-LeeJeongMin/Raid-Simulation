@@ -3,8 +3,6 @@
 
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.Animations;
-using UnityEngine.Playables;
 
 public class PlayerStatus : MonoBehaviour
 {
@@ -71,13 +69,31 @@ public class PlayerStatus : MonoBehaviour
     public PlayerClassInfo ClassInfo => classInfo;
     public bool IsDead => health != null && health.IsDead;
 
+    // 보스 더미 여부 캐시 (대상 판정 시 GetComponent 반복 호출 제거)
+    private bool bossDummyResolved;
+    private bool isBossDummy;
+    public bool IsBossDummy
+    {
+        get
+        {
+            if (!bossDummyResolved)
+            {
+                isBossDummy = GetComponent<BossDummyController>() != null;
+                bossDummyResolved = true;
+            }
+
+            return isBossDummy;
+        }
+    }
+
     private Animator animator;
-    private PlayableGraph deathGraph;
-    private AnimationPlayableOutput deathOutput;
-    private AnimationClipPlayable deathPlayable;
+    // 사망 클립 직접 재생을 담당하는 공용 플레이어
+    private SingleClipPlayer deathClipPlayer;
+    private SingleClipPlayer DeathClipPlayer => deathClipPlayer ??= new SingleClipPlayer(name + "_DeathGraph", "Death");
 
     private void Awake()
     {
+        CombatRegistry.Register(this);
         ResolveReferences();
         ApplyStatusSettings();
     }
@@ -397,19 +413,7 @@ public class PlayerStatus : MonoBehaviour
 
         if (useDirectDeathClipPlayback && deathClip != null)
         {
-            CreateDeathGraphIfNeeded();
-
-            if (deathPlayable.IsValid())
-                deathPlayable.Destroy();
-
-            deathPlayable = AnimationClipPlayable.Create(deathGraph, deathClip);
-            deathPlayable.SetApplyFootIK(false);
-            deathPlayable.SetApplyPlayableIK(false);
-            deathPlayable.SetTime(0d);
-            deathPlayable.SetSpeed(1d);
-            deathPlayable.SetDone(false);
-            deathOutput.SetSourcePlayable(deathPlayable);
-            deathGraph.Play();
+            DeathClipPlayer.Play(animator, deathClip, 1f, false);
             return;
         }
 
@@ -417,35 +421,17 @@ public class PlayerStatus : MonoBehaviour
             animator.CrossFadeInFixedTime(deathStateName, 0.05f, 0, 0f);
     }
 
-    private void CreateDeathGraphIfNeeded()
-    {
-        if (deathGraph.IsValid())
-            return;
-
-        deathGraph = PlayableGraph.Create(name + "_DeathGraph");
-        deathGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
-        deathOutput = AnimationPlayableOutput.Create(deathGraph, "Death", animator);
-    }
-
     private void FreezeDeathClipAtEndIfNeeded()
     {
         if (!freezeOnFinalDeathPose)
             return;
 
-        if (!deathPlayable.IsValid() || deathClip == null)
-            return;
-
-        if (deathPlayable.GetTime() >= deathClip.length)
-        {
-            deathPlayable.SetTime(deathClip.length);
-            deathPlayable.SetSpeed(0d);
-            deathPlayable.SetDone(true);
-        }
+        deathClipPlayer?.FreezeAtEndIfFinished();
     }
 
     private void OnDestroy()
     {
-        if (deathGraph.IsValid())
-            deathGraph.Destroy();
+        CombatRegistry.Unregister(this);
+        deathClipPlayer?.Dispose();
     }
 }

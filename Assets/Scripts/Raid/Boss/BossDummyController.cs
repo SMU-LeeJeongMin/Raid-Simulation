@@ -1,8 +1,6 @@
 // 보스 상태 스크립트
 using System.Collections;
 using UnityEngine;
-using UnityEngine.Animations;
-using UnityEngine.Playables;
 
 [RequireComponent(typeof(Health))]
 public class BossDummyController : MonoBehaviour
@@ -42,12 +40,14 @@ public class BossDummyController : MonoBehaviour
     private Rigidbody[] cachedRigidbodies;
     private bool deathHandled;
 
-    private PlayableGraph deathGraph;
-    private AnimationPlayableOutput deathOutput;
-    private AnimationClipPlayable deathPlayable;
+    // 사망 클립 직접 재생을 담당하는 공용 플레이어
+    private SingleClipPlayer deathClipPlayer;
+    private SingleClipPlayer DeathClipPlayer => deathClipPlayer ??= new SingleClipPlayer(name + "_DeathGraph", "Death");
 
     private void Awake()
     {
+        CombatRegistry.Register(this);
+
         if (health == null)
             health = GetComponent<Health>();
 
@@ -209,64 +209,22 @@ public class BossDummyController : MonoBehaviour
 
     private IEnumerator PlayDeathClipRoutine()
     {
-        CreateDeathGraphIfNeeded();
-
-        if (deathPlayable.IsValid())
-            deathPlayable.Destroy();
-
-        deathPlayable = AnimationClipPlayable.Create(deathGraph, deathClip);
-        deathPlayable.SetApplyFootIK(false);
-        deathPlayable.SetApplyPlayableIK(false);
-        deathPlayable.SetTime(0d);
-        deathPlayable.SetDone(false);
-
         float duration = deathDurationOverride > 0f ? deathDurationOverride : deathClip.length;
         duration = Mathf.Max(0.05f, duration);
-        double speed = deathClip.length <= 0.0001f ? 1d : deathClip.length / duration;
-        deathPlayable.SetSpeed(speed);
 
-        deathOutput.SetSourcePlayable(deathPlayable);
-        deathGraph.Play();
+        DeathClipPlayer.PlayTimed(animator, deathClip, duration);
 
         yield return new WaitForSeconds(duration);
 
-        if (holdDeathPose && deathPlayable.IsValid())
-        {
-            deathPlayable.SetTime(deathClip.length);
-            deathPlayable.SetSpeed(0d);
-            deathGraph.Play();
-        }
-        else if (deathGraph.IsValid())
-        {
-            deathGraph.Stop();
-        }
-    }
-
-    private void CreateDeathGraphIfNeeded()
-    {
-        if (deathGraph.IsValid())
-            return;
-
-        deathGraph = PlayableGraph.Create(name + "_DeathGraph");
-        deathGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
-        deathOutput = AnimationPlayableOutput.Create(deathGraph, "Death", animator);
+        if (holdDeathPose)
+            DeathClipPlayer.FreezeAtEnd();
+        else
+            DeathClipPlayer.Stop();
     }
 
     private string ResolveAnimatorStateName(string stateName)
     {
-        if (animator == null || string.IsNullOrWhiteSpace(stateName))
-            return string.Empty;
-
-        int shortHash = Animator.StringToHash(stateName);
-        if (animator.HasState(0, shortHash))
-            return stateName;
-
-        string baseLayerPath = "Base Layer." + stateName;
-        int fullHash = Animator.StringToHash(baseLayerPath);
-        if (animator.HasState(0, fullHash))
-            return baseLayerPath;
-
-        return string.Empty;
+        return AnimatorStateUtility.ResolveStateName(animator, stateName);
     }
 
     private void TrySetTrigger(string triggerName)
@@ -326,24 +284,12 @@ public class BossDummyController : MonoBehaviour
 
     private void SetLayerRecursive(string layerName)
     {
-        if (string.IsNullOrWhiteSpace(layerName))
-            return;
-
-        int layer = LayerMask.NameToLayer(layerName);
-        if (layer < 0)
-            return;
-
-        Transform[] children = GetComponentsInChildren<Transform>(true);
-        for (int i = 0; i < children.Length; i++)
-        {
-            if (children[i] != null)
-                children[i].gameObject.layer = layer;
-        }
+        LayerUtility.SetLayerRecursively(gameObject, layerName);
     }
 
     private void OnDestroy()
     {
-        if (deathGraph.IsValid())
-            deathGraph.Destroy();
+        CombatRegistry.Unregister(this);
+        deathClipPlayer?.Dispose();
     }
 }

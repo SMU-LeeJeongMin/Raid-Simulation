@@ -1,8 +1,7 @@
 // 보스 기본 공격
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Animations;
-using UnityEngine.Playables;
 
 [RequireComponent(typeof(Health))]
 public class BossBasicPatternController : MonoBehaviour
@@ -87,9 +86,6 @@ public class BossBasicPatternController : MonoBehaviour
     public AnimationClip walkForwardClip;
     public AnimationClip walkForwardLeftClip;
     public AnimationClip walkForwardRightClip;
-    public AnimationClip walkBackwardClip;
-    public AnimationClip walkBackwardLeftClip;
-    public AnimationClip walkBackwardRightClip;
     public float moveClipSpeed = 1f;
     public float defaultAttackDuration = 1.2f;
 
@@ -134,11 +130,9 @@ public class BossBasicPatternController : MonoBehaviour
     private bool useAttack1Next = true;
     private Coroutine attackRoutine;
 
-    private PlayableGraph graph;
-    private AnimationPlayableOutput output;
-    private AnimationClipPlayable clipPlayable;
-    private AnimationClip currentClip;
-    private bool currentClipShouldLoop;
+    // 패턴 클립 직접 재생을 담당하는 공용 플레이어
+    private SingleClipPlayer clipPlayer;
+    private SingleClipPlayer ClipPlayer => clipPlayer ??= new SingleClipPlayer(name + "_BossBasicPatternGraph", "BossBasicPattern");
 
     private void Awake()
     {
@@ -223,7 +217,7 @@ public class BossBasicPatternController : MonoBehaviour
         if (!autoFindPlayer)
             return;
 
-        if (Time.time < nextTargetSearchTime && IsValidPlayerTarget(targetPlayer))
+        if (Time.time < nextTargetSearchTime && PartyTargetUtility.IsValidPlayerTarget(targetPlayer))
             return;
 
         nextTargetSearchTime = Time.time + Mathf.Max(0.05f, targetRefreshInterval);
@@ -232,14 +226,14 @@ public class BossBasicPatternController : MonoBehaviour
 
     private PlayerStatus FindClosestPlayerTarget(Vector3 fromPosition)
     {
-        PlayerStatus[] players = FindObjectsByType<PlayerStatus>();
+        IReadOnlyList<PlayerStatus> players = CombatRegistry.PlayerStatuses;
         float bestDistance = float.PositiveInfinity;
         PlayerStatus best = null;
 
-        for (int i = 0; i < players.Length; i++)
+        for (int i = 0; i < players.Count; i++)
         {
             PlayerStatus player = players[i];
-            if (!IsValidPlayerTarget(player))
+            if (!PartyTargetUtility.IsValidPlayerTarget(player))
                 continue;
 
             Vector3 delta = player.transform.position - fromPosition;
@@ -342,18 +336,17 @@ public class BossBasicPatternController : MonoBehaviour
 
     private void TryApplyAttackDamage(BossAttackPattern pattern)
     {
-        PlayerStatus[] targets = FindObjectsByType<PlayerStatus>();
-        bool hitAny = false;
+        IReadOnlyList<PlayerStatus> targets = CombatRegistry.PlayerStatuses;
 
-        if (targets == null || targets.Length == 0)
+        if (targets.Count == 0)
             return;
 
         Vector3 origin = GetPatternHitOrigin(pattern);
 
-        for (int i = 0; i < targets.Length; i++)
+        for (int i = 0; i < targets.Count; i++)
         {
             PlayerStatus player = targets[i];
-            if (!IsValidPlayerTarget(player))
+            if (!PartyTargetUtility.IsValidPlayerTarget(player))
                 continue;
 
             Vector3 target = player.transform.position;
@@ -380,22 +373,7 @@ public class BossBasicPatternController : MonoBehaviour
 
             player.TakeDamage(pattern.damage, gameObject);
             SpawnPlayerHitVFX(pattern, player);
-            hitAny = true;
         }
-    }
-
-    private bool IsValidPlayerTarget(PlayerStatus player)
-    {
-        if (player == null)
-            return false;
-
-        if (player.GetComponent<BossDummyController>() != null)
-            return false;
-
-        if (player.Health == null || player.Health.IsDead)
-            return false;
-
-        return true;
     }
 
     private void SpawnPlayerHitVFX(BossAttackPattern pattern, PlayerStatus player)
@@ -466,36 +444,15 @@ public class BossBasicPatternController : MonoBehaviour
         return player.transform.position + Vector3.up * 0.8f + pattern.playerHitVFXOffset;
     }
 
+    // 공용 VFX 유틸 위임 (기존 호출부 유지용 래퍼)
     private Transform FindChildByName(Transform root, string childName)
     {
-        if (root == null || string.IsNullOrWhiteSpace(childName))
-            return null;
-
-        Transform[] children = root.GetComponentsInChildren<Transform>(true);
-        for (int i = 0; i < children.Length; i++)
-        {
-            if (children[i] != null && children[i].name == childName)
-                return children[i];
-        }
-
-        return null;
+        return VFXUtility.FindChildByName(root, childName);
     }
 
     private void RestartParticleSystems(GameObject root)
     {
-        if (root == null)
-            return;
-
-        ParticleSystem[] systems = root.GetComponentsInChildren<ParticleSystem>(true);
-        for (int i = 0; i < systems.Length; i++)
-        {
-            ParticleSystem ps = systems[i];
-            if (ps == null)
-                continue;
-
-            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            ps.Play(true);
-        }
+        VFXUtility.RestartParticles(root);
     }
 
     private Vector3 GetPatternHitOrigin(BossAttackPattern pattern)
@@ -618,28 +575,9 @@ public class BossBasicPatternController : MonoBehaviour
         if (animator == null || clip == null)
             return;
 
-        if (currentClip == clip && currentClipShouldLoop == loop && graph.IsValid() && clipPlayable.IsValid())
-            return;
-
-        CreateGraphIfNeeded();
-
-        if (clipPlayable.IsValid())
-            clipPlayable.Destroy();
-
-        currentClip = clip;
-        currentClipShouldLoop = loop;
-
-        clipPlayable = AnimationClipPlayable.Create(graph, clip);
-        clipPlayable.SetApplyFootIK(false);
-        clipPlayable.SetApplyPlayableIK(false);
-        clipPlayable.SetTime(0d);
-        clipPlayable.SetSpeed(Mathf.Max(0.01f, speed));
-        clipPlayable.SetDone(false);
-
-        output.SetSourcePlayable(clipPlayable);
-        graph.Play();
-
-        currentAnimationLabel = label;
+        // 같은 클립이 같은 루프 설정으로 재생 중이면 재시작하지 않음
+        if (ClipPlayer.PlayIfChanged(animator, clip, speed, loop))
+            currentAnimationLabel = label;
     }
 
     private void PlayAnimatorState(string stateName, bool loop, string label)
@@ -652,48 +590,17 @@ public class BossBasicPatternController : MonoBehaviour
         animator.enabled = true;
         animator.CrossFadeInFixedTime(stateName, 0.08f, 0, 0f);
         currentAnimationLabel = label;
-        currentClipShouldLoop = loop;
-    }
-
-    private void CreateGraphIfNeeded()
-    {
-        if (graph.IsValid())
-            return;
-
-        graph = PlayableGraph.Create(name + "_BossBasicPatternGraph");
-        graph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
-        output = AnimationPlayableOutput.Create(graph, "BossBasicPattern", animator);
     }
 
     private void StopClip()
     {
-        currentClip = null;
-
-        if (clipPlayable.IsValid())
-            clipPlayable.Destroy();
-
-        if (graph.IsValid())
-            graph.Stop();
+        clipPlayer?.Stop();
     }
 
     private void KeepClipLoopingIfNeeded()
     {
-        if (!loopIdleAndMoveClips || !currentClipShouldLoop)
-            return;
-
-        if (!graph.IsValid() || !clipPlayable.IsValid() || currentClip == null)
-            return;
-
-        double length = currentClip.length;
-        if (length <= 0.0001d)
-            return;
-
-        double time = clipPlayable.GetTime();
-        if (time >= length)
-        {
-            clipPlayable.SetTime(time % length);
-            clipPlayable.SetDone(false);
-        }
+        if (loopIdleAndMoveClips)
+            clipPlayer?.Tick();
     }
 
     private void OnDisable()
@@ -711,8 +618,7 @@ public class BossBasicPatternController : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (graph.IsValid())
-            graph.Destroy();
+        clipPlayer?.Dispose();
     }
 
     private void OnDrawGizmosSelected()

@@ -68,6 +68,7 @@ public class RaidMetricsLogger : MonoBehaviour
 
     private Health bossHealth;
     private float nextBindTime;
+    private bool autoGenerateEpisodeId;
 
     // Heal / shield quality
     private int healEvents;
@@ -127,8 +128,8 @@ public class RaidMetricsLogger : MonoBehaviour
     {
         outputPath = Path.Combine(Application.persistentDataPath, fileName);
 
-        if (string.IsNullOrWhiteSpace(episodeId))
-            episodeId = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
+        // 인스펙터에서 id를 비워둔 경우 에피소드 시작마다 자동 생성
+        autoGenerateEpisodeId = string.IsNullOrWhiteSpace(episodeId);
 
         if (logPathOnStart)
             Debug.Log($"[RaidMetricsLogger] Output: {outputPath}", this);
@@ -147,6 +148,7 @@ public class RaidMetricsLogger : MonoBehaviour
     private void OnDisable()
     {
         UnsubscribeMetricEvents();
+        UnsubscribeHealthListeners();
     }
 
     private void Update()
@@ -211,6 +213,10 @@ public class RaidMetricsLogger : MonoBehaviour
         episodeRunning = true;
         resultWritten = false;
         episodeStartTime = Time.time;
+
+        // 같은 세션에서 여러 에피소드를 돌려도 행이 고유하도록 id 재생성
+        if (autoGenerateEpisodeId || string.IsNullOrWhiteSpace(episodeId))
+            episodeId = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
 
         playerDamageTaken = 0f;
         npcDamageTaken = 0f;
@@ -323,6 +329,18 @@ public class RaidMetricsLogger : MonoBehaviour
         health.EnsureEvents();
         subscribedHealths.Add(health);
         health.onDeath.AddListener(OnHealthDeath);
+    }
+
+    // 구독한 사망 이벤트 리스너 해제 (씬 재시작 시 리스너 누적 방지)
+    private void UnsubscribeHealthListeners()
+    {
+        foreach (Health health in subscribedHealths)
+        {
+            if (health != null)
+                health.onDeath.RemoveListener(OnHealthDeath);
+        }
+
+        subscribedHealths.Clear();
     }
 
     private void RegisterPartyHealth(Health health)
@@ -550,20 +568,31 @@ public class RaidMetricsLogger : MonoBehaviour
             npcActionCounts[actionName] = 0;
         npcActionCounts[actionName]++;
 
-        if (actionName.Contains("MoveToSafePosition"))
-            npcMoveToSafePositionCount++;
-        else if (actionName.Contains("FollowPlayer"))
-            npcFollowPlayerCount++;
-        else if (actionName.Contains("MoveToBoss"))
-            npcMoveToBossCount++;
-        else if (actionName.Contains("KeepDistance"))
-            npcKeepDistanceCount++;
-        else if (actionName.Contains("RegroupDuringBossFly"))
-            npcRegroupDuringBossFlyCount++;
-        else if (actionName.Contains("MoveToAllyAndHeal"))
-            npcMoveToAllyAndHealCount++;
-        else if (actionName.Contains("ShieldDangerAlly"))
-            npcShieldDangerAllyCount++;
+        // 액션 이름 상수와 정확히 일치하는 경우만 집계 (Contains 부분 일치로 인한 오집계 방지)
+        switch (actionName)
+        {
+            case NpcActionNames.MoveToSafePosition:
+                npcMoveToSafePositionCount++;
+                break;
+            case NpcActionNames.FollowPlayer:
+                npcFollowPlayerCount++;
+                break;
+            case NpcActionNames.MoveToBoss:
+                npcMoveToBossCount++;
+                break;
+            case NpcActionNames.KeepDistance:
+                npcKeepDistanceCount++;
+                break;
+            case NpcActionNames.RegroupDuringBossFly:
+                npcRegroupDuringBossFlyCount++;
+                break;
+            case NpcActionNames.MoveToAllyAndHeal:
+                npcMoveToAllyAndHealCount++;
+                break;
+            case NpcActionNames.ShieldDangerAlly:
+                npcShieldDangerAllyCount++;
+                break;
+        }
     }
 
     private void OnSlimeSpawned(SlimeAddEnemy slime)
@@ -681,6 +710,7 @@ public class RaidMetricsLogger : MonoBehaviour
         if (resultWritten)
             return;
 
+        // 이벤트 핸들러 재진입 방지를 위한 선차단
         resultWritten = true;
         episodeRunning = false;
         activeDangerZoneCountAtEnd = DangerZoneRegistry.Count;
@@ -690,56 +720,109 @@ public class RaidMetricsLogger : MonoBehaviour
         float bossHpRatio = bossHealth != null && bossHealth.MaxHealth > 0f ? bossHealth.CurrentHealth / bossHealth.MaxHealth : -1f;
         float avgHealResponseTime = healResponseEvents > 0 ? healResponseTimeTotal / healResponseEvents : -1f;
 
-        EnsureHeader();
+        // 헤더와 값을 같은 목록에서 생성하여 컬럼 밀림 원천 차단
+        List<KeyValuePair<string, string>> columns = BuildCsvColumns(clearSuccess, endReason, playerClass, elapsed, bossHpRatio, avgHealResponseTime);
+        string valueLine = JoinColumns(columns, false);
 
-        List<string> values = new List<string>
+        try
         {
-            Escape(episodeId),
-            Escape(algorithmName),
-            Escape(playerClass),
-            clearSuccess ? "1" : "0",
-            FormatFloat(elapsed),
-            Escape(endReason),
-            FormatFloat(bossHpRatio),
-            FormatFloat(playerDamageTaken),
-            FormatFloat(npcDamageTaken),
-            FormatFloat(shieldAbsorbedAmount),
-            shieldAbsorbEvents.ToString(CultureInfo.InvariantCulture),
-            shieldAddedEvents.ToString(CultureInfo.InvariantCulture),
-            playerLowHpEvents.ToString(CultureInfo.InvariantCulture),
-            npcLowHpEvents.ToString(CultureInfo.InvariantCulture),
-            playerPatternHitCount.ToString(CultureInfo.InvariantCulture),
-            npcPatternHitCount.ToString(CultureInfo.InvariantCulture),
-            playerDeathCount.ToString(CultureInfo.InvariantCulture),
-            npcDeathCount.ToString(CultureInfo.InvariantCulture),
-            bossDeathCount.ToString(CultureInfo.InvariantCulture),
-            healEvents.ToString(CultureInfo.InvariantCulture),
-            FormatFloat(healActualAmount),
-            FormatFloat(overhealAmount),
-            playerHealEvents.ToString(CultureInfo.InvariantCulture),
-            FormatFloat(playerHealAmount),
-            npcHealEvents.ToString(CultureInfo.InvariantCulture),
-            FormatFloat(npcHealAmount),
-            playerLowHpHealEvents.ToString(CultureInfo.InvariantCulture),
-            npcLowHpHealEvents.ToString(CultureInfo.InvariantCulture),
-            FormatFloat(avgHealResponseTime),
-            skillFailCount.ToString(CultureInfo.InvariantCulture),
-            ultimateOnBossCount.ToString(CultureInfo.InvariantCulture),
-            ultimateOnSlimeCount.ToString(CultureInfo.InvariantCulture),
-            ultimateWhileBossImmuneCount.ToString(CultureInfo.InvariantCulture),
-            slimeSpawnCount.ToString(CultureInfo.InvariantCulture),
-            slimeKilledCount.ToString(CultureInfo.InvariantCulture),
-            slimeDotZoneCreatedCount.ToString(CultureInfo.InvariantCulture),
-            npcMoveToSafePositionCount.ToString(CultureInfo.InvariantCulture),
-            npcKeepDistanceCount.ToString(CultureInfo.InvariantCulture),
-            npcMoveToAllyAndHealCount.ToString(CultureInfo.InvariantCulture),
-            npcShieldDangerAllyCount.ToString(CultureInfo.InvariantCulture),
-            Escape(GetSkillFailureSummary()),
-            Escape(GetNPCActionSummary())
-        };
+            WriteEpisodeRow(columns, valueLine);
+            Debug.Log($"[RaidMetricsLogger] Episode saved: {outputPath}", this);
+        }
+        catch (Exception e)
+        {
+            // CSV가 다른 프로그램(예: Excel)에 열려 있으면 쓰기가 실패하므로 데이터를 로그에 남겨 유실 방지
+            Debug.LogError($"[RaidMetricsLogger] CSV 기록 실패: {e.Message}\n복구용 데이터 행: {valueLine}", this);
+        }
+    }
 
-        File.AppendAllText(outputPath, string.Join(",", values) + Environment.NewLine);
-        Debug.Log($"[RaidMetricsLogger] Episode saved: {outputPath}", this);
+    // CSV 한 행의 (헤더, 값) 쌍을 단일 지점에서 정의
+    private List<KeyValuePair<string, string>> BuildCsvColumns(bool clearSuccess, string endReason, string playerClass, float elapsed, float bossHpRatio, float avgHealResponseTime)
+    {
+        List<KeyValuePair<string, string>> columns = new List<KeyValuePair<string, string>>(48);
+        void Add(string header, string value) => columns.Add(new KeyValuePair<string, string>(header, value));
+
+        Add("episode_id", Escape(episodeId));
+        Add("algorithm", Escape(algorithmName));
+        Add("player_class", Escape(playerClass));
+        Add("clear_success", clearSuccess ? "1" : "0");
+        Add("clear_time", FormatFloat(elapsed));
+        Add("end_reason", Escape(endReason));
+        Add("boss_hp_ratio", FormatFloat(bossHpRatio));
+        Add("player_damage_taken", FormatFloat(playerDamageTaken));
+        Add("npc_damage_taken", FormatFloat(npcDamageTaken));
+        Add("shield_absorbed_amount", FormatFloat(shieldAbsorbedAmount));
+        Add("shield_absorb_events", FormatInt(shieldAbsorbEvents));
+        Add("shield_added_events", FormatInt(shieldAddedEvents));
+        Add("player_low_hp_events", FormatInt(playerLowHpEvents));
+        Add("npc_low_hp_events", FormatInt(npcLowHpEvents));
+        Add("player_pattern_hit_count", FormatInt(playerPatternHitCount));
+        Add("npc_pattern_hit_count", FormatInt(npcPatternHitCount));
+        Add("player_death_count", FormatInt(playerDeathCount));
+        Add("npc_death_count", FormatInt(npcDeathCount));
+        Add("boss_death_count", FormatInt(bossDeathCount));
+        Add("heal_events", FormatInt(healEvents));
+        Add("heal_actual_amount", FormatFloat(healActualAmount));
+        Add("overheal_amount", FormatFloat(overhealAmount));
+        Add("player_heal_events", FormatInt(playerHealEvents));
+        Add("player_heal_amount", FormatFloat(playerHealAmount));
+        Add("npc_heal_events", FormatInt(npcHealEvents));
+        Add("npc_heal_amount", FormatFloat(npcHealAmount));
+        Add("player_low_hp_heal_events", FormatInt(playerLowHpHealEvents));
+        Add("npc_low_hp_heal_events", FormatInt(npcLowHpHealEvents));
+        Add("avg_heal_response_time", FormatFloat(avgHealResponseTime));
+        Add("skill_fail_count", FormatInt(skillFailCount));
+        Add("ultimate_on_boss_count", FormatInt(ultimateOnBossCount));
+        Add("ultimate_on_slime_count", FormatInt(ultimateOnSlimeCount));
+        Add("ultimate_while_boss_immune_count", FormatInt(ultimateWhileBossImmuneCount));
+        Add("slime_spawn_count", FormatInt(slimeSpawnCount));
+        Add("slime_killed_count", FormatInt(slimeKilledCount));
+        Add("slime_dot_zone_created_count", FormatInt(slimeDotZoneCreatedCount));
+        Add("npc_move_to_safe_position_count", FormatInt(npcMoveToSafePositionCount));
+        Add("npc_keep_distance_count", FormatInt(npcKeepDistanceCount));
+        Add("npc_move_to_ally_and_heal_count", FormatInt(npcMoveToAllyAndHealCount));
+        Add("npc_shield_danger_ally_count", FormatInt(npcShieldDangerAllyCount));
+        Add("skill_failure_summary", Escape(GetSkillFailureSummary()));
+        Add("npc_action_summary", Escape(GetNPCActionSummary()));
+
+        return columns;
+    }
+
+    private static string JoinColumns(List<KeyValuePair<string, string>> columns, bool useHeader)
+    {
+        List<string> parts = new List<string>(columns.Count);
+        for (int i = 0; i < columns.Count; i++)
+            parts.Add(useHeader ? columns[i].Key : columns[i].Value);
+
+        return string.Join(",", parts);
+    }
+
+    private void WriteEpisodeRow(List<KeyValuePair<string, string>> columns, string valueLine)
+    {
+        string headerLine = JoinColumns(columns, true);
+
+        FileInfo fileInfo = new FileInfo(outputPath);
+        bool needHeader = !fileInfo.Exists || fileInfo.Length == 0;
+
+        if (!needHeader)
+        {
+            // 기존 파일이 구버전 컬럼 구성일 때 데이터가 어긋난 채 쌓이는 것을 감지
+            string existingHeader = ReadFirstLine(outputPath);
+            if (!string.Equals(existingHeader, headerLine, StringComparison.Ordinal))
+                Debug.LogWarning("[RaidMetricsLogger] 기존 CSV의 헤더가 현재 컬럼 정의와 불일치. 새 파일명 사용 권장", this);
+        }
+
+        string content = needHeader
+            ? headerLine + Environment.NewLine + valueLine + Environment.NewLine
+            : valueLine + Environment.NewLine;
+
+        File.AppendAllText(outputPath, content);
+    }
+
+    private static string ReadFirstLine(string path)
+    {
+        using (StreamReader reader = new StreamReader(path))
+            return reader.ReadLine();
     }
 
     private string ResolvePlayerClass()
@@ -753,60 +836,6 @@ public class RaidMetricsLogger : MonoBehaviour
         }
 
         return SelectedCharacterMemory.LoadSelectedId("unknown");
-    }
-
-    private void EnsureHeader()
-    {
-        if (File.Exists(outputPath) && File.ReadAllText(outputPath).Length > 0)
-            return;
-
-        string[] headers =
-        {
-            "episode_id",
-            "algorithm",
-            "player_class",
-            "clear_success",
-            "clear_time",
-            "end_reason",
-            "boss_hp_ratio",
-            "player_damage_taken",
-            "npc_damage_taken",
-            "shield_absorbed_amount",
-            "shield_absorb_events",
-            "shield_added_events",
-            "player_low_hp_events",
-            "npc_low_hp_events",
-            "player_pattern_hit_count",
-            "npc_pattern_hit_count",
-            "player_death_count",
-            "npc_death_count",
-            "boss_death_count",
-            "heal_events",
-            "heal_actual_amount",
-            "overheal_amount",
-            "player_heal_events",
-            "player_heal_amount",
-            "npc_heal_events",
-            "npc_heal_amount",
-            "player_low_hp_heal_events",
-            "npc_low_hp_heal_events",
-            "avg_heal_response_time",
-            "skill_fail_count",
-            "ultimate_on_boss_count",
-            "ultimate_on_slime_count",
-            "ultimate_while_boss_immune_count",
-            "slime_spawn_count",
-            "slime_killed_count",
-            "slime_dot_zone_created_count",
-            "npc_move_to_safe_position_count",
-            "npc_keep_distance_count",
-            "npc_move_to_ally_and_heal_count",
-            "npc_shield_danger_ally_count",
-            "skill_failure_summary",
-            "npc_action_summary"
-        };
-
-        File.AppendAllText(outputPath, string.Join(",", headers) + Environment.NewLine);
     }
 
     private bool IsNPC(PlayerStatus status)
@@ -855,6 +884,11 @@ public class RaidMetricsLogger : MonoBehaviour
             return "";
 
         return value.ToString("0.###", CultureInfo.InvariantCulture);
+    }
+
+    private string FormatInt(int value)
+    {
+        return value.ToString(CultureInfo.InvariantCulture);
     }
 
     private string Escape(string value)

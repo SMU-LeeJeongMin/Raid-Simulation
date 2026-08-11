@@ -105,7 +105,8 @@ public class RaidCameraFollow : MonoBehaviour
         if (!autoFindBoss || bossTarget != null)
             return;
 
-        BossDummyController boss = FindAnyObjectByType<BossDummyController>();
+        // 매 LateUpdate 씬 전체 탐색 대신 레지스트리 조회
+        BossDummyController boss = CombatRegistry.FirstBossDummy;
         if (boss != null)
             bossTarget = boss.transform;
     }

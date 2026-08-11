@@ -43,8 +43,9 @@ public class SkillPanelUI : MonoBehaviour
 
     private void Update()
     {
-        if (skillController == null && autoFindPlayer)
-            TryBindNow();
+        // 재바인딩이 필요하면 코루틴만 재시작 (매 프레임 씬 탐색 제거, 재시도는 0.25초 간격)
+        if (skillController == null && autoFindPlayer && bindRoutine == null)
+            StartBinding();
 
         RefreshButtons();
     }
@@ -65,11 +66,13 @@ public class SkillPanelUI : MonoBehaviour
         do
         {
             if (TryBindNow())
-                yield break;
+                break;
 
             yield return new WaitForSeconds(0.25f);
         }
         while (keepTryingUntilBound);
+
+        bindRoutine = null;
     }
 
     public bool TryBindNow()

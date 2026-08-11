@@ -3,8 +3,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Animations;
-using UnityEngine.Playables;
 
 public enum BossPatternShape
 {
@@ -258,12 +256,12 @@ public class BossSkillPatternController : MonoBehaviour
     private Vector3 groundPositionBeforeFly;
     private readonly Dictionary<GameObject, int> originalLayers = new Dictionary<GameObject, int>();
 
-    private bool loopingPhaseClip;
-    private AnimationClip currentLoopClip;
+    // 유효 대상 수집용 재사용 버퍼 (데미지 틱마다 새 리스트 할당 방지)
+    private readonly List<PlayerStatus> validTargetBuffer = new List<PlayerStatus>();
 
-    private PlayableGraph graph;
-    private AnimationPlayableOutput output;
-    private AnimationClipPlayable playable;
+    // 페이즈 클립 직접 재생을 담당하는 공용 플레이어
+    private SingleClipPlayer clipPlayer;
+    private SingleClipPlayer ClipPlayer => clipPlayer ??= new SingleClipPlayer(name + "_BossSkillPatternGraph", "BossSkillPattern");
 
     public bool IsFlying => flying;
     public bool IsInSpecialPattern => inSpecialPattern;
@@ -272,6 +270,8 @@ public class BossSkillPatternController : MonoBehaviour
 
     private void Awake()
     {
+        CombatRegistry.Register(this);
+
         if (health == null)
             health = GetComponent<Health>();
 
@@ -541,7 +541,7 @@ public class BossSkillPatternController : MonoBehaviour
         if (!autoFindPlayer)
             return;
 
-        if (Time.time < nextTargetFindTime && IsValidPlayerTarget(targetPlayer))
+        if (Time.time < nextTargetFindTime && PartyTargetUtility.IsValidPlayerTarget(targetPlayer))
             return;
 
         nextTargetFindTime = Time.time + Mathf.Max(0.05f, targetRefreshInterval);
@@ -550,14 +550,14 @@ public class BossSkillPatternController : MonoBehaviour
 
     private PlayerStatus FindClosestPlayerTarget(Vector3 fromPosition)
     {
-        PlayerStatus[] players = FindObjectsByType<PlayerStatus>();
+        IReadOnlyList<PlayerStatus> players = CombatRegistry.PlayerStatuses;
         float bestDistance = float.PositiveInfinity;
         PlayerStatus best = null;
 
-        for (int i = 0; i < players.Length; i++)
+        for (int i = 0; i < players.Count; i++)
         {
             PlayerStatus player = players[i];
-            if (!IsValidPlayerTarget(player))
+            if (!PartyTargetUtility.IsValidPlayerTarget(player))
                 continue;
 
             Vector3 delta = player.transform.position - fromPosition;
@@ -575,11 +575,11 @@ public class BossSkillPatternController : MonoBehaviour
 
     private PlayerStatus FindHumanPlayerTarget()
     {
-        PlayerStatus[] players = FindObjectsByType<PlayerStatus>();
-        for (int i = 0; i < players.Length; i++)
+        IReadOnlyList<PlayerStatus> players = CombatRegistry.PlayerStatuses;
+        for (int i = 0; i < players.Count; i++)
         {
             PlayerStatus player = players[i];
-            if (!IsValidPlayerTarget(player))
+            if (!PartyTargetUtility.IsValidPlayerTarget(player))
                 continue;
 
             if (player.GetComponent<NPCPartyMember>() == null)
@@ -942,7 +942,6 @@ public class BossSkillPatternController : MonoBehaviour
             yield return ExecuteTrackingLightning();
         }
 
-        StopLoopingPhaseClip();
         SpawnBossVFX(flyPhase.landVFXPrefab);
         PlayPhaseClip(flyPhase.landClip, flyPhase.landStateName, flyPhase.landDuration);
         if (flyPhase.moveBossUpDuringFly)
@@ -962,93 +961,80 @@ public class BossSkillPatternController : MonoBehaviour
 
     private IEnumerator ExecuteRandomLightningStrikes()
     {
-        int waves = Mathf.Max(1, flyPhase.randomLightningWaves);
-        int perWave = Mathf.Max(1, flyPhase.randomLightningPerWave);
+        ResolveWaveCounts(flyPhase.randomLightningWaves, flyPhase.randomLightningPerWave, flyPhase.randomLightningCount, out int waves, out int perWave);
 
-        if (flyPhase.randomLightningWaves <= 0 || flyPhase.randomLightningPerWave <= 0)
-        {
-            waves = 1;
-            perWave = Mathf.Max(1, flyPhase.randomLightningCount);
-        }
-
-        for (int wave = 0; wave < waves; wave++)
-        {
-            List<Vector3> positions = new List<Vector3>();
-            List<BossTelegraphArea> telegraphs = new List<BossTelegraphArea>();
-
-            List<Vector3> generated = GenerateRandomPositionsAroundPartyTargets(
-                perWave,
-                flyPhase.randomLightningSpreadRadius,
-                flyPhase.randomLightningMinSeparation,
-                flyPhase.randomLightningRadius,
-                includeHumanPlayerPosition: false);
-
-            for (int i = 0; i < generated.Count; i++)
+        yield return RunTelegraphedWaves(
+            waves,
+            perWave,
+            flyPhase.randomLightningSpreadRadius,
+            flyPhase.randomLightningMinSeparation,
+            flyPhase.randomLightningRadius,
+            flyPhase.randomLightningWarningTime,
+            flyPhase.randomLightningWaveInterval,
+            pos =>
             {
-                Vector3 pos = generated[i];
-                positions.Add(pos);
-                telegraphs.Add(BossTelegraphArea.CreateCircle(pos, flyPhase.randomLightningRadius, flyPhase.randomLightningWarningTime, warningColor, null, warningMaterial));
-            }
-
-            yield return new WaitForSeconds(flyPhase.randomLightningWarningTime);
-
-            for (int i = 0; i < telegraphs.Count; i++)
-                if (telegraphs[i] != null)
-                    Destroy(telegraphs[i].gameObject);
-
-            for (int i = 0; i < positions.Count; i++)
-            {
-                ApplyCircleDamage(positions[i], flyPhase.randomLightningRadius, flyPhase.randomLightningDamage);
-                SpawnVFX(flyPhase.randomLightningVFXPrefab, positions[i] + flyPhase.lightningVFXOffset, Quaternion.Euler(flyPhase.lightningVFXEuler), flyPhase.lightningVFXScale, flyPhase.lightningVFXDestroyDelay);
-            }
-
-            yield return new WaitForSeconds(flyPhase.randomLightningWaveInterval);
-        }
+                ApplyCircleDamage(pos, flyPhase.randomLightningRadius, flyPhase.randomLightningDamage);
+                SpawnVFX(flyPhase.randomLightningVFXPrefab, pos + flyPhase.lightningVFXOffset, Quaternion.Euler(flyPhase.lightningVFXEuler), flyPhase.lightningVFXScale, flyPhase.lightningVFXDestroyDelay);
+            });
     }
 
     private IEnumerator ExecuteLightningDOTZones()
     {
-        int waves = Mathf.Max(1, flyPhase.dotZoneWaves);
-        int perWave = Mathf.Max(1, flyPhase.dotZonesPerWave);
+        ResolveWaveCounts(flyPhase.dotZoneWaves, flyPhase.dotZonesPerWave, flyPhase.dotZoneCount, out int waves, out int perWave);
 
-        if (flyPhase.dotZoneWaves <= 0 || flyPhase.dotZonesPerWave <= 0)
+        yield return RunTelegraphedWaves(
+            waves,
+            perWave,
+            flyPhase.dotZoneSpreadRadius,
+            flyPhase.dotZoneMinSeparation,
+            flyPhase.dotZoneRadius,
+            flyPhase.dotZoneWarningTime,
+            flyPhase.dotZoneInterval,
+            pos => StartCoroutine(DOTZoneRoutine(pos)));
+
+        yield return new WaitForSeconds(flyPhase.dotZoneDuration);
+    }
+
+    // 구버전 count 설정과의 호환 처리 (waves/perWave 미설정 시 count 사용)
+    private static void ResolveWaveCounts(int configuredWaves, int configuredPerWave, int legacyCount, out int waves, out int perWave)
+    {
+        waves = Mathf.Max(1, configuredWaves);
+        perWave = Mathf.Max(1, configuredPerWave);
+
+        if (configuredWaves <= 0 || configuredPerWave <= 0)
         {
             waves = 1;
-            perWave = Mathf.Max(1, flyPhase.dotZoneCount);
+            perWave = Mathf.Max(1, legacyCount);
         }
+    }
 
+    // 두 낙뢰 패턴이 공유하는 웨이브 루틴: 원형 텔레그래프 표시 → 경고 대기 → 위치별 효과 실행
+    private IEnumerator RunTelegraphedWaves(int waves, int perWave, float spreadRadius, float minSeparation, float circleRadius, float warningTime, float waveInterval, System.Action<Vector3> onImpact)
+    {
         for (int wave = 0; wave < waves; wave++)
         {
-            List<Vector3> positions = new List<Vector3>();
-            List<BossTelegraphArea> telegraphs = new List<BossTelegraphArea>();
-
-            List<Vector3> generated = GenerateRandomPositionsAroundPartyTargets(
+            List<Vector3> positions = GenerateRandomPositionsAroundPartyTargets(
                 perWave,
-                flyPhase.dotZoneSpreadRadius,
-                flyPhase.dotZoneMinSeparation,
-                flyPhase.dotZoneRadius,
+                spreadRadius,
+                minSeparation,
+                circleRadius,
                 includeHumanPlayerPosition: false);
 
-            for (int i = 0; i < generated.Count; i++)
-            {
-                Vector3 pos = generated[i];
-                positions.Add(pos);
-                telegraphs.Add(BossTelegraphArea.CreateCircle(pos, flyPhase.dotZoneRadius, flyPhase.dotZoneWarningTime, warningColor, null, warningMaterial));
-            }
+            List<BossTelegraphArea> telegraphs = new List<BossTelegraphArea>(positions.Count);
+            for (int i = 0; i < positions.Count; i++)
+                telegraphs.Add(BossTelegraphArea.CreateCircle(positions[i], circleRadius, warningTime, warningColor, null, warningMaterial));
 
-            yield return new WaitForSeconds(flyPhase.dotZoneWarningTime);
+            yield return new WaitForSeconds(warningTime);
 
             for (int i = 0; i < telegraphs.Count; i++)
                 if (telegraphs[i] != null)
                     Destroy(telegraphs[i].gameObject);
 
             for (int i = 0; i < positions.Count; i++)
-                StartCoroutine(DOTZoneRoutine(positions[i]));
+                onImpact(positions[i]);
 
-            yield return new WaitForSeconds(flyPhase.dotZoneInterval);
+            yield return new WaitForSeconds(waveInterval);
         }
-
-        yield return new WaitForSeconds(flyPhase.dotZoneDuration);
     }
 
     private IEnumerator DOTZoneRoutine(Vector3 pos)
@@ -1082,7 +1068,7 @@ public class BossSkillPatternController : MonoBehaviour
         for (int i = 0; i < targets.Length; i++)
         {
             PlayerStatus target = targets[i];
-            if (!IsValidPlayerTarget(target))
+            if (!PartyTargetUtility.IsValidPlayerTarget(target))
                 continue;
 
             activeRoutines++;
@@ -1099,7 +1085,7 @@ public class BossSkillPatternController : MonoBehaviour
         BossTelegraphArea telegraph = null;
         GameObject followVFX = null;
 
-        while (Time.time < endTime && IsValidPlayerTarget(trackedTarget))
+        while (Time.time < endTime && PartyTargetUtility.IsValidPlayerTarget(trackedTarget))
         {
             Vector3 pos = trackedTarget.transform.position;
             pos.y = GetGroundY(pos);
@@ -1351,49 +1337,18 @@ public class BossSkillPatternController : MonoBehaviour
 
     private PlayerStatus[] GetValidPlayerTargets()
     {
-        PlayerStatus[] all = FindObjectsByType<PlayerStatus>();
-        if (all == null || all.Length == 0)
-            return System.Array.Empty<PlayerStatus>();
-
-        List<PlayerStatus> valid = new List<PlayerStatus>(all.Length);
-        for (int i = 0; i < all.Length; i++)
-        {
-            PlayerStatus player = all[i];
-            if (!IsValidPlayerTarget(player))
-                continue;
-
-            valid.Add(player);
-        }
-
-        return valid.ToArray();
-    }
-
-    private bool IsValidPlayerTarget(PlayerStatus player)
-    {
-        if (player == null)
-            return false;
-
-        if (player.GetComponent<BossDummyController>() != null)
-            return false;
-
-        if (player.Health == null || player.Health.IsDead)
-            return false;
-
-        return true;
+        // 재사용 버퍼에 수집 후 배열화 (씬 전체 탐색 제거)
+        PartyTargetUtility.CollectValidPlayerTargets(validTargetBuffer);
+        return validTargetBuffer.Count > 0 ? validTargetBuffer.ToArray() : System.Array.Empty<PlayerStatus>();
     }
 
     private void DamagePlayer(PlayerStatus player, float damage)
     {
-        if (!IsValidPlayerTarget(player))
+        if (!PartyTargetUtility.IsValidPlayerTarget(player))
             return;
 
         player.TakeDamage(damage, gameObject);
         SpawnPlayerHitVFX(player);
-    }
-
-    private void DamagePlayer(float damage)
-    {
-        DamagePlayer(targetPlayer, damage);
     }
 
     private void SpawnPlayerHitVFX(PlayerStatus player)
@@ -1492,51 +1447,15 @@ public class BossSkillPatternController : MonoBehaviour
         SpawnVFX(prefab, transform.position + transform.TransformDirection(flyPhase.bossVFXOffset), transform.rotation * Quaternion.Euler(flyPhase.bossVFXEuler), flyPhase.bossVFXScale, flyPhase.bossVFXDestroyDelay);
     }
 
+    // 공용 VFX 유틸 위임 (기존 호출부 유지용 래퍼)
     private GameObject SpawnVFX(GameObject prefab, Vector3 position, Quaternion rotation, Vector3 scale, float destroyDelay)
     {
-        if (prefab == null)
-            return null;
-
-        GameObject go = Instantiate(prefab, position, rotation);
-        go.transform.localScale = Vector3.Scale(go.transform.localScale, scale);
-        RestartParticles(go);
-
-        if (destroyDelay > 0f)
-            Destroy(go, destroyDelay);
-
-        return go;
-    }
-
-    private void RestartParticles(GameObject root)
-    {
-        if (root == null)
-            return;
-
-        ParticleSystem[] systems = root.GetComponentsInChildren<ParticleSystem>(true);
-        for (int i = 0; i < systems.Length; i++)
-        {
-            ParticleSystem ps = systems[i];
-            if (ps == null)
-                continue;
-
-            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            ps.Play(true);
-        }
+        return VFXUtility.Spawn(prefab, position, rotation, scale, destroyDelay);
     }
 
     private Transform FindChildByName(Transform root, string childName)
     {
-        if (root == null || string.IsNullOrWhiteSpace(childName))
-            return null;
-
-        Transform[] children = root.GetComponentsInChildren<Transform>(true);
-        for (int i = 0; i < children.Length; i++)
-        {
-            if (children[i] != null && children[i].name == childName)
-                return children[i];
-        }
-
-        return null;
+        return VFXUtility.FindChildByName(root, childName);
     }
 
     private float GetGroundY(Vector3 reference)
@@ -1667,33 +1586,17 @@ public class BossSkillPatternController : MonoBehaviour
 
         if (useDirectClipPlayback && clip != null)
         {
-            CreateGraphIfNeeded();
-            if (playable.IsValid())
-                playable.Destroy();
-
-            playable = AnimationClipPlayable.Create(graph, clip);
-            playable.SetTime(0d);
-            playable.SetDone(false);
-            playable.SetApplyFootIK(false);
-            playable.SetApplyPlayableIK(false);
-            playable.SetSpeed(1d);
-            output.SetSourcePlayable(playable);
-            graph.Play();
+            ClipPlayer.Play(animator, clip, 1f, true);
 
             float elapsed = 0f;
-            double length = Mathf.Max(0.01f, clip.length);
             while (elapsed < duration)
             {
                 elapsed += Time.deltaTime;
-                if (playable.IsValid() && playable.GetTime() >= length)
-                    playable.SetTime(0d);
+                ClipPlayer.Tick();
                 yield return null;
             }
 
-            if (playable.IsValid())
-                playable.Destroy();
-            if (graph.IsValid())
-                graph.Stop();
+            ClipPlayer.Stop();
             yield break;
         }
 
@@ -1709,15 +1612,12 @@ public class BossSkillPatternController : MonoBehaviour
 
     private void PlayPhaseClip(AnimationClip clip, string stateName, float duration)
     {
-        StopLoopingPhaseClip();
+        // 새 클립 재생 시 공용 플레이어가 기존 루프 상태를 스스로 해제
         PlayClipOrState(clip, stateName, duration);
     }
 
     private void PlayLoopingPhaseClip(AnimationClip clip, string stateName)
     {
-        loopingPhaseClip = false;
-        currentLoopClip = null;
-
         if (animator == null)
             return;
 
@@ -1727,21 +1627,8 @@ public class BossSkillPatternController : MonoBehaviour
 
         if (useDirectClipPlayback && clip != null)
         {
-            CreateGraphIfNeeded();
-            if (playable.IsValid())
-                playable.Destroy();
-
-            playable = AnimationClipPlayable.Create(graph, clip);
-            playable.SetTime(0d);
-            playable.SetDone(false);
-            playable.SetApplyFootIK(false);
-            playable.SetApplyPlayableIK(false);
-            playable.SetSpeed(1d);
-            output.SetSourcePlayable(playable);
-            graph.Play();
-
-            loopingPhaseClip = true;
-            currentLoopClip = clip;
+            // 루프 유지는 Update의 KeepLoopingPhaseClipIfNeeded에서 Tick으로 처리
+            ClipPlayer.Play(animator, clip, 1f, true);
             return;
         }
 
@@ -1753,33 +1640,9 @@ public class BossSkillPatternController : MonoBehaviour
         }
     }
 
-    private void StopLoopingPhaseClip()
-    {
-        loopingPhaseClip = false;
-        currentLoopClip = null;
-    }
-
     private void KeepLoopingPhaseClipIfNeeded()
     {
-        if (!loopingPhaseClip || currentLoopClip == null || !playable.IsValid())
-            return;
-
-        double length = currentLoopClip.length;
-        if (length <= 0.0001d)
-            return;
-
-        double time = playable.GetTime();
-        if (time >= length)
-        {
-            playable.SetTime(time % length);
-            playable.SetDone(false);
-        }
-    }
-
-    private void PlayClipOnly(AnimationClip clip, float duration)
-    {
-        StopLoopingPhaseClip();
-        PlayClipOrState(clip, string.Empty, duration);
+        clipPlayer?.Tick();
     }
 
     private void PlayClipOrState(AnimationClip clip, string stateName, float duration)
@@ -1793,19 +1656,7 @@ public class BossSkillPatternController : MonoBehaviour
 
         if (useDirectClipPlayback && clip != null)
         {
-            CreateGraphIfNeeded();
-            if (playable.IsValid())
-                playable.Destroy();
-
-            playable = AnimationClipPlayable.Create(graph, clip);
-            playable.SetTime(0d);
-            playable.SetDone(false);
-            playable.SetApplyFootIK(false);
-            playable.SetApplyPlayableIK(false);
-            double speed = duration <= 0.001f ? 1d : clip.length / Mathf.Max(0.05f, duration);
-            playable.SetSpeed(speed);
-            output.SetSourcePlayable(playable);
-            graph.Play();
+            ClipPlayer.PlayTimed(animator, clip, duration);
             return;
         }
 
@@ -1817,35 +1668,22 @@ public class BossSkillPatternController : MonoBehaviour
         }
     }
 
-    private void CreateGraphIfNeeded()
-    {
-        if (graph.IsValid())
-            return;
-
-        graph = PlayableGraph.Create(name + "_BossSkillPatternGraph");
-        graph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
-        output = AnimationPlayableOutput.Create(graph, "BossSkillPattern", animator);
-    }
-
     private void StopClip()
     {
-        StopLoopingPhaseClip();
-        if (playable.IsValid())
-            playable.Destroy();
-        if (graph.IsValid())
-            graph.Stop();
+        clipPlayer?.Stop();
     }
 
     private void OnDestroy()
     {
+        CombatRegistry.Unregister(this);
+
         if (health != null)
         {
             health.onHealthChanged.RemoveListener(OnHealthChanged);
             health.onDeath.RemoveListener(OnBossDeath);
         }
 
-        if (graph.IsValid())
-            graph.Destroy();
+        clipPlayer?.Dispose();
     }
 
     private void OnDrawGizmosSelected()

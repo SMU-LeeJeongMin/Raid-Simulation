@@ -1,5 +1,6 @@
 // 슬라임이 제시간에 처리되지 못하였을 때 남기는 장판
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class SlimeDotZone : MonoBehaviour
@@ -13,6 +14,7 @@ public class SlimeDotZone : MonoBehaviour
     public float visualHeight = 0.035f;
 
     private GameObject visualInstance;
+    private Material runtimeVisualMaterial;
     private DangerZoneHandle dangerZoneHandle;
     private float elapsed;
 
@@ -68,11 +70,12 @@ public class SlimeDotZone : MonoBehaviour
 
     private void ApplyTickDamage()
     {
-        PlayerStatus[] statuses = FindObjectsByType<PlayerStatus>();
-        for (int i = 0; i < statuses.Length; i++)
+        // 레지스트리 순회 + 통합 유효성 검사 (보스 더미 제외 검사가 누락되어 있던 부분 수정)
+        IReadOnlyList<PlayerStatus> statuses = CombatRegistry.PlayerStatuses;
+        for (int i = 0; i < statuses.Count; i++)
         {
             PlayerStatus status = statuses[i];
-            if (status == null || status.Health == null || status.Health.IsDead)
+            if (!PartyTargetUtility.IsValidPlayerTarget(status))
                 continue;
 
             Vector3 delta = status.transform.position - transform.position;
@@ -103,11 +106,18 @@ public class SlimeDotZone : MonoBehaviour
         Renderer renderer = cylinder.GetComponent<Renderer>();
         if (renderer != null)
         {
-            Material mat = new Material(Shader.Find("Sprites/Default"));
-            mat.color = fallbackColor;
-            renderer.sharedMaterial = mat;
+            runtimeVisualMaterial = new Material(Shader.Find("Sprites/Default"));
+            runtimeVisualMaterial.color = fallbackColor;
+            renderer.sharedMaterial = runtimeVisualMaterial;
         }
 
         visualInstance = cylinder;
+    }
+
+    // 장판마다 생성한 런타임 Material 정리 (누수 방지)
+    private void OnDestroy()
+    {
+        if (runtimeVisualMaterial != null)
+            Destroy(runtimeVisualMaterial);
     }
 }

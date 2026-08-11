@@ -44,6 +44,11 @@ public class SkillButtonUI : MonoBehaviour
 
     private SkillPanelUI owner;
 
+    // 표시 상태 캐시 (값이 변한 프레임에만 UI 기록, 문자열 할당 방지)
+    private int lastDisabledVisualState = -1;
+    private int lastCooldownSeconds = -1;
+    private int lastUltimatePercentShown = -1;
+
     private void Reset()
     {
         button = GetComponent<Button>();
@@ -101,9 +106,7 @@ public class SkillButtonUI : MonoBehaviour
 
     public void Refresh(PlayerSkillController controller, bool checkTargetRangeForDisabled)
     {
-        CacheReferencesIfMissing();
-        ApplyStaticVisualSettings();
-
+        // 정적 시각 설정은 Awake/Initialize에서 1회만 적용 (매 프레임 재적용 제거)
         if (controller == null)
         {
             SetDisabledVisual(true, false);
@@ -153,7 +156,7 @@ public class SkillButtonUI : MonoBehaviour
         }
 
         if (slot == PlayerSkillSlot.Ultimate && showUltimateGaugeText)
-            SetUltimateText(true, controller.GetUltimateGaugePercentInt());
+            SetUltimateText(true, lastUltimateGaugePercent);
         else
             SetUltimateText(false, 0);
     }
@@ -276,7 +279,7 @@ public class SkillButtonUI : MonoBehaviour
         cooldownOverlayImage.raycastTarget = false;
         cooldownOverlayImage.type = Image.Type.Filled;
         cooldownOverlayImage.fillMethod = Image.FillMethod.Radial360;
-        cooldownOverlayImage.fillOrigin = 2;
+        cooldownOverlayImage.fillOrigin = (int)Image.Origin360.Top;
 
         if (forceOverlayColors)
             cooldownOverlayImage.color = cooldownOverlayColor;
@@ -319,6 +322,13 @@ public class SkillButtonUI : MonoBehaviour
     {
         bool visible = disabled && !isCurrentCasting;
 
+        // 상태가 변한 프레임에만 오버레이와 아이콘 색상 기록
+        int state = visible ? 1 : 0;
+        if (state == lastDisabledVisualState)
+            return;
+
+        lastDisabledVisualState = state;
+
         if (disabledOverlayImage != null)
         {
             if (forceOverlayColors)
@@ -337,14 +347,11 @@ public class SkillButtonUI : MonoBehaviour
         if (cooldownOverlayImage == null)
             return;
 
-        if (forceOverlayColors)
-            cooldownOverlayImage.color = cooldownOverlayColor;
+        // 정적 설정(type, fillMethod, 색상)은 PrepareCooldownOverlay가 담당
+        ShieldedHealthBarUI.SetActiveIfChanged(cooldownOverlayImage.gameObject, visible);
 
-        cooldownOverlayImage.gameObject.SetActive(visible);
-        cooldownOverlayImage.type = Image.Type.Filled;
-        cooldownOverlayImage.fillMethod = Image.FillMethod.Radial360;
-        cooldownOverlayImage.fillOrigin = 2;
-        cooldownOverlayImage.fillAmount = Mathf.Clamp01(normalized);
+        if (visible)
+            cooldownOverlayImage.fillAmount = Mathf.Clamp01(normalized);
     }
 
     private void SetCooldownText(bool visible, float value)
@@ -352,9 +359,21 @@ public class SkillButtonUI : MonoBehaviour
         if (cooldownText == null)
             return;
 
-        cooldownText.gameObject.SetActive(visible);
-        if (visible)
-            cooldownText.text = string.Format(cooldownFormat, Mathf.Max(0, Mathf.CeilToInt(value)));
+        ShieldedHealthBarUI.SetActiveIfChanged(cooldownText.gameObject, visible);
+
+        if (!visible)
+        {
+            lastCooldownSeconds = -1;
+            return;
+        }
+
+        // 표시 초 단위가 변한 경우에만 문자열 생성
+        int seconds = Mathf.Max(0, Mathf.CeilToInt(value));
+        if (seconds != lastCooldownSeconds)
+        {
+            lastCooldownSeconds = seconds;
+            cooldownText.text = string.Format(cooldownFormat, seconds);
+        }
     }
 
     private void SetUltimateText(bool visible, int percent)
@@ -362,8 +381,20 @@ public class SkillButtonUI : MonoBehaviour
         if (ultimateGaugeText == null)
             return;
 
-        ultimateGaugeText.gameObject.SetActive(visible);
-        if (visible)
-            ultimateGaugeText.text = Mathf.Clamp(percent, 0, 100).ToString() + "%";
+        ShieldedHealthBarUI.SetActiveIfChanged(ultimateGaugeText.gameObject, visible);
+
+        if (!visible)
+        {
+            lastUltimatePercentShown = -1;
+            return;
+        }
+
+        // 퍼센트 정수 값이 변한 경우에만 문자열 생성
+        int clamped = Mathf.Clamp(percent, 0, 100);
+        if (clamped != lastUltimatePercentShown)
+        {
+            lastUltimatePercentShown = clamped;
+            ultimateGaugeText.text = clamped.ToString() + "%";
+        }
     }
 }

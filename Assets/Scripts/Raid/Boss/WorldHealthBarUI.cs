@@ -18,7 +18,7 @@ public class WorldHealthBarUI : MonoBehaviour
 
     private Canvas canvas;
     private Image fillImage;
-    private static Sprite solidSprite;
+    private Camera cachedCamera;
 
     private void Awake()
     {
@@ -84,15 +84,15 @@ public class WorldHealthBarUI : MonoBehaviour
 
         if (hideWhenDead && targetHealth.IsDead)
         {
-            if (canvas != null)
-                canvas.gameObject.SetActive(false);
+            ShieldedHealthBarUI.SetActiveIfChanged(canvas != null ? canvas.gameObject : null, false);
             return;
         }
 
         if (canvas != null && !canvas.gameObject.activeSelf)
             canvas.gameObject.SetActive(true);
 
-        fillImage.fillAmount = Mathf.Clamp01(targetHealth.NormalizedHealth);
+        // 값이 변한 경우에만 기록
+        ShieldedHealthBarUI.SetFill(fillImage, targetHealth.NormalizedHealth);
     }
 
     private void FaceCamera()
@@ -100,7 +100,11 @@ public class WorldHealthBarUI : MonoBehaviour
         if (canvas == null)
             return;
 
-        Camera cam = Camera.main;
+        // Camera.main 매 프레임 조회 대신 캐시 사용 (파괴 시에만 재조회)
+        if (cachedCamera == null)
+            cachedCamera = Camera.main;
+
+        Camera cam = cachedCamera;
         if (cam == null)
             return;
 
@@ -119,15 +123,7 @@ public class WorldHealthBarUI : MonoBehaviour
 
     private static Sprite GetSolidSprite()
     {
-        if (solidSprite != null)
-            return solidSprite;
-
-        Texture2D tex = new Texture2D(1, 1, TextureFormat.RGBA32, false);
-        tex.hideFlags = HideFlags.HideAndDontSave;
-        tex.SetPixel(0, 0, Color.white);
-        tex.Apply(false, true);
-        solidSprite = Sprite.Create(tex, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
-        solidSprite.hideFlags = HideFlags.HideAndDontSave;
-        return solidSprite;
+        // 프로젝트 공용 1x1 스프라이트 사용 (파일별 중복 생성 제거)
+        return ShieldedHealthBarUI.SolidFillSprite;
     }
 }

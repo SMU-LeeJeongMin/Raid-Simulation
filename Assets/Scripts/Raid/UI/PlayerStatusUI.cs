@@ -1,15 +1,9 @@
 // 플레이어 UI
 // HP / Shield / Mana / Portrait 표시
+// 공통 바 렌더링 로직은 ShieldedHealthBarUI 사용
 
 using UnityEngine;
 using UnityEngine.UI;
-
-public enum PlayerShieldUIDisplayMode
-{
-    OverlayCurrentShield,
-    ExtraBehindHealth,
-    AdjacentToCurrentHealth
-}
 
 public class PlayerStatusUI : MonoBehaviour
 {
@@ -36,7 +30,7 @@ public class PlayerStatusUI : MonoBehaviour
     public Color manaColor = new Color(0.2f, 0.55f, 1f, 1f);
 
     [Header("Shield Display")]
-    public PlayerShieldUIDisplayMode shieldDisplayMode = PlayerShieldUIDisplayMode.AdjacentToCurrentHealth;
+    public ShieldUIDisplayMode shieldDisplayMode = ShieldUIDisplayMode.AdjacentToCurrentHealth;
     public bool shieldFillFromRight = false;
     public bool hideShieldWhenEmpty = true;
     [Min(0f)] public float customShieldDisplayMax = 0f;
@@ -48,8 +42,6 @@ public class PlayerStatusUI : MonoBehaviour
     [Header("Unbound Display")]
     public bool emptyWhenUnbound = true;
 
-    private static Sprite solidFillSprite;
-
     private void Awake()
     {
         PrepareFillImages();
@@ -59,11 +51,14 @@ public class PlayerStatusUI : MonoBehaviour
     private void OnEnable()
     {
         PrepareFillImages();
+        RefreshPortrait();
         Refresh();
     }
 
     private void Update()
     {
+        // 정적 설정(sprite, type, 색상, 초상화)은 바인딩 시 1회만 적용하고
+        // 매 프레임에는 변경된 값만 기록
         Refresh();
     }
 
@@ -109,9 +104,8 @@ public class PlayerStatusUI : MonoBehaviour
     public void Refresh()
     {
         RefreshHealth();
-        RefreshShield();
+        RefreshShieldBar();
         RefreshMana();
-        RefreshPortrait();
     }
 
     private void RefreshHealth()
@@ -119,96 +113,27 @@ public class PlayerStatusUI : MonoBehaviour
         if (playerHealth == null)
         {
             if (emptyWhenUnbound)
-                SetFill(hpFillImage, 0f, false);
+                ShieldedHealthBarUI.SetFill(hpFillImage, 0f);
             return;
         }
 
         float max = Mathf.Max(1f, playerHealth.MaxHealth);
         float current = Mathf.Clamp(playerHealth.CurrentHealth, 0f, max);
-        SetFill(hpFillImage, current / max, false);
+        ShieldedHealthBarUI.SetFill(hpFillImage, current / max);
     }
 
-    private void RefreshShield()
+    private void RefreshShieldBar()
     {
-        if (shieldFillImage == null)
-            return;
-
         float shieldAmount = playerShield != null ? Mathf.Max(0f, playerShield.CurrentShield) : 0f;
-        if (shieldAmount <= 0f)
-        {
-            ClearShieldFill();
-            if (hideShieldWhenEmpty)
-                shieldFillImage.gameObject.SetActive(false);
-            return;
-        }
+        ShieldBarSettings settings = BuildShieldSettings();
 
-        if (hideShieldWhenEmpty)
-            shieldFillImage.gameObject.SetActive(true);
-
-        float displayMax = customShieldDisplayMax > 0f
-            ? customShieldDisplayMax
-            : playerHealth != null ? Mathf.Max(1f, playerHealth.MaxHealth) : 100f;
-
-        if (shieldDisplayMode == PlayerShieldUIDisplayMode.AdjacentToCurrentHealth)
-        {
-            RefreshAdjacentShield(shieldAmount, displayMax);
-            return;
-        }
-
-        ResetShieldRectToFullWidth();
-
-        float fill;
-        if (shieldDisplayMode == PlayerShieldUIDisplayMode.ExtraBehindHealth && playerHealth != null)
-        {
-            float combined = Mathf.Clamp(playerHealth.CurrentHealth + shieldAmount, 0f, displayMax);
-            fill = combined / displayMax;
-        }
-        else
-        {
-            fill = Mathf.Clamp01(shieldAmount / displayMax);
-        }
-
-        SetFill(shieldFillImage, fill, shieldFillFromRight);
-    }
-
-    private void RefreshAdjacentShield(float shieldAmount, float displayMax)
-    {
-        if (shieldFillImage == null)
-            return;
-
-        float hpRatio = 0f;
-        if (playerHealth != null)
-        {
-            float maxHp = Mathf.Max(1f, playerHealth.MaxHealth);
-            hpRatio = Mathf.Clamp01(playerHealth.CurrentHealth / maxHp);
-        }
-
-        float shieldRatio = Mathf.Clamp01(shieldAmount / Mathf.Max(1f, displayMax));
-        float start = hpRatio;
-        float end = Mathf.Clamp01(hpRatio + shieldRatio);
-
-        if (end <= start + 0.001f && showShieldAtRightWhenHealthFull)
-        {
-            end = 1f;
-            start = Mathf.Clamp01(1f - shieldRatio);
-        }
-
-        if (end <= start + 0.001f)
-        {
-            ClearShieldFill();
-            return;
-        }
-
-        PrepareAdjacentShieldImage();
-
-        RectTransform rect = shieldFillImage.rectTransform;
-        rect.anchorMin = new Vector2(start, 0f);
-        rect.anchorMax = new Vector2(end, 1f);
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-        rect.pivot = new Vector2(0f, 0.5f);
-
-        shieldFillImage.fillAmount = 1f;
+        ShieldedHealthBarUI.RefreshShield(
+            shieldFillImage,
+            shieldAmount,
+            playerHealth != null ? playerHealth.CurrentHealth : 0f,
+            playerHealth != null ? playerHealth.MaxHealth : 0f,
+            playerHealth != null,
+            settings);
     }
 
     private void RefreshMana()
@@ -216,15 +141,16 @@ public class PlayerStatusUI : MonoBehaviour
         if (playerMana == null)
         {
             if (emptyWhenUnbound)
-                SetFill(manaFillImage, 0f, false);
+                ShieldedHealthBarUI.SetFill(manaFillImage, 0f);
             return;
         }
 
         float max = Mathf.Max(1f, playerMana.MaxMana);
         float current = Mathf.Clamp(playerMana.CurrentMana, 0f, max);
-        SetFill(manaFillImage, current / max, false);
+        ShieldedHealthBarUI.SetFill(manaFillImage, current / max);
     }
 
+    // 초상화는 바인딩 시에만 갱신 (매 프레임 sprite 재할당 제거)
     private void RefreshPortrait()
     {
         if (portraitImage == null)
@@ -244,81 +170,9 @@ public class PlayerStatusUI : MonoBehaviour
 
     private void PrepareFillImages()
     {
-        PrepareFillImage(hpFillImage, false);
-        PrepareShieldImage();
-        PrepareFillImage(manaFillImage, false);
-    }
-
-    private void PrepareShieldImage()
-    {
-        if (shieldFillImage == null)
-            return;
-
-        if (shieldDisplayMode == PlayerShieldUIDisplayMode.AdjacentToCurrentHealth)
-            PrepareAdjacentShieldImage();
-        else
-            PrepareFillImage(shieldFillImage, shieldFillFromRight);
-    }
-
-    private void PrepareFillImage(Image image, bool fillFromRight)
-    {
-        if (image == null)
-            return;
-
-        if (useGeneratedSolidFillSprite)
-            image.sprite = GetSolidFillSprite();
-
-        image.type = Image.Type.Filled;
-        image.fillMethod = Image.FillMethod.Horizontal;
-        image.fillOrigin = fillFromRight ? 1 : 0; 
-        image.preserveAspect = false;
-    }
-
-    private void PrepareAdjacentShieldImage()
-    {
-        if (shieldFillImage == null)
-            return;
-
-        if (useGeneratedSolidFillSprite)
-            shieldFillImage.sprite = GetSolidFillSprite();
-
-        shieldFillImage.type = Image.Type.Simple;
-        shieldFillImage.preserveAspect = false;
-        shieldFillImage.color = shieldColor;
-    }
-
-    private void ResetShieldRectToFullWidth()
-    {
-        if (shieldFillImage == null)
-            return;
-
-        RectTransform rect = shieldFillImage.rectTransform;
-        rect.anchorMin = new Vector2(0f, 0f);
-        rect.anchorMax = new Vector2(1f, 1f);
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-        rect.pivot = new Vector2(0.5f, 0.5f);
-    }
-
-    private void ClearShieldFill()
-    {
-        if (shieldFillImage == null)
-            return;
-
-        if (shieldDisplayMode == PlayerShieldUIDisplayMode.AdjacentToCurrentHealth)
-        {
-            PrepareAdjacentShieldImage();
-            RectTransform rect = shieldFillImage.rectTransform;
-            rect.anchorMin = new Vector2(0f, 0f);
-            rect.anchorMax = new Vector2(0f, 1f);
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-            shieldFillImage.fillAmount = 1f;
-        }
-        else
-        {
-            SetFill(shieldFillImage, 0f, shieldFillFromRight);
-        }
+        ShieldedHealthBarUI.PrepareFillImage(hpFillImage, false, useGeneratedSolidFillSprite);
+        ShieldedHealthBarUI.PrepareShieldImage(shieldFillImage, BuildShieldSettings());
+        ShieldedHealthBarUI.PrepareFillImage(manaFillImage, false, useGeneratedSolidFillSprite);
     }
 
     private void ApplyColors()
@@ -333,29 +187,17 @@ public class PlayerStatusUI : MonoBehaviour
             manaFillImage.color = manaColor;
     }
 
-    private void SetFill(Image image, float amount, bool fillFromRight)
+    private ShieldBarSettings BuildShieldSettings()
     {
-        if (image == null)
-            return;
-
-        PrepareFillImage(image, fillFromRight);
-        image.fillAmount = Mathf.Clamp01(amount);
-    }
-
-    private static Sprite GetSolidFillSprite()
-    {
-        if (solidFillSprite != null)
-            return solidFillSprite;
-
-        Texture2D texture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
-        texture.name = "Generated_UI_SolidFill";
-        texture.hideFlags = HideFlags.HideAndDontSave;
-        texture.SetPixel(0, 0, Color.white);
-        texture.Apply(false, true);
-
-        solidFillSprite = Sprite.Create(texture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
-        solidFillSprite.name = "Generated_UI_SolidFillSprite";
-        solidFillSprite.hideFlags = HideFlags.HideAndDontSave;
-        return solidFillSprite;
+        return new ShieldBarSettings
+        {
+            displayMode = shieldDisplayMode,
+            fillFromRight = shieldFillFromRight,
+            hideWhenEmpty = hideShieldWhenEmpty,
+            customDisplayMax = customShieldDisplayMax,
+            showAtRightWhenHealthFull = showShieldAtRightWhenHealthFull,
+            useGeneratedSprite = useGeneratedSolidFillSprite,
+            shieldColor = shieldColor
+        };
     }
 }

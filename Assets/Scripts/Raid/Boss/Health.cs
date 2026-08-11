@@ -44,6 +44,7 @@ public class Health : MonoBehaviour
 
     private void Awake()
     {
+        CombatRegistry.Register(this);
         EnsureEvents();
 
         if (startWithFullHealth)
@@ -63,6 +64,11 @@ public class Health : MonoBehaviour
     {
         maxHealth = Mathf.Max(1f, maxHealth);
         currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
+    }
+
+    private void OnDestroy()
+    {
+        CombatRegistry.Unregister(this);
     }
 
     public void EnsureEvents()

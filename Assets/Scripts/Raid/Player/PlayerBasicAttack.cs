@@ -2,9 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Animations;
 using UnityEngine.EventSystems;
-using UnityEngine.Playables;
 using UnityEngine.Serialization;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -60,9 +58,9 @@ public class PlayerBasicAttack : MonoBehaviour
     private BasicAttackStats currentStats;
     private float nextAttackAllowedTime;
 
-    private PlayableGraph attackGraph;
-    private AnimationPlayableOutput attackOutput;
-    private AnimationClipPlayable attackPlayable;
+    // 공격 클립 직접 재생을 담당하는 공용 플레이어
+    private SingleClipPlayer attackClipPlayer;
+    private SingleClipPlayer AttackClipPlayer => attackClipPlayer ??= new SingleClipPlayer(name + "_BasicAttackGraph", "BasicAttack");
 
     private float originalAnimatorSpeed = 1f;
     private bool originalRootMotion;
@@ -289,44 +287,12 @@ public class PlayerBasicAttack : MonoBehaviour
 
     private void PlayDirectClip(AnimationClip clip, float attackDuration)
     {
-        if (animator == null || clip == null)
-            return;
-
-        CreateAttackGraphIfNeeded();
-
-        if (attackPlayable.IsValid())
-            attackPlayable.Destroy();
-
-        attackPlayable = AnimationClipPlayable.Create(attackGraph, clip);
-        attackPlayable.SetApplyFootIK(false);
-        attackPlayable.SetApplyPlayableIK(false);
-        attackPlayable.SetTime(0d);
-        attackPlayable.SetDone(false);
-
-        double speed = attackDuration <= 0.0001f ? 1d : clip.length / attackDuration;
-        attackPlayable.SetSpeed(speed);
-
-        attackOutput.SetSourcePlayable(attackPlayable);
-        attackGraph.Play();
-    }
-
-    private void CreateAttackGraphIfNeeded()
-    {
-        if (attackGraph.IsValid())
-            return;
-
-        attackGraph = PlayableGraph.Create(name + "_BasicAttackGraph");
-        attackGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
-        attackOutput = AnimationPlayableOutput.Create(attackGraph, "BasicAttack", animator);
+        AttackClipPlayer.PlayTimed(animator, clip, attackDuration);
     }
 
     private void StopDirectAttackClipIfNeeded()
     {
-        if (attackPlayable.IsValid())
-            attackPlayable.Destroy();
-
-        if (attackGraph.IsValid())
-            attackGraph.Stop();
+        attackClipPlayer?.Stop();
     }
 
     private void SetMovementStateForAttack(BasicAttackStats stats, bool attacking)
@@ -464,12 +430,13 @@ public class PlayerBasicAttack : MonoBehaviour
         ref float bestScore,
         HashSet<Health> visitedHealth)
     {
-        DamageReceiver[] receivers = FindObjectsByType<DamageReceiver>();
-        for (int i = 0; i < receivers.Length; i++)
+        // 씬 전체 탐색 대신 레지스트리 순회 (공격 및 UI 폴링마다 호출되는 핫패스)
+        IReadOnlyList<DamageReceiver> receivers = CombatRegistry.DamageReceivers;
+        for (int i = 0; i < receivers.Count; i++)
             TrySetBestTargetFromReceiver(receivers[i], origin, forward, stats, ref best, ref bestScore, visitedHealth, "HorizontalAutoTarget-DamageReceiver");
 
-        Health[] healths = FindObjectsByType<Health>();
-        for (int i = 0; i < healths.Length; i++)
+        IReadOnlyList<Health> healths = CombatRegistry.Healths;
+        for (int i = 0; i < healths.Count; i++)
         {
             Health health = healths[i];
             if (health == null)
@@ -712,19 +679,7 @@ public class PlayerBasicAttack : MonoBehaviour
 
     private string ResolveAnimatorStateName(string stateName, bool warnIfMissing)
     {
-        if (animator == null || string.IsNullOrWhiteSpace(stateName))
-            return string.Empty;
-
-        int shortHash = Animator.StringToHash(stateName);
-        if (animator.HasState(0, shortHash))
-            return stateName;
-
-        string baseLayerPath = "Base Layer." + stateName;
-        int fullHash = Animator.StringToHash(baseLayerPath);
-        if (animator.HasState(0, fullHash))
-            return baseLayerPath;
-
-        return string.Empty;
+        return AnimatorStateUtility.ResolveStateName(animator, stateName);
     }
 
     private bool IsFlyingBossHealth(Health targetHealth)
@@ -752,8 +707,7 @@ public class PlayerBasicAttack : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (attackGraph.IsValid())
-            attackGraph.Destroy();
+        attackClipPlayer?.Dispose();
     }
 
     private void OnDrawGizmosSelected()

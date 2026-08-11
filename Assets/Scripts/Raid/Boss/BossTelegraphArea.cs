@@ -26,6 +26,7 @@ public class BossTelegraphArea : MonoBehaviour
 
     private Renderer cachedRenderer;
     private Material runtimeMaterial;
+    private Mesh runtimeMesh;
     private DangerZoneHandle dangerZoneHandle;
     private float zoneRadius;
     private float zoneLength;
@@ -33,6 +34,12 @@ public class BossTelegraphArea : MonoBehaviour
     private float zoneAngle;
     private float elapsed;
     private Color baseColor = new Color(1f, 0f, 0f, 0.45f);
+
+    // 셰이더 프로퍼티 ID 캐시 (매 프레임 문자열 조회 방지)
+    private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+    private static readonly int ColorId = Shader.PropertyToID("_Color");
+    private bool hasBaseColorProperty;
+    private bool hasColorProperty;
 
     public static BossTelegraphArea CreateCircle(
         Vector3 center,
@@ -110,9 +117,11 @@ public class BossTelegraphArea : MonoBehaviour
 
         MeshFilter filter = go.AddComponent<MeshFilter>();
         MeshRenderer renderer = go.AddComponent<MeshRenderer>();
-        filter.mesh = BuildConeMesh(radius, Mathf.Clamp(angleDegrees, 1f, 360f), 48);
+        Mesh coneMesh = BuildConeMesh(radius, Mathf.Clamp(angleDegrees, 1f, 360f), 48);
+        filter.mesh = coneMesh;
 
         BossTelegraphArea area = go.AddComponent<BossTelegraphArea>();
+        area.runtimeMesh = coneMesh;
         area.shape = BossTelegraphShape.Cone;
         area.zoneLength = radius;
         area.zoneRadius = radius;
@@ -132,6 +141,11 @@ public class BossTelegraphArea : MonoBehaviour
             cachedRenderer = GetComponentInChildren<Renderer>(true);
 
         runtimeMaterial = sharedMaterial != null ? new Material(sharedMaterial) : CreateDefaultTelegraphMaterial(color);
+
+        // 어떤 색상 프로퍼티를 가졌는지 1회만 판정
+        hasBaseColorProperty = runtimeMaterial.HasProperty(BaseColorId);
+        hasColorProperty = runtimeMaterial.HasProperty(ColorId);
+
         ApplyColor(color);
 
         if (cachedRenderer != null)
@@ -191,10 +205,20 @@ public class BossTelegraphArea : MonoBehaviour
         if (runtimeMaterial == null)
             return;
 
-        if (runtimeMaterial.HasProperty("_BaseColor"))
-            runtimeMaterial.SetColor("_BaseColor", color);
-        if (runtimeMaterial.HasProperty("_Color"))
-            runtimeMaterial.SetColor("_Color", color);
+        if (hasBaseColorProperty)
+            runtimeMaterial.SetColor(BaseColorId, color);
+        if (hasColorProperty)
+            runtimeMaterial.SetColor(ColorId, color);
+    }
+
+    // 텔레그래프마다 생성하는 런타임 Material과 부채꼴 Mesh 정리 (누수 방지)
+    private void OnDestroy()
+    {
+        if (runtimeMaterial != null)
+            Destroy(runtimeMaterial);
+
+        if (runtimeMesh != null)
+            Destroy(runtimeMesh);
     }
 
     private static Material CreateDefaultTelegraphMaterial(Color color)

@@ -2,8 +2,6 @@
 
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Animations;
-using UnityEngine.Playables;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -68,10 +66,9 @@ public class PlayerMovement : MonoBehaviour
     private float verticalVelocity;
     private readonly HashSet<string> animatorParameterNames = new HashSet<string>();
 
-    private PlayableGraph movementGraph;
-    private AnimationPlayableOutput movementOutput;
-    private AnimationClipPlayable movementPlayable;
-    private AnimationClip currentMovementClip;
+    // 이동 클립 직접 재생을 담당하는 공용 플레이어
+    private SingleClipPlayer movementClipPlayer;
+    private SingleClipPlayer MovementClipPlayer => movementClipPlayer ??= new SingleClipPlayer(name + "_MovementGraph", "Movement");
 
     private void Awake()
     {
@@ -317,20 +314,7 @@ public class PlayerMovement : MonoBehaviour
 
         if (useDirectClipPlayback && clip != null)
         {
-            CreateMovementGraphIfNeeded();
-
-            if (movementPlayable.IsValid())
-                movementPlayable.Destroy();
-
-            currentMovementClip = clip;
-            movementPlayable = AnimationClipPlayable.Create(movementGraph, clip);
-            movementPlayable.SetApplyFootIK(false);
-            movementPlayable.SetApplyPlayableIK(false);
-            movementPlayable.SetTime(0d);
-            movementPlayable.SetSpeed(Mathf.Max(0.01f, speed));
-            movementPlayable.SetDone(false);
-            movementOutput.SetSourcePlayable(movementPlayable);
-            movementGraph.Play();
+            MovementClipPlayer.Play(animator, clip, speed, loopMovementClips);
             return;
         }
 
@@ -346,55 +330,22 @@ public class PlayerMovement : MonoBehaviour
         if (animator == null || string.IsNullOrWhiteSpace(stateName))
             return string.Empty;
 
-        int shortHash = Animator.StringToHash(stateName);
-        if (animator.HasState(0, shortHash))
-            return stateName;
+        string resolved = AnimatorStateUtility.ResolveStateName(animator, stateName);
+        if (string.IsNullOrEmpty(resolved))
+            Debug.LogWarning($"[PlayerMovement] Animator state not found: {stateName}. If you use Direct Clip Playback with clips assigned, this warning can be ignored.", this);
 
-        string baseLayerPath = "Base Layer." + stateName;
-        int fullHash = Animator.StringToHash(baseLayerPath);
-        if (animator.HasState(0, fullHash))
-            return baseLayerPath;
-
-        Debug.LogWarning($"[PlayerMovement] Animator state not found: {stateName}. If you use Direct Clip Playback with clips assigned, this warning can be ignored.", this);
-        return string.Empty;
-    }
-
-    private void CreateMovementGraphIfNeeded()
-    {
-        if (movementGraph.IsValid())
-            return;
-
-        movementGraph = PlayableGraph.Create(name + "_MovementGraph");
-        movementGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
-        movementOutput = AnimationPlayableOutput.Create(movementGraph, "Movement", animator);
+        return resolved;
     }
 
     private void StopDirectMovementClip()
     {
-        currentMovementClip = null;
-
-        if (movementPlayable.IsValid())
-            movementPlayable.Destroy();
-
-        if (movementGraph.IsValid())
-            movementGraph.Stop();
+        movementClipPlayer?.Stop();
     }
 
     private void KeepMovementClipLoopingIfNeeded()
     {
-        if (!loopMovementClips || !movementGraph.IsValid() || !movementPlayable.IsValid() || currentMovementClip == null)
-            return;
-
-        double length = currentMovementClip.length;
-        if (length <= 0.0001d)
-            return;
-
-        double time = movementPlayable.GetTime();
-        if (time >= length)
-        {
-            movementPlayable.SetTime(time % length);
-            movementPlayable.SetDone(false);
-        }
+        if (loopMovementClips)
+            movementClipPlayer?.Tick();
     }
 
     private void CacheAnimatorParameters()
@@ -426,7 +377,6 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (movementGraph.IsValid())
-            movementGraph.Destroy();
+        movementClipPlayer?.Dispose();
     }
 }

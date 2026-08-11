@@ -1,5 +1,6 @@
 // 보스 패턴 VFX
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class BossPatternProjectile : MonoBehaviour
@@ -60,11 +61,12 @@ public class BossPatternProjectile : MonoBehaviour
     {
         if (hitAnyPartyMember)
         {
-            PlayerStatus[] players = FindObjectsByType<PlayerStatus>();
-            for (int i = 0; i < players.Length; i++)
+            // 씬 전체 탐색 대신 레지스트리 순회 (투사체당 매 프레임 호출되는 핫패스)
+            IReadOnlyList<PlayerStatus> players = CombatRegistry.PlayerStatuses;
+            for (int i = 0; i < players.Count; i++)
             {
                 PlayerStatus player = players[i];
-                if (!IsValidTarget(player))
+                if (!PartyTargetUtility.IsValidPlayerTarget(player))
                     continue;
 
                 Vector3 flat = player.transform.position - transform.position;
@@ -76,26 +78,12 @@ public class BossPatternProjectile : MonoBehaviour
             return null;
         }
 
-        if (!IsValidTarget(targetPlayer))
+        if (!PartyTargetUtility.IsValidPlayerTarget(targetPlayer))
             return null;
 
         Vector3 delta = targetPlayer.transform.position - transform.position;
         delta.y = 0f;
         return delta.magnitude <= hitRadius ? targetPlayer : null;
-    }
-
-    private bool IsValidTarget(PlayerStatus player)
-    {
-        if (player == null)
-            return false;
-
-        if (player.GetComponent<BossDummyController>() != null)
-            return false;
-
-        if (player.Health == null || player.Health.IsDead)
-            return false;
-
-        return true;
     }
 
     private void Complete(bool hit)

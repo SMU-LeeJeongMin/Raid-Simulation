@@ -157,24 +157,10 @@ public class PlayerSkillDatabase : ScriptableObject
                 areaDamageRadius = 3.2f,
                 multiHitCount = 5,
                 multiHitInterval = 0.13f,
-                useProjectileVFX = true,
-                applyDamageOnProjectileImpact = true,
-                projectileRenderMode = PlayerSkillVFXProjectileRenderMode.StretchLine,
-                projectileStartPoint = PlayerSkillVFXProjectileStartPoint.Caster,
-                projectileVFXStartOffset = new Vector3(0f, 0.9f, 0.5f),
-                projectileVFXRotationMode = PlayerSkillVFXRotationMode.DirectionToTarget,
-                projectileLineAxis = PlayerSkillVFXLineAxis.Z,
-                projectileLineLengthScale = 1f,
-                projectileLineThicknessScale = 1f,
-                projectileLineVisibleDuration = 0.35f,
-                projectileLineImpactDelay = -1f,
-                projectileSpeed = 18f,
-                projectileMaxLifetime = 2f,
-                spawnTargetVFXOnProjectileImpact = true,
                 targetVFXAutoDestroyDelay = 3f,
                 lockMovementDuringSkill = true,
                 suppressMovementAnimationDuringSkill = true
-            }
+            }.WithStretchLineProjectile(projectileSpeed: 18f, projectileMaxLifetime: 2f, lineVisibleDuration: 0.35f)
         };
     }
 
@@ -314,23 +300,9 @@ public class PlayerSkillDatabase : ScriptableObject
                 damage = 550f,
                 useAreaDamage = true,
                 areaDamageRadius = 4.0f,
-                useProjectileVFX = true,
-                applyDamageOnProjectileImpact = true,
-                projectileRenderMode = PlayerSkillVFXProjectileRenderMode.StretchLine,
-                projectileStartPoint = PlayerSkillVFXProjectileStartPoint.Caster,
-                projectileVFXStartOffset = new Vector3(0f, 0.9f, 0.5f),
-                projectileVFXRotationMode = PlayerSkillVFXRotationMode.DirectionToTarget,
-                projectileLineAxis = PlayerSkillVFXLineAxis.Z,
-                projectileLineLengthScale = 1f,
-                projectileLineThicknessScale = 1f,
-                projectileLineVisibleDuration = 0.45f,
-                projectileLineImpactDelay = -1f,
-                projectileSpeed = 12f,
-                projectileMaxLifetime = 3f,
-                spawnTargetVFXOnProjectileImpact = true,
                 castVFXAutoDestroyDelay = 2f,
                 targetVFXAutoDestroyDelay = 4f
-            }
+            }.WithStretchLineProjectile(projectileSpeed: 12f, projectileMaxLifetime: 3f, lineVisibleDuration: 0.45f)
         };
     }
 
@@ -389,7 +361,6 @@ public class PlayerSkillDatabase : ScriptableObject
                 duration = 5f,
                 tickInterval = 1f,
                 lockBasicAttackDuringSkill = true,
-                lockOtherSkillsDuringSkill = true,
                 lockMovementDuringSkill = false,
                 suppressMovementAnimationDuringSkill = false,
                 movementSpeedMultiplier = 1.35f,
@@ -447,7 +418,6 @@ public class PlayerSkillDefinition
     [Header("Animation")]
     public AnimationClip animationClip;
     public string animatorStateName = "ATK1";
-    public bool useDirectClipPlayback = true;
     [Min(0.05f)] public float actionDuration = 0.8f;
     [Range(0f, 1f)] public float effectDelayNormalized = 0.45f;
     [Min(0f)] public float extraRecoveryTime = 0f;
@@ -456,7 +426,6 @@ public class PlayerSkillDefinition
     public bool lockMovementDuringSkill = true;
     public bool suppressMovementAnimationDuringSkill = true;
     public bool lockBasicAttackDuringSkill = true;
-    public bool lockOtherSkillsDuringSkill = true;
     public bool faceTargetOnSkill = true;
     [Min(0.1f)] public float movementSpeedMultiplier = 1f;
 
@@ -549,4 +518,25 @@ public class PlayerSkillDefinition
     public Vector3 auraVFXEuler = Vector3.zero;
     public Vector3 auraVFXScale = Vector3.one;
     [Min(0.05f)] public float auraVFXAutoDestroyDelay = 5f;
+
+    // 시전자에서 대상으로 뻗는 직선(StretchLine) 투사체 공통 설정 적용
+    // 워리어와 메이지 궁극기에 중복 기술되어 있던 12줄의 단일 정의
+    public PlayerSkillDefinition WithStretchLineProjectile(float projectileSpeed, float projectileMaxLifetime, float lineVisibleDuration)
+    {
+        useProjectileVFX = true;
+        applyDamageOnProjectileImpact = true;
+        projectileRenderMode = PlayerSkillVFXProjectileRenderMode.StretchLine;
+        projectileStartPoint = PlayerSkillVFXProjectileStartPoint.Caster;
+        projectileVFXStartOffset = new Vector3(0f, 0.9f, 0.5f);
+        projectileVFXRotationMode = PlayerSkillVFXRotationMode.DirectionToTarget;
+        projectileLineAxis = PlayerSkillVFXLineAxis.Z;
+        projectileLineLengthScale = 1f;
+        projectileLineThicknessScale = 1f;
+        projectileLineVisibleDuration = lineVisibleDuration;
+        projectileLineImpactDelay = -1f;
+        this.projectileSpeed = projectileSpeed;
+        this.projectileMaxLifetime = projectileMaxLifetime;
+        spawnTargetVFXOnProjectileImpact = true;
+        return this;
+    }
 }

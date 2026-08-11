@@ -30,104 +30,28 @@ public class BasicAttackStatsDatabase : ScriptableObject
     [ContextMenu("Fill Default Class Stats")]
     public void FillDefaultClassStats()
     {
+        // 직업 간에 달라지는 값만 지정, 공통값은 BasicAttackStats 필드 초기화 값 사용
         classStats = new[]
         {
-            new BasicAttackStats
-            {
-                characterId = "warrior",
-                displayName = "Warrior",
-                damage = 85f,
-                ultimateGainOnHit = 4f,
-                attackDuration = 0.95f,
-                extraRecoveryTime = 0f,
-                hitNormalizedTime = 0.45f,
-                range = 1.0f,
-                hitRadius = 0.65f,
-                requireTargetInFront = true,
-                maxTargetAngle = 180f,
-                useHorizontalAutoTarget = true,
-                useColliderBoundsForAutoTarget = true,
-                autoTargetExtraRange = 0.35f,
-                animatorStateName = "ATK0",
-                returnStateName = "IdleA",
-                useDirectClipPlayback = true,
-                disableRootMotionDuringAttack = true,
-                lockMovementDuringAttack = true,
-                suppressMovementAnimationDuringAttack = true,
-                faceTargetOnAttack = true
-            },
-            new BasicAttackStats
-            {
-                characterId = "archer",
-                displayName = "Archer",
-                damage = 55f,
-                ultimateGainOnHit = 3f,
-                attackDuration = 0.60f,
-                extraRecoveryTime = 0f,
-                hitNormalizedTime = 0.45f,
-                range = 6.0f,
-                hitRadius = 0.45f,
-                requireTargetInFront = true,
-                maxTargetAngle = 180f,
-                useHorizontalAutoTarget = true,
-                useColliderBoundsForAutoTarget = true,
-                autoTargetExtraRange = 0.35f,
-                animatorStateName = "Shoot",
-                returnStateName = "IdleA",
-                useDirectClipPlayback = true,
-                disableRootMotionDuringAttack = true,
-                lockMovementDuringAttack = true,
-                suppressMovementAnimationDuringAttack = true,
-                faceTargetOnAttack = true
-            },
-            new BasicAttackStats
-            {
-                characterId = "mage",
-                displayName = "Mage",
-                damage = 70f,
-                ultimateGainOnHit = 4f,
-                attackDuration = 0.80f,
-                extraRecoveryTime = 0f,
-                hitNormalizedTime = 0.45f,
-                range = 5.0f,
-                hitRadius = 0.5f,
-                requireTargetInFront = true,
-                maxTargetAngle = 180f,
-                useHorizontalAutoTarget = true,
-                useColliderBoundsForAutoTarget = true,
-                autoTargetExtraRange = 0.35f,
-                animatorStateName = "ATK0",
-                returnStateName = "IdleA",
-                useDirectClipPlayback = true,
-                disableRootMotionDuringAttack = true,
-                lockMovementDuringAttack = true,
-                suppressMovementAnimationDuringAttack = true,
-                faceTargetOnAttack = true
-            },
-            new BasicAttackStats
-            {
-                characterId = "healer",
-                displayName = "Healer",
-                damage = 40f,
-                ultimateGainOnHit = 4f,
-                attackDuration = 1.05f,
-                extraRecoveryTime = 0f,
-                hitNormalizedTime = 0.45f,
-                range = 4.5f,
-                hitRadius = 0.45f,
-                requireTargetInFront = true,
-                maxTargetAngle = 180f,
-                useHorizontalAutoTarget = true,
-                useColliderBoundsForAutoTarget = true,
-                autoTargetExtraRange = 0.35f,
-                animatorStateName = "ATK0",
-                returnStateName = "IdleA",
-                useDirectClipPlayback = true,
-                disableRootMotionDuringAttack = true,
-                lockMovementDuringAttack = true,
-                suppressMovementAnimationDuringAttack = true,
-                faceTargetOnAttack = true
-            }
+            MakeStats("warrior", "Warrior", damage: 85f, ultimateGain: 4f, duration: 0.95f, range: 1.0f, hitRadius: 0.65f, attackStateName: "ATK0"),
+            MakeStats("archer", "Archer", damage: 55f, ultimateGain: 3f, duration: 0.60f, range: 6.0f, hitRadius: 0.45f, attackStateName: "Shoot"),
+            MakeStats("mage", "Mage", damage: 70f, ultimateGain: 4f, duration: 0.80f, range: 5.0f, hitRadius: 0.5f, attackStateName: "ATK0"),
+            MakeStats("healer", "Healer", damage: 40f, ultimateGain: 4f, duration: 1.05f, range: 4.5f, hitRadius: 0.45f, attackStateName: "ATK0")
+        };
+    }
+
+    private static BasicAttackStats MakeStats(string id, string displayName, float damage, float ultimateGain, float duration, float range, float hitRadius, string attackStateName)
+    {
+        return new BasicAttackStats
+        {
+            characterId = id,
+            displayName = displayName,
+            damage = damage,
+            ultimateGainOnHit = ultimateGain,
+            attackDuration = duration,
+            range = range,
+            hitRadius = hitRadius,
+            animatorStateName = attackStateName
         };
     }
 

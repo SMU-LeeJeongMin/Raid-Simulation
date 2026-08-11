@@ -2,8 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Animations;
-using UnityEngine.Playables;
 
 [RequireComponent(typeof(Health))]
 public class BossAddPhaseController : MonoBehaviour
@@ -87,11 +85,9 @@ public class BossAddPhaseController : MonoBehaviour
     private readonly List<SlimeAddEnemy> activeSlimes = new List<SlimeAddEnemy>();
     private Coroutine addPhaseRoutine;
 
-    private PlayableGraph graph;
-    private AnimationPlayableOutput output;
-    private AnimationClipPlayable playable;
-    private AnimationClip currentLoopClip;
-    private bool looping;
+    // 페이즈 클립 직접 재생을 담당하는 공용 플레이어
+    private SingleClipPlayer clipPlayer;
+    private SingleClipPlayer ClipPlayer => clipPlayer ??= new SingleClipPlayer(name + "_BossAddPhaseGraph", "BossAddPhase");
 
     private bool previousBasicEnabled;
     private bool previousSkillEnabled;
@@ -118,6 +114,7 @@ public class BossAddPhaseController : MonoBehaviour
         {
             bossHealth.EnsureEvents();
             bossHealth.onHealthChanged.AddListener(OnBossHealthChanged);
+            bossHealth.onDeath.AddListener(OnBossDeath);
         }
     }
 
@@ -125,6 +122,37 @@ public class BossAddPhaseController : MonoBehaviour
     {
         if (bossHealth != null && bossHealth.onHealthChanged != null)
             bossHealth.onHealthChanged.RemoveListener(OnBossHealthChanged);
+        if (bossHealth != null && bossHealth.onDeath != null)
+            bossHealth.onDeath.RemoveListener(OnBossDeath);
+
+        // 비활성화 시 진행 중인 소환 페이즈 강제 종료 (무적 및 컨트롤러 잠금 누수 방지)
+        AbortAddPhase();
+    }
+
+    // 페이즈 도중 보스 사망 시 무적/잠금 상태가 남지 않도록 즉시 중단
+    private void OnBossDeath(Health deadHealth)
+    {
+        AbortAddPhase();
+    }
+
+    private void AbortAddPhase()
+    {
+        if (addPhaseRoutine != null)
+        {
+            StopCoroutine(addPhaseRoutine);
+            addPhaseRoutine = null;
+        }
+
+        if (!addPhaseActive)
+            return;
+
+        StopLoopAnimation();
+
+        if (bossHealth != null && makeBossDamageImmune)
+            bossHealth.SetDamageImmune(false);
+
+        LockBossControllers(false);
+        addPhaseActive = false;
     }
 
     private void Update()
@@ -180,6 +208,7 @@ public class BossAddPhaseController : MonoBehaviour
 
         LockBossControllers(false);
         addPhaseActive = false;
+        addPhaseRoutine = null;
     }
 
     private void LockBossControllers(bool locked)
@@ -225,7 +254,7 @@ public class BossAddPhaseController : MonoBehaviour
             Quaternion rotation = Quaternion.Euler(0f, UnityEngine.Random.Range(0f, 360f), 0f);
             GameObject slimeObject = CreateSlimeObject(position, rotation);
 
-            SetLayerRecursively(slimeObject, LayerMask.NameToLayer(slimeLayerName));
+            LayerUtility.SetLayerRecursively(slimeObject, slimeLayerName);
 
             SlimeAddEnemy slime = slimeObject.GetComponent<SlimeAddEnemy>();
             if (slime == null)
@@ -280,17 +309,7 @@ public class BossAddPhaseController : MonoBehaviour
             slimeObject.transform.localScale = new Vector3(0.9f, 0.7f, 0.9f);
             Renderer renderer = slimeObject.GetComponent<Renderer>();
             if (renderer != null)
-            {
-                Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-                if (shader == null)
-                    shader = Shader.Find("Standard");
-                if (shader == null)
-                    shader = Shader.Find("Sprites/Default");
-
-                Material mat = new Material(shader);
-                mat.color = new Color(0.2f, 0.9f, 0.25f, 1f);
-                renderer.sharedMaterial = mat;
-            }
+                renderer.sharedMaterial = GetFallbackSlimeMaterial();
         }
 
         slimeObject.name = "Add_Slime_ExplodingOrb";
@@ -383,32 +402,17 @@ public class BossAddPhaseController : MonoBehaviour
 
         if (useDirectClip && clip != null)
         {
-            CreateGraphIfNeeded();
-            if (playable.IsValid())
-                playable.Destroy();
-
-            playable = AnimationClipPlayable.Create(graph, clip);
-            playable.SetApplyFootIK(false);
-            playable.SetApplyPlayableIK(false);
-            playable.SetTime(0d);
-            playable.SetSpeed(1d);
-            output.SetSourcePlayable(playable);
-            graph.Play();
+            ClipPlayer.Play(animator, clip, 1f, loop);
 
             float elapsed = 0f;
-            double length = Mathf.Max(0.01f, clip.length);
             while (elapsed < duration)
             {
                 elapsed += Time.deltaTime;
-                if (loop && playable.IsValid() && playable.GetTime() >= length)
-                    playable.SetTime(0d);
+                ClipPlayer.Tick();
                 yield return null;
             }
 
-            if (playable.IsValid())
-                playable.Destroy();
-            if (graph.IsValid())
-                graph.Stop();
+            ClipPlayer.Stop();
             yield break;
         }
 
@@ -431,19 +435,7 @@ public class BossAddPhaseController : MonoBehaviour
 
         if (useDirectLoopClipPlayback && loopClip != null)
         {
-            CreateGraphIfNeeded();
-            if (playable.IsValid())
-                playable.Destroy();
-
-            currentLoopClip = loopClip;
-            looping = true;
-            playable = AnimationClipPlayable.Create(graph, loopClip);
-            playable.SetApplyFootIK(false);
-            playable.SetApplyPlayableIK(false);
-            playable.SetTime(0d);
-            playable.SetSpeed(1d);
-            output.SetSourcePlayable(playable);
-            graph.Play();
+            ClipPlayer.Play(animator, loopClip, 1f, true);
             return;
         }
 
@@ -453,49 +445,37 @@ public class BossAddPhaseController : MonoBehaviour
 
     private void KeepLoopClipPlaying()
     {
-        if (!addPhaseActive || !looping || !playable.IsValid() || currentLoopClip == null)
-            return;
-
-        double length = Mathf.Max(0.01f, currentLoopClip.length);
-        if (playable.GetTime() >= length)
-            playable.SetTime(0d);
+        if (addPhaseActive)
+            clipPlayer?.Tick();
     }
 
     private void StopLoopAnimation()
     {
-        looping = false;
-        currentLoopClip = null;
-
-        if (playable.IsValid())
-            playable.Destroy();
-
-        if (graph.IsValid())
-            graph.Stop();
+        clipPlayer?.Stop();
     }
 
-    private void CreateGraphIfNeeded()
+    // 프리팹 없이 소환되는 디버그용 슬라임 구체의 공용 Material (마리당 생성 누수 방지)
+    private static Material fallbackSlimeMaterial;
+
+    private static Material GetFallbackSlimeMaterial()
     {
-        if (graph.IsValid())
-            return;
+        if (fallbackSlimeMaterial != null)
+            return fallbackSlimeMaterial;
 
-        graph = PlayableGraph.Create(name + "_BossAddPhaseGraph");
-        graph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
-        output = AnimationPlayableOutput.Create(graph, "BossAddPhase", animator);
-    }
+        Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+        if (shader == null)
+            shader = Shader.Find("Standard");
+        if (shader == null)
+            shader = Shader.Find("Sprites/Default");
 
-    private void SetLayerRecursively(GameObject root, int layer)
-    {
-        if (root == null || layer < 0)
-            return;
-
-        Transform[] children = root.GetComponentsInChildren<Transform>(true);
-        for (int i = 0; i < children.Length; i++)
-            children[i].gameObject.layer = layer;
+        fallbackSlimeMaterial = new Material(shader);
+        fallbackSlimeMaterial.name = "M_Runtime_FallbackSlime";
+        fallbackSlimeMaterial.color = new Color(0.2f, 0.9f, 0.25f, 1f);
+        return fallbackSlimeMaterial;
     }
 
     private void OnDestroy()
     {
-        if (graph.IsValid())
-            graph.Destroy();
+        clipPlayer?.Dispose();
     }
 }

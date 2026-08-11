@@ -10,7 +10,13 @@ public class DamageReceiver : MonoBehaviour
 
     private void Awake()
     {
+        CombatRegistry.Register(this);
         AutoFindHealthIfNeeded();
+    }
+
+    private void OnDestroy()
+    {
+        CombatRegistry.Unregister(this);
     }
 
     private void Reset()

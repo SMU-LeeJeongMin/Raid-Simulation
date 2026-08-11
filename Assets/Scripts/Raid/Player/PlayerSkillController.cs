@@ -4,9 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Animations;
 using UnityEngine.EventSystems;
-using UnityEngine.Playables;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -58,9 +56,9 @@ public class PlayerSkillController : MonoBehaviour
     [SerializeField] private float ultimateReadyTime;
     [SerializeField] private PlayerSkillSlot activeSkillSlot = PlayerSkillSlot.Skill1;
 
-    private PlayableGraph skillGraph;
-    private AnimationPlayableOutput skillOutput;
-    private AnimationClipPlayable skillPlayable;
+    // 스킬 클립 직접 재생을 담당하는 공용 플레이어
+    private SingleClipPlayer skillClipPlayer;
+    private SingleClipPlayer SkillClipPlayer => skillClipPlayer ??= new SingleClipPlayer(name + "_SkillGraph", "Skill");
 
     private float originalAnimatorSpeed = 1f;
     private bool originalRootMotion;
@@ -160,58 +158,9 @@ public class PlayerSkillController : MonoBehaviour
 
     public bool TryUseSkill(PlayerSkillSlot slot)
     {
-        ResolveReferences();
-
-        if (skillInProgress)
+        // 실제 사용과 UI 표시가 동일한 검증 규칙 공유 (규칙 불일치로 인한 표류 방지)
+        if (!ValidateSkillUse(slot, requireTarget: true, out _, out PlayerSkillDefinition skill, out DamageReceiver target))
             return false;
-
-        PlayerSkillDefinition skill = ResolveSkill(slot);
-        if (skill == null)
-        {
-            return false;
-        }
-
-        if (Time.time < GetReadyTime(slot))
-        {
-            return false;
-        }
-
-        bool offensive = IsOffensiveSkill(skill);
-        DamageReceiver target = null;
-        if (offensive && blockOffensiveSkillsWhileBossFlying && IsAnyBossFlying())
-        {
-            return false;
-        }
-
-        if (offensive)
-        {
-            if (basicAttack == null)
-            {
-                return false;
-            }
-
-            target = basicAttack.FindTargetForSkill();
-            if (target == null)
-            {
-                return false;
-            }
-        }
-
-        if (skill.manaCost > 0f)
-        {
-            if (mana == null || !mana.CanConsume(skill.manaCost))
-            {
-                return false;
-            }
-        }
-
-        if (skill.ultimateCost > 0f)
-        {
-            if (ultimateGauge == null || !ultimateGauge.CanConsume(skill.ultimateCost))
-            {
-                return false;
-            }
-        }
 
         if (skill.manaCost > 0f)
             mana.Consume(skill.manaCost);
@@ -221,6 +170,72 @@ public class PlayerSkillController : MonoBehaviour
 
         SetReadyTime(slot, Time.time + skill.cooldown);
         StartCoroutine(SkillRoutine(skill, target));
+        return true;
+    }
+
+    // 스킬 사용 가능 여부의 단일 검증
+    private bool ValidateSkillUse(PlayerSkillSlot slot, bool requireTarget, out string reason, out PlayerSkillDefinition skill, out DamageReceiver target)
+    {
+        target = null;
+        skill = null;
+        ResolveReferences();
+
+        if (skillInProgress)
+        {
+            reason = activeSkillSlot == slot ? "CastingCurrent" : "CastingOther";
+            return false;
+        }
+
+        skill = ResolveSkill(slot);
+        if (skill == null)
+        {
+            reason = "NoSkill";
+            return false;
+        }
+
+        if (Time.time < GetReadyTime(slot))
+        {
+            reason = "Cooldown";
+            return false;
+        }
+
+        bool offensive = IsOffensiveSkill(skill);
+
+        if (offensive && blockOffensiveSkillsWhileBossFlying && IsAnyBossFlying())
+        {
+            reason = "BossFlying";
+            return false;
+        }
+
+        if (skill.manaCost > 0f && (mana == null || !mana.CanConsume(skill.manaCost)))
+        {
+            reason = "NotEnoughMana";
+            return false;
+        }
+
+        if (skill.ultimateCost > 0f && (ultimateGauge == null || !ultimateGauge.CanConsume(skill.ultimateCost)))
+        {
+            reason = "NotEnoughUltimate";
+            return false;
+        }
+
+        if (offensive && requireTarget)
+        {
+            if (basicAttack == null)
+            {
+                reason = "NoTarget";
+                return false;
+            }
+
+            target = basicAttack.FindTargetForSkill();
+            if (target == null)
+            {
+                reason = "NoTarget";
+                return false;
+            }
+        }
+
+        reason = "Ready";
         return true;
     }
 
@@ -246,44 +261,53 @@ public class PlayerSkillController : MonoBehaviour
         skillInProgress = true;
         activeSkillSlot = skill.slot;
 
-        if (targetAtStart != null && skill.faceTargetOnSkill && basicAttack != null)
-            FaceTarget(basicAttack.GetTargetAimPositionForSkill(targetAtStart));
+        // 잠금 시간 계산은 루틴 시작 시각 기준 (쿨다운 역산 의존 제거)
+        float startTime = Time.time;
 
-        float actionDuration = Mathf.Max(0.05f, skill.actionDuration);
-        float effectDelay = Mathf.Clamp01(skill.effectDelayNormalized) * actionDuration;
-        float totalLockTime = Mathf.Max(actionDuration, effectDelay) + Mathf.Max(0f, skill.extraRecoveryTime);
-
-        currentSkillInfo = $"{skill.displayName} mana={skill.manaCost:0.##}, cooldown={skill.cooldown:0.##}, duration={actionDuration:0.##}";
-
-        PrepareAnimatorForSkill(skill);
-        SetActionLocks(skill, true);
-        ApplyMovementSpeedMultiplier(skill, true);
-        PlaySkillAnimation(skill, actionDuration);
-        StartSkillAnimationStopTimer(actionDuration);
-
-        if (VFXPlayer != null)
+        try
         {
-            VFXPlayer.PlayCastVFX(skill);
-            VFXPlayer.PlayAuraVFX(skill);
+            if (targetAtStart != null && skill.faceTargetOnSkill && basicAttack != null)
+                FaceTarget(basicAttack.GetTargetAimPositionForSkill(targetAtStart));
+
+            float actionDuration = Mathf.Max(0.05f, skill.actionDuration);
+            float effectDelay = Mathf.Clamp01(skill.effectDelayNormalized) * actionDuration;
+            float totalLockTime = Mathf.Max(actionDuration, effectDelay) + Mathf.Max(0f, skill.extraRecoveryTime);
+
+            currentSkillInfo = $"{skill.displayName} mana={skill.manaCost:0.##}, cooldown={skill.cooldown:0.##}, duration={actionDuration:0.##}";
+
+            PrepareAnimatorForSkill(skill);
+            SetActionLocks(skill, true);
+            ApplyMovementSpeedMultiplier(skill, true);
+            PlaySkillAnimation(skill, actionDuration);
+            StartSkillAnimationStopTimer(actionDuration);
+
+            if (VFXPlayer != null)
+            {
+                VFXPlayer.PlayCastVFX(skill);
+                VFXPlayer.PlayAuraVFX(skill);
+            }
+
+            if (effectDelay > 0f)
+                yield return new WaitForSeconds(effectDelay);
+
+            yield return ExecuteSkillEffect(skill, targetAtStart);
+
+            float elapsedAfterEffect = Time.time - startTime;
+            float remaining = Mathf.Max(0f, totalLockTime - elapsedAfterEffect);
+            if (remaining > 0f)
+                yield return new WaitForSeconds(remaining);
         }
+        finally
+        {
+            // 스킬 효과 중 예외가 발생해도 잠금과 애니메이션 상태를 반드시 복원 (영구 잠금 방지)
+            StopSkillAnimationStopTimer();
+            StopDirectSkillClipIfNeeded();
+            RestoreAnimatorAfterSkill();
+            ApplyMovementSpeedMultiplier(skill, false);
+            SetActionLocks(skill, false);
 
-        if (effectDelay > 0f)
-            yield return new WaitForSeconds(effectDelay);
-
-        yield return ExecuteSkillEffect(skill, targetAtStart);
-
-        float elapsedAfterEffect = Time.time - (GetReadyTime(skill.slot) - skill.cooldown);
-        float remaining = Mathf.Max(0f, totalLockTime - elapsedAfterEffect);
-        if (remaining > 0f)
-            yield return new WaitForSeconds(remaining);
-
-        StopSkillAnimationStopTimer();
-        StopDirectSkillClipIfNeeded();
-        RestoreAnimatorAfterSkill();
-        ApplyMovementSpeedMultiplier(skill, false);
-        SetActionLocks(skill, false);
-
-        skillInProgress = false;
+            skillInProgress = false;
+        }
     }
 
     private IEnumerator ExecuteSkillEffect(PlayerSkillDefinition skill, DamageReceiver targetAtStart)
@@ -482,8 +506,9 @@ public class PlayerSkillController : MonoBehaviour
                 return result;
         }
 
-        DamageReceiver[] receivers = FindObjectsByType<DamageReceiver>();
-        for (int i = 0; i < receivers.Length; i++)
+        // 씬 전체 탐색 대신 레지스트리 순회 (지속 스킬은 틱마다 호출되는 핫패스)
+        IReadOnlyList<DamageReceiver> receivers = CombatRegistry.DamageReceivers;
+        for (int i = 0; i < receivers.Count; i++)
         {
             DamageReceiver receiver = receivers[i];
             if (receiver == null)
@@ -603,15 +628,13 @@ public class PlayerSkillController : MonoBehaviour
 
     private PlayerStatus[] FindAllies()
     {
-        PlayerStatus[] statuses = FindObjectsByType<PlayerStatus>();
+        // 레지스트리 순회 + 캐시된 보스 더미 판정 (사망한 아군 포함 여부는 기존 동작 유지)
+        IReadOnlyList<PlayerStatus> statuses = CombatRegistry.PlayerStatuses;
         List<PlayerStatus> allies = new List<PlayerStatus>();
-        for (int i = 0; i < statuses.Length; i++)
+        for (int i = 0; i < statuses.Count; i++)
         {
             PlayerStatus status = statuses[i];
-            if (status == null)
-                continue;
-
-            if (status.GetComponent<BossDummyController>() != null)
+            if (status == null || status.IsBossDummy)
                 continue;
 
             allies.Add(status);
@@ -778,52 +801,9 @@ public class PlayerSkillController : MonoBehaviour
 
     public bool CanUseSkillForUI(PlayerSkillSlot slot, bool checkTargetRange, out string reason)
     {
-        reason = string.Empty;
-        ResolveReferences();
-
-        if (skillInProgress)
-        {
-            reason = activeSkillSlot == slot ? "CastingCurrent" : "CastingOther";
-            return false;
-        }
-
-        PlayerSkillDefinition skill = ResolveSkill(slot);
-        if (skill == null)
-        {
-            reason = "NoSkill";
-            return false;
-        }
-
-        float cooldownRemaining = GetCooldownRemaining(slot);
-        if (cooldownRemaining > 0.01f)
-        {
-            reason = "Cooldown";
-            return false;
-        }
-
-        if (skill.manaCost > 0f && (mana == null || !mana.CanConsume(skill.manaCost)))
-        {
-            reason = "NotEnoughMana";
-            return false;
-        }
-
-        if (skill.ultimateCost > 0f && (ultimateGauge == null || !ultimateGauge.CanConsume(skill.ultimateCost)))
-        {
-            reason = "NotEnoughUltimate";
-            return false;
-        }
-
-        if (checkTargetRange && IsOffensiveSkill(skill))
-        {
-            if (basicAttack == null || basicAttack.FindTargetForSkill() == null)
-            {
-                reason = "NoTarget";
-                return false;
-            }
-        }
-
-        reason = "Ready";
-        return true;
+        // 실제 사용(TryUseSkill)과 동일한 검증 사용
+        // 기존에는 보스 비행 중 차단 검사가 UI에 빠져 있어 "Ready"로 표시되지만 실제로는 실패했음
+        return ValidateSkillUse(slot, checkTargetRange, out reason, out _, out _);
     }
 
 
@@ -950,44 +930,12 @@ public class PlayerSkillController : MonoBehaviour
 
     private void PlayDirectClip(AnimationClip clip, float actionDuration)
     {
-        if (animator == null || clip == null)
-            return;
-
-        CreateSkillGraphIfNeeded();
-
-        if (skillPlayable.IsValid())
-            skillPlayable.Destroy();
-
-        skillPlayable = AnimationClipPlayable.Create(skillGraph, clip);
-        skillPlayable.SetApplyFootIK(false);
-        skillPlayable.SetApplyPlayableIK(false);
-        skillPlayable.SetTime(0d);
-        skillPlayable.SetDone(false);
-
-        double speed = actionDuration <= 0.0001f ? 1d : clip.length / actionDuration;
-        skillPlayable.SetSpeed(speed);
-
-        skillOutput.SetSourcePlayable(skillPlayable);
-        skillGraph.Play();
-    }
-
-    private void CreateSkillGraphIfNeeded()
-    {
-        if (skillGraph.IsValid())
-            return;
-
-        skillGraph = PlayableGraph.Create(name + "_SkillGraph");
-        skillGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
-        skillOutput = AnimationPlayableOutput.Create(skillGraph, "Skill", animator);
+        SkillClipPlayer.PlayTimed(animator, clip, actionDuration);
     }
 
     private void StopDirectSkillClipIfNeeded()
     {
-        if (skillPlayable.IsValid())
-            skillPlayable.Destroy();
-
-        if (skillGraph.IsValid())
-            skillGraph.Stop();
+        skillClipPlayer?.Stop();
     }
 
     private void SetActionLocks(PlayerSkillDefinition skill, bool locked)
@@ -1049,25 +997,17 @@ public class PlayerSkillController : MonoBehaviour
         if (animator == null || string.IsNullOrWhiteSpace(stateName))
             return string.Empty;
 
-        int shortHash = Animator.StringToHash(stateName);
-        if (animator.HasState(0, shortHash))
-            return stateName;
-
-        string baseLayerPath = "Base Layer." + stateName;
-        int fullHash = Animator.StringToHash(baseLayerPath);
-        if (animator.HasState(0, fullHash))
-            return baseLayerPath;
-
-        if (warnIfMissing)
+        string resolved = AnimatorStateUtility.ResolveStateName(animator, stateName);
+        if (string.IsNullOrEmpty(resolved) && warnIfMissing)
             Debug.LogWarning($"[PlayerSkillController] Animator state not found: {stateName}. If you use Direct Clip Playback with Animation Clip assigned, this warning can be ignored.", this);
 
-        return string.Empty;
+        return resolved;
     }
 
     private bool IsAnyBossFlying()
     {
-        BossSkillPatternController[] bosses = FindObjectsByType<BossSkillPatternController>();
-        for (int i = 0; i < bosses.Length; i++)
+        IReadOnlyList<BossSkillPatternController> bosses = CombatRegistry.BossSkillControllers;
+        for (int i = 0; i < bosses.Count; i++)
         {
             BossSkillPatternController boss = bosses[i];
             if (boss != null && boss.IsFlying)
@@ -1097,7 +1037,6 @@ public class PlayerSkillController : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (skillGraph.IsValid())
-            skillGraph.Destroy();
+        skillClipPlayer?.Dispose();
     }
 }

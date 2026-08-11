@@ -2,8 +2,6 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.Animations;
-using UnityEngine.Playables;
 
 [RequireComponent(typeof(Health))]
 public class SlimeAddEnemy : MonoBehaviour
@@ -82,11 +80,12 @@ public class SlimeAddEnemy : MonoBehaviour
     private bool killedMetricReported;
     private bool explodedMetricReported;
     private PlayerStatus currentTarget;
+    // 대상 후보 수집용 재사용 버퍼 (틱마다 새 리스트 할당 방지)
+    private readonly System.Collections.Generic.List<PlayerStatus> targetCandidateBuffer = new System.Collections.Generic.List<PlayerStatus>();
 
-    private PlayableGraph graph;
-    private AnimationPlayableOutput output;
-    private AnimationClipPlayable playable;
-    private AnimationClip currentClip;
+    // 슬라임 클립 직접 재생을 담당하는 공용 플레이어
+    private SingleClipPlayer clipPlayer;
+    private SingleClipPlayer ClipPlayer => clipPlayer ??= new SingleClipPlayer(name + "_SlimeAnimationGraph", "SlimeAnimation");
     private bool playingWalk;
     private Coroutine knockdownRoutine;
     private Transform animatorTransform;
@@ -429,20 +428,9 @@ public class SlimeAddEnemy : MonoBehaviour
 
     private void ChooseRandomTarget()
     {
-        PlayerStatus[] statuses = FindObjectsByType<PlayerStatus>();
-        System.Collections.Generic.List<PlayerStatus> candidates = new System.Collections.Generic.List<PlayerStatus>();
-
-        for (int i = 0; i < statuses.Length; i++)
-        {
-            PlayerStatus status = statuses[i];
-            if (status == null || status.Health == null || status.Health.IsDead)
-                continue;
-
-            if (status.GetComponent<BossDummyController>() != null)
-                continue;
-
-            candidates.Add(status);
-        }
+        // 레지스트리 순회 + 통합 유효성 검사, 재사용 버퍼로 할당 제거
+        PartyTargetUtility.CollectValidPlayerTargets(targetCandidateBuffer);
+        System.Collections.Generic.List<PlayerStatus> candidates = targetCandidateBuffer;
 
         if (candidates.Count == 0)
         {
@@ -530,18 +518,8 @@ public class SlimeAddEnemy : MonoBehaviour
 
         if (useDirectClipPlayback && clip != null)
         {
-            CreateGraphIfNeeded();
-            if (playable.IsValid())
-                playable.Destroy();
-
-            currentClip = clip;
-            playable = AnimationClipPlayable.Create(graph, clip);
-            playable.SetApplyFootIK(false);
-            playable.SetApplyPlayableIK(false);
-            playable.SetTime(0d);
-            playable.SetSpeed(Mathf.Max(0.01f, speed));
-            output.SetSourcePlayable(playable);
-            graph.Play();
+            // 슬라임 클립은 항상 반복 재생 (Update의 KeepClipLoopingIfNeeded에서 유지)
+            ClipPlayer.Play(animator, clip, speed, true);
             return;
         }
 
@@ -557,20 +535,10 @@ public class SlimeAddEnemy : MonoBehaviour
 
     private string ResolveAnimatorStateName(string stateName)
     {
-        if (animator == null || string.IsNullOrWhiteSpace(stateName))
+        if (animator == null || animator.runtimeAnimatorController == null)
             return string.Empty;
 
-        if (animator.runtimeAnimatorController == null)
-            return string.Empty;
-
-        if (animator.HasState(0, Animator.StringToHash(stateName)))
-            return stateName;
-
-        string baseLayer = "Base Layer." + stateName;
-        if (animator.HasState(0, Animator.StringToHash(baseLayer)))
-            return baseLayer;
-
-        return string.Empty;
+        return AnimatorStateUtility.ResolveStateName(animator, stateName);
     }
 
     private void RemoveDemoAnimationPlayerComponents()
@@ -593,31 +561,12 @@ public class SlimeAddEnemy : MonoBehaviour
 
     private void KeepClipLoopingIfNeeded()
     {
-        if (!playable.IsValid() || currentClip == null)
-            return;
-
-        double length = Mathf.Max(0.01f, currentClip.length);
-        if (playable.GetTime() >= length)
-            playable.SetTime(0d);
-    }
-
-    private void CreateGraphIfNeeded()
-    {
-        if (graph.IsValid())
-            return;
-
-        graph = PlayableGraph.Create(name + "_SlimeAnimationGraph");
-        graph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
-        output = AnimationPlayableOutput.Create(graph, "SlimeAnimation", animator);
+        clipPlayer?.Tick();
     }
 
     private void StopDirectClip()
     {
-        if (playable.IsValid())
-            playable.Destroy();
-
-        if (graph.IsValid())
-            graph.Stop();
+        clipPlayer?.Stop();
     }
 
     private void OnDeath(Health deadHealth)
@@ -666,18 +615,8 @@ public class SlimeAddEnemy : MonoBehaviour
         bool canUseClip = useDirectKnockdownClipPlayback && knockdownClip != null;
         if (canUseClip)
         {
-            CreateGraphIfNeeded();
-            if (playable.IsValid())
-                playable.Destroy();
-
-            currentClip = knockdownClip;
-            playable = AnimationClipPlayable.Create(graph, knockdownClip);
-            playable.SetApplyFootIK(false);
-            playable.SetApplyPlayableIK(false);
-            playable.SetTime(0d);
-            playable.SetSpeed(1d);
-            output.SetSourcePlayable(playable);
-            graph.Play();
+            // 기존 구현과 동일하게 넉다운 클립도 반복 유지 대상에 포함
+            ClipPlayer.Play(animator, knockdownClip, 1f, true);
             return;
         }
 
@@ -775,11 +714,12 @@ public class SlimeAddEnemy : MonoBehaviour
 
     private void ApplyExplosionDamage()
     {
-        PlayerStatus[] statuses = FindObjectsByType<PlayerStatus>();
-        for (int i = 0; i < statuses.Length; i++)
+        // 통합 유효성 검사 적용 (폭발이 보스 더미를 때리던 문제 수정)
+        System.Collections.Generic.IReadOnlyList<PlayerStatus> statuses = CombatRegistry.PlayerStatuses;
+        for (int i = 0; i < statuses.Count; i++)
         {
             PlayerStatus status = statuses[i];
-            if (status == null || status.Health == null || status.Health.IsDead)
+            if (!PartyTargetUtility.IsValidPlayerTarget(status))
                 continue;
 
             float distance = Vector3.Distance(transform.position, status.transform.position);
@@ -796,8 +736,7 @@ public class SlimeAddEnemy : MonoBehaviour
             knockdownRoutine = null;
         }
 
-        if (graph.IsValid())
-            graph.Destroy();
+        clipPlayer?.Dispose();
     }
 
     private void OnDrawGizmosSelected()

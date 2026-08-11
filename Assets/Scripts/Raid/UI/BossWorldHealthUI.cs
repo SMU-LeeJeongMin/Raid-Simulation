@@ -47,7 +47,8 @@ public class BossWorldHealthUI : MonoBehaviour
     private Canvas parentCanvas;
     private RectTransform canvasRect;
     private CanvasGroup canvasGroup;
-    private static Sprite solidWhiteSprite;
+    // 표시 중인 퍼센트 값 캐시 (0.1% 단위, 변경 시에만 문자열 생성)
+    private int lastDisplayedPermille = -1;
 
     private void Awake()
     {
@@ -110,6 +111,7 @@ public class BossWorldHealthUI : MonoBehaviour
         if (bossNameText != null)
             bossNameText.text = displayName ?? string.Empty;
 
+        ConfigureFillImage();
         RefreshBar();
         UpdatePositionAndVisibility();
     }
@@ -136,13 +138,14 @@ public class BossWorldHealthUI : MonoBehaviour
         }
     }
 
+    // 정적 시각 설정 (Awake와 Bind 시에만 호출, 매 프레임 재적용 제거)
     private void ConfigureFillImage()
     {
         if (hpFillImage == null)
             return;
 
         if (useGeneratedSolidFillSprite)
-            hpFillImage.sprite = GetSolidWhiteSprite();
+            hpFillImage.sprite = ShieldedHealthBarUI.SolidFillSprite;
 
         hpFillImage.type = Image.Type.Filled;
         hpFillImage.fillMethod = Image.FillMethod.Horizontal;
@@ -152,17 +155,22 @@ public class BossWorldHealthUI : MonoBehaviour
 
     private void RefreshBar()
     {
-        ConfigureFillImage();
-
         float normalized = 0f;
-        if (bossHealth != null && bossHealth.MaxHealth > 0f)
-            normalized = Mathf.Clamp01(bossHealth.CurrentHealth / bossHealth.MaxHealth);
+        if (bossHealth != null)
+            normalized = Mathf.Clamp01(bossHealth.NormalizedHealth);
 
-        if (hpFillImage != null)
-            hpFillImage.fillAmount = normalized;
+        ShieldedHealthBarUI.SetFill(hpFillImage, normalized);
 
+        // 표시 단위(0.1%)가 변한 경우에만 문자열 생성 (매 프레임 할당 제거)
         if (percentText != null)
-            percentText.text = $"{normalized * 100f:0.0}%";
+        {
+            int permille = Mathf.RoundToInt(normalized * 1000f);
+            if (permille != lastDisplayedPermille)
+            {
+                lastDisplayedPermille = permille;
+                percentText.text = $"{normalized * 100f:0.0}%";
+            }
+        }
     }
 
     private void UpdatePositionAndVisibility()
@@ -195,14 +203,17 @@ public class BossWorldHealthUI : MonoBehaviour
         bool insideViewport = viewportPosition.x >= -viewportMargin && viewportPosition.x <= 1f + viewportMargin &&
                               viewportPosition.y >= -viewportMargin && viewportPosition.y <= 1f + viewportMargin;
 
+        // 화면 밖이거나 가려진 경우 숨김 후 즉시 종료 (아래 SetVisible(true) 덮어쓰기 방지)
         if (hideWhenOffScreen && (!inFront || !insideViewport))
         {
             SetVisible(false);
+            return;
         }
 
         if (hideWhenOccluded && IsOccluded(worldPosition))
         {
             SetVisible(false);
+            return;
         }
 
         Vector3 screenPosition = worldCamera.WorldToScreenPoint(worldPosition);
@@ -320,29 +331,4 @@ public class BossWorldHealthUI : MonoBehaviour
         }
     }
 
-    private string GetPositionSourceName()
-    {
-        if (bossHpAnchor != null)
-            return bossHpAnchor.name;
-        if (useRendererBoundsWhenPossible && rendererBoundsRoot != null)
-            return rendererBoundsRoot.name + " RendererBounds";
-        return followTarget != null ? followTarget.name : "None";
-    }
-
-    private static Sprite GetSolidWhiteSprite()
-    {
-        if (solidWhiteSprite != null)
-            return solidWhiteSprite;
-
-        Texture2D texture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
-        texture.name = "Generated_UI_SolidWhite";
-        texture.SetPixel(0, 0, Color.white);
-        texture.Apply();
-        texture.hideFlags = HideFlags.HideAndDontSave;
-
-        solidWhiteSprite = Sprite.Create(texture, new Rect(0f, 0f, 1f, 1f), new Vector2(0.5f, 0.5f));
-        solidWhiteSprite.name = "Generated_UI_SolidWhiteSprite";
-        solidWhiteSprite.hideFlags = HideFlags.HideAndDontSave;
-        return solidWhiteSprite;
-    }
 }
