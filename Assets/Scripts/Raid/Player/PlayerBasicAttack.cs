@@ -44,7 +44,6 @@ public class PlayerBasicAttack : MonoBehaviour
     public float fallbackAttackHeight = 0.8f;
 
     [Header("Debug")]
-    public bool logAttack = true;
     public bool drawAttackGizmo = true;
     public bool drawHorizontalAutoTargetGizmo = true;
 
@@ -318,9 +317,8 @@ public class PlayerBasicAttack : MonoBehaviour
 
         if (!IsReceiverValidAtHit(target))
         {
+            // 빗나감은 지표로만 집계 (AI 전투에서 일상적으로 발생하므로 콘솔 로그 미출력)
             RaidMetricsEvents.ReportBasicAttackMiss(this, stats, "no_valid_target_at_hit_timing");
-            if (logAttack)
-                Debug.Log("[PlayerBasicAttack] Basic attack missed. No valid target at hit timing.", this);
             return;
         }
 

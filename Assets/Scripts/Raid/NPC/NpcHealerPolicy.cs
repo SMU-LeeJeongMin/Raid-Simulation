@@ -7,7 +7,7 @@ using UnityEngine;
 /// </summary>
 public class NpcHealerPolicy : INpcRolePolicy
 {
-    public string Think(NPCSimpleFSMController npc)
+    public NpcAction Think(NPCSimpleFSMController npc)
     {
         // 패턴 인지 모드: 위험 지역에 있는 아군 보호 우선
         if (npc.IsPatternAware() && npc.healerProtectDangerAlly)
@@ -19,7 +19,7 @@ public class NpcHealerPolicy : INpcRolePolicy
                 if (moved)
                 {
                     npc.SetStateLabel($"Healer MoveToDangerAlly {dangerAlly.name}");
-                    return NpcActionNames.MoveToAllyAndHeal;
+                    return NpcAction.MoveToAllyAndHeal;
                 }
 
                 bool usedSupport = false;
@@ -33,7 +33,7 @@ public class NpcHealerPolicy : INpcRolePolicy
                 if (usedSupport)
                 {
                     npc.SetStateLabel($"Healer ProtectDangerAlly {dangerAlly.name}");
-                    return NpcActionNames.ShieldDangerAlly;
+                    return NpcAction.ShieldDangerAlly;
                 }
             }
         }
@@ -48,7 +48,7 @@ public class NpcHealerPolicy : INpcRolePolicy
             if (movedToAlly || usedHeal)
             {
                 npc.SetStateLabel($"Healer Heal {lowAlly.name}");
-                return NpcActionNames.MoveToAllyAndHeal;
+                return NpcAction.MoveToAllyAndHeal;
             }
         }
 
@@ -60,7 +60,7 @@ public class NpcHealerPolicy : INpcRolePolicy
             if (movedToAlly || usedShield)
             {
                 npc.SetStateLabel($"Healer Shield {lowAlly.name}");
-                return NpcActionNames.ShieldParty;
+                return NpcAction.ShieldParty;
             }
         }
 
@@ -68,7 +68,7 @@ public class NpcHealerPolicy : INpcRolePolicy
         {
             npc.FollowPlayerFormation();
             npc.SetStateLabel("Healer Support Only: Boss Flying");
-            return NpcActionNames.RegroupDuringBossFly;
+            return NpcAction.RegroupDuringBossFly;
         }
 
         if (npc.boss != null)
@@ -79,11 +79,12 @@ public class NpcHealerPolicy : INpcRolePolicy
 
         npc.FollowPlayerFormation();
         npc.SetStateLabel("Healer Follow Player");
-        return NpcActionNames.FollowPlayer;
+        return NpcAction.FollowPlayer;
     }
 
     // 위험 지역 안에 있는 아군 중 (낮은 HP, 임박한 지역, 가까운 거리) 점수가 가장 높은 대상 탐색
-    private PlayerStatus FindMostThreatenedAlly(NPCSimpleFSMController npc)
+    // Utility 정책도 재사용하는 공용 탐색
+    public static PlayerStatus FindMostThreatenedAlly(NPCSimpleFSMController npc)
     {
         IReadOnlyList<PlayerStatus> statuses = CombatRegistry.PlayerStatuses;
         PlayerStatus best = null;
@@ -114,7 +115,7 @@ public class NpcHealerPolicy : INpcRolePolicy
         return best;
     }
 
-    private PlayerStatus FindLowestHpAlly(out float lowestRatio)
+    public static PlayerStatus FindLowestHpAlly(out float lowestRatio)
     {
         lowestRatio = 1f;
         PlayerStatus lowest = null;
@@ -138,7 +139,7 @@ public class NpcHealerPolicy : INpcRolePolicy
     }
 
     // 아군이 힐 사거리 밖이면 접근 이동 수행 후 true 반환
-    private bool MoveNearAllyIfNeeded(NPCSimpleFSMController npc, PlayerStatus ally)
+    public static bool MoveNearAllyIfNeeded(NPCSimpleFSMController npc, PlayerStatus ally)
     {
         if (ally == null)
             return false;
@@ -154,7 +155,7 @@ public class NpcHealerPolicy : INpcRolePolicy
         return false;
     }
 
-    private float GetHealthRatio(PlayerStatus target)
+    public static float GetHealthRatio(PlayerStatus target)
     {
         if (target == null || target.Health == null || target.Health.MaxHealth <= 0f)
             return 1f;
@@ -163,7 +164,7 @@ public class NpcHealerPolicy : INpcRolePolicy
     }
 
     // 스킬1(힐) 또는 스킬2(실드) 사용 시도 (행동 쿨다운 공유)
-    private bool TryUseHealerSkill(NPCSimpleFSMController npc, bool useShieldSkill)
+    public static bool TryUseHealerSkill(NPCSimpleFSMController npc, bool useShieldSkill)
     {
         if (!npc.IsActionReady)
             return false;

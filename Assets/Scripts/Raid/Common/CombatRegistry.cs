@@ -14,12 +14,14 @@ public static class CombatRegistry
     private static readonly List<Health> healths = new List<Health>();
     private static readonly List<BossDummyController> bossDummies = new List<BossDummyController>();
     private static readonly List<BossSkillPatternController> bossSkillControllers = new List<BossSkillPatternController>();
+    private static readonly List<SlimeAddEnemy> slimes = new List<SlimeAddEnemy>();
 
     public static IReadOnlyList<PlayerStatus> PlayerStatuses => playerStatuses;
     public static IReadOnlyList<DamageReceiver> DamageReceivers => damageReceivers;
     public static IReadOnlyList<Health> Healths => healths;
     public static IReadOnlyList<BossDummyController> BossDummies => bossDummies;
     public static IReadOnlyList<BossSkillPatternController> BossSkillControllers => bossSkillControllers;
+    public static IReadOnlyList<SlimeAddEnemy> Slimes => slimes;
 
     // 씬에 하나만 존재하는 보스 참조용 편의 접근자
     public static BossDummyController FirstBossDummy => bossDummies.Count > 0 ? bossDummies[0] : null;
@@ -80,6 +82,17 @@ public static class CombatRegistry
         bossSkillControllers.Remove(controller);
     }
 
+    public static void Register(SlimeAddEnemy slime)
+    {
+        if (slime != null && !slimes.Contains(slime))
+            slimes.Add(slime);
+    }
+
+    public static void Unregister(SlimeAddEnemy slime)
+    {
+        slimes.Remove(slime);
+    }
+
     // 도메인 리로드 비활성화 환경에서 이전 플레이 세션의 잔존 등록 제거
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetOnLoad()
@@ -89,5 +102,6 @@ public static class CombatRegistry
         healths.Clear();
         bossDummies.Clear();
         bossSkillControllers.Clear();
+        slimes.Clear();
     }
 }

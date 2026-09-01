@@ -375,6 +375,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   triggerInteraction: 2
+  skipFlyingBossTarget: 1
   fallbackAttackHeight: 0.8
   logAttack: 1
   drawAttackGizmo: 1
@@ -403,8 +404,8 @@ MonoBehaviour:
   classInfo: {fileID: 6478785104673893821}
   createHealthIfMissing: 1
   applyHealthOnAwake: 1
-  maxHealth: 1000
-  startingHealth: 1000
+  maxHealth: 700
+  startingHealth: 700
   startWithFullHealth: 1
   ignoreDamageAfterDeath: 1
   destroyOnDeath: 0
@@ -450,13 +451,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e791f78b376daeb4684e3b747923494b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 1000
-  currentHealth: 1000
+  maxHealth: 700
+  currentHealth: 700
   startWithFullHealth: 1
   ignoreDamageAfterDeath: 1
   destroyOnDeath: 0
   destroyDelay: 3
-  logDamage: 0
+  damageImmune: 0
   onHealthChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -487,7 +488,6 @@ MonoBehaviour:
   regenerate: 1
   regenPerSecond: 8
   regenDelayAfterUse: 0.5
-  logChanges: 0
 --- !u!114 &-6470092493735594848
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -503,7 +503,6 @@ MonoBehaviour:
   VFXDatabase: {fileID: 11400000, guid: 5d2b3fb21f792fa4b8a47ac846d3a806, type: 2}
   classInfo: {fileID: 6478785104673893821}
   fallbackTargetHeight: 1.1
-  logVFX: 0
 --- !u!114 &2726979683544294860
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -526,12 +525,12 @@ MonoBehaviour:
   mana: {fileID: -4731607320141327905}
   ultimateGauge: {fileID: -6695044260777637294}
   VFXPlayer: {fileID: 404973723215748207}
+  blockOffensiveSkillsWhileBossFlying: 1
   useKeyboardInput: 1
   ignoreInputWhenPointerIsOverUI: 1
   skill1Key: 42
   skill2Key: 43
   ultimateKey: 44
-  logSkill: 1
   forceOneShotSkillAnimation: 1
   findAnimationClipByStateName: 1
   warnWhenSkillClipMissing: 1
@@ -559,7 +558,6 @@ MonoBehaviour:
   classInfo: {fileID: 6478785104673893821}
   fallbackCasterHeight: 0.9
   fallbackTargetHeight: 1.1
-  logVFX: 1
 --- !u!114 &-6695044260777637294
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -575,7 +573,7 @@ MonoBehaviour:
   maxGauge: 100
   currentGauge: 0
   startFullForTesting: 1
-  logChanges: 1
+  consumeTolerance: 0.01
 --- !u!114 &-2466677879128845277
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -590,7 +588,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ShieldResource
   currentShield: 0
   shieldExpireTime: 0
-  logChanges: 1
 --- !u!1 &1061156421552890
 GameObject:
   m_ObjectHideFlags: 0

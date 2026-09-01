@@ -444,7 +444,8 @@ public class PlayerSkillController : MonoBehaviour
         for (int i = 0; i < allies.Length; i++)
         {
             PlayerStatus ally = allies[i];
-            if (ally == null)
+            // 사망한 아군은 실드 대상에서 제외
+            if (!PartyTargetUtility.IsValidPlayerTarget(ally))
                 continue;
 
             ally.AddShield(skill.shieldAmount, skill.shieldDuration);
@@ -466,7 +467,8 @@ public class PlayerSkillController : MonoBehaviour
             for (int j = 0; j < allies.Length; j++)
             {
                 PlayerStatus ally = allies[j];
-                if (ally == null)
+                // 사망한 아군은 지속 힐 대상에서 제외 (틱마다 재판정)
+                if (!PartyTargetUtility.IsValidPlayerTarget(ally))
                     continue;
 
                 ally.Heal(skill.tickHealAmount, gameObject);

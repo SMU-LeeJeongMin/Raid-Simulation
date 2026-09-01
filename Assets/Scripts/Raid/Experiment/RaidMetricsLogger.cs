@@ -10,9 +10,16 @@ using UnityEngine;
 /// </summary>
 public class RaidMetricsLogger : MonoBehaviour
 {
+    // 에피소드 종료(기록 시도 완료) 알림. 배치 러너의 다음 에피소드 진행 신호
+    public static event Action<RaidMetricsLogger, bool, string> EpisodeFinished;
+
     [Header("Experiment")]
     public string algorithmName = "PatternAwareFSM";
     public string episodeId = "";
+    [Tooltip("실험 반복 식별용 난수 시드. 음수면 미지정으로 기록되고 난수 초기화도 수행하지 않음. 4단계 에피소드 자동 반복에서 회차마다 설정 예정")]
+    public int seed = -1;
+    [Tooltip("에피소드 시작 시 seed로 Unity 난수를 초기화할지 여부 (seed가 0 이상일 때만 적용)")]
+    public bool applySeedOnEpisodeStart = true;
     public bool autoStartOnAwake = true;
     public bool writeOnBossDeath = true;
     public bool writeOnPartyWipe = true;
@@ -34,6 +41,8 @@ public class RaidMetricsLogger : MonoBehaviour
 
     [Header("Output")]
     public string fileName = "raid_episode_metrics.csv";
+    [Tooltip("핵심 5지표 외 확장 지표까지 기록할지 여부. 확장 기록은 파일명에 _extended가 붙어 핵심 파일과 분리됨 (컬럼 구성이 달라 같은 파일에 섞이면 안 됨)")]
+    public bool writeExtendedMetrics = false;
     public bool logPathOnStart = true;
 
     [Header("Runtime Debug")]
@@ -126,7 +135,7 @@ public class RaidMetricsLogger : MonoBehaviour
 
     private void Awake()
     {
-        outputPath = Path.Combine(Application.persistentDataPath, fileName);
+        outputPath = Path.Combine(Application.persistentDataPath, ResolveOutputFileName());
 
         // 인스펙터에서 id를 비워둔 경우 에피소드 시작마다 자동 생성
         autoGenerateEpisodeId = string.IsNullOrWhiteSpace(episodeId);
@@ -217,6 +226,10 @@ public class RaidMetricsLogger : MonoBehaviour
         // 같은 세션에서 여러 에피소드를 돌려도 행이 고유하도록 id 재생성
         if (autoGenerateEpisodeId || string.IsNullOrWhiteSpace(episodeId))
             episodeId = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
+
+        // 재현 가능한 반복 실험을 위한 난수 초기화 (seed 미지정 시 기존 동작 유지)
+        if (applySeedOnEpisodeStart && seed >= 0)
+            UnityEngine.Random.InitState(seed);
 
         playerDamageTaken = 0f;
         npcDamageTaken = 0f;
@@ -715,6 +728,9 @@ public class RaidMetricsLogger : MonoBehaviour
         episodeRunning = false;
         activeDangerZoneCountAtEnd = DangerZoneRegistry.Count;
 
+        // 기록 직전에 경로 재계산 (실행 중 writeExtendedMetrics 변경 반영)
+        outputPath = Path.Combine(Application.persistentDataPath, ResolveOutputFileName());
+
         string playerClass = ResolvePlayerClass();
         float elapsed = Time.time - episodeStartTime;
         float bossHpRatio = bossHealth != null && bossHealth.MaxHealth > 0f ? bossHealth.CurrentHealth / bossHealth.MaxHealth : -1f;
@@ -734,21 +750,43 @@ public class RaidMetricsLogger : MonoBehaviour
             // CSV가 다른 프로그램(예: Excel)에 열려 있으면 쓰기가 실패하므로 데이터를 로그에 남겨 유실 방지
             Debug.LogError($"[RaidMetricsLogger] CSV 기록 실패: {e.Message}\n복구용 데이터 행: {valueLine}", this);
         }
+
+        // 기록 성공 여부와 무관하게 종료를 알려 배치 진행이 멈추지 않도록 함
+        EpisodeFinished?.Invoke(this, clearSuccess, endReason);
     }
 
-    // CSV 한 행의 (헤더, 값) 쌍을 단일 지점에서 정의
+    // CSV 한 행의 (헤더, 값) 쌍을 단일 지점에서 정의.
+    // 구성: 식별자 5개 + 핵심 5지표. writeExtendedMetrics가 켜진 경우에만 확장 지표 추가
     private List<KeyValuePair<string, string>> BuildCsvColumns(bool clearSuccess, string endReason, string playerClass, float elapsed, float bossHpRatio, float avgHealResponseTime)
     {
         List<KeyValuePair<string, string>> columns = new List<KeyValuePair<string, string>>(48);
         void Add(string header, string value) => columns.Add(new KeyValuePair<string, string>(header, value));
 
+        // ---------- 식별자 (분석 시 필터링과 조인의 기준) ----------
         Add("episode_id", Escape(episodeId));
         Add("algorithm", Escape(algorithmName));
         Add("player_class", Escape(playerClass));
+        Add("seed", seed >= 0 ? FormatInt(seed) : "");
+        Add("player_controller_mode", Escape(ScriptedPlayerMode.PlayerControllerModeName));
+        // 종료 사유 (boss_dead, party_wipe, timeout 등). 타임아웃 에피소드를 분석에서 거르는 기준
+        Add("end_reason", Escape(endReason));
+
+        // ---------- 핵심 5지표 (알고리즘 비교의 판단 기준) ----------
+        // clear_success: 최종 성과. clear_time: 효율. pattern_hit_count: 위험 회피 (파티 합산).
+        // slime_exploded_count: Add Phase 우선순위 대응. avg_heal_response_time: 지원 반응성
         Add("clear_success", clearSuccess ? "1" : "0");
         Add("clear_time", FormatFloat(elapsed));
-        Add("end_reason", Escape(endReason));
+        Add("pattern_hit_count", FormatInt(playerPatternHitCount + npcPatternHitCount));
+        Add("slime_exploded_count", FormatInt(slimeExplodedCount));
+        Add("avg_heal_response_time", FormatFloat(avgHealResponseTime));
+
+        if (!writeExtendedMetrics)
+            return columns;
+
+        // ---------- 확장 지표 (원인 분석과 논문 부록용) ----------
         Add("boss_hp_ratio", FormatFloat(bossHpRatio));
+        Add("player_pattern_hit_count", FormatInt(playerPatternHitCount));
+        Add("npc_pattern_hit_count", FormatInt(npcPatternHitCount));
         Add("player_damage_taken", FormatFloat(playerDamageTaken));
         Add("npc_damage_taken", FormatFloat(npcDamageTaken));
         Add("shield_absorbed_amount", FormatFloat(shieldAbsorbedAmount));
@@ -756,8 +794,6 @@ public class RaidMetricsLogger : MonoBehaviour
         Add("shield_added_events", FormatInt(shieldAddedEvents));
         Add("player_low_hp_events", FormatInt(playerLowHpEvents));
         Add("npc_low_hp_events", FormatInt(npcLowHpEvents));
-        Add("player_pattern_hit_count", FormatInt(playerPatternHitCount));
-        Add("npc_pattern_hit_count", FormatInt(npcPatternHitCount));
         Add("player_death_count", FormatInt(playerDeathCount));
         Add("npc_death_count", FormatInt(npcDeathCount));
         Add("boss_death_count", FormatInt(bossDeathCount));
@@ -770,11 +806,11 @@ public class RaidMetricsLogger : MonoBehaviour
         Add("npc_heal_amount", FormatFloat(npcHealAmount));
         Add("player_low_hp_heal_events", FormatInt(playerLowHpHealEvents));
         Add("npc_low_hp_heal_events", FormatInt(npcLowHpHealEvents));
-        Add("avg_heal_response_time", FormatFloat(avgHealResponseTime));
         Add("skill_fail_count", FormatInt(skillFailCount));
         Add("ultimate_on_boss_count", FormatInt(ultimateOnBossCount));
         Add("ultimate_on_slime_count", FormatInt(ultimateOnSlimeCount));
         Add("ultimate_while_boss_immune_count", FormatInt(ultimateWhileBossImmuneCount));
+        Add("ultimate_wasted_count", FormatInt(ultimateWastedCount));
         Add("slime_spawn_count", FormatInt(slimeSpawnCount));
         Add("slime_killed_count", FormatInt(slimeKilledCount));
         Add("slime_dot_zone_created_count", FormatInt(slimeDotZoneCreatedCount));
@@ -786,6 +822,17 @@ public class RaidMetricsLogger : MonoBehaviour
         Add("npc_action_summary", Escape(GetNPCActionSummary()));
 
         return columns;
+    }
+
+    // 확장 기록이 켜진 경우 파일명에 _extended를 붙여 핵심 파일과 분리
+    private string ResolveOutputFileName()
+    {
+        if (!writeExtendedMetrics)
+            return fileName;
+
+        string baseName = Path.GetFileNameWithoutExtension(fileName);
+        string extension = Path.GetExtension(fileName);
+        return baseName + "_extended" + (string.IsNullOrEmpty(extension) ? ".csv" : extension);
     }
 
     private static string JoinColumns(List<KeyValuePair<string, string>> columns, bool useHeader)

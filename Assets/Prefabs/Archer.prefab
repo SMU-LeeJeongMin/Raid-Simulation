@@ -2713,15 +2713,9 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   triggerInteraction: 2
-  leftClickSelectsTarget: 1
-  attackOnLeftClickWithoutTarget: 0
-  prioritizeSelectedTarget: 1
-  targetSelectionCamera: {fileID: 0}
-  targetSelectionRayDistance: 1000
-  selectedTarget: {fileID: 0}
-  selectedTargetName: 
-  blockBasicAttackWhileBossFlying: 1
+  skipFlyingBossTarget: 1
   fallbackAttackHeight: 0.8
+  logAttack: 1
   drawAttackGizmo: 1
   drawHorizontalAutoTargetGizmo: 1
   externalActionLock: 0
@@ -2748,8 +2742,8 @@ MonoBehaviour:
   classInfo: {fileID: 6182033290715742897}
   createHealthIfMissing: 1
   applyHealthOnAwake: 1
-  maxHealth: 1000
-  startingHealth: 1000
+  maxHealth: 700
+  startingHealth: 700
   startWithFullHealth: 1
   ignoreDamageAfterDeath: 1
   destroyOnDeath: 0
@@ -2795,15 +2789,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e791f78b376daeb4684e3b747923494b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 1000
-  currentHealth: 1000
+  maxHealth: 700
+  currentHealth: 700
   startWithFullHealth: 1
   ignoreDamageAfterDeath: 1
   destroyOnDeath: 0
   destroyDelay: 3
   damageImmune: 0
-  logImmuneDamage: 0
-  logDamage: 0
   onHealthChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -2919,6 +2911,7 @@ MonoBehaviour:
   maxGauge: 100
   currentGauge: 0
   startFullForTesting: 1
+  consumeTolerance: 0.01
 --- !u!114 &-6046565899056841897
 MonoBehaviour:
   m_ObjectHideFlags: 0

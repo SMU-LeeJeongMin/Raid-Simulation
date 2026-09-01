@@ -281,6 +281,10 @@ public class PlayerStatus : MonoBehaviour
         if (shield == null)
             return;
 
+        // 사망한 대상에게는 실드 미적용 (호출 경로와 무관한 근본 차단, 지표 오염 방지)
+        if (health != null && health.IsDead)
+            return;
+
         shield.AddShield(amount, duration);
         RaidMetricsEvents.ReportShieldAdded(this, Mathf.Max(0f, amount), Mathf.Max(0f, duration), source);
     }

@@ -8431,7 +8431,11 @@ GameObject:
   - component: {fileID: 843131467}
   - component: {fileID: 843131469}
   - component: {fileID: 843131471}
+  - component: {fileID: 843131472}
   - component: {fileID: 843131470}
+  - component: {fileID: 843131473}
+  - component: {fileID: 843131474}
+  - component: {fileID: 843131475}
   m_Layer: 0
   m_Name: RaidGameManager
   m_TagString: Untagged
@@ -8572,7 +8576,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3dbd5ca80252db24686765ed0be67b2b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NPCPolicyExperimentSetup
-  aiMode: 1
+  aiMode: 2
   partySpawner: {fileID: 843131469}
   metricsLogger: {fileID: 843131471}
   applyOnAwake: 1
@@ -8590,8 +8594,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c48cc42c085004143bca1c6612ee23b7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RaidMetricsLogger
-  algorithmName: PatternAwareFSM
+  algorithmName: BasicFSM
   episodeId: 
+  seed: -1
+  applySeedOnEpisodeStart: 1
   autoStartOnAwake: 1
   writeOnBossDeath: 1
   writeOnPartyWipe: 1
@@ -8606,6 +8612,7 @@ MonoBehaviour:
   autoBind: 1
   rebindInterval: 1
   fileName: raid_episode_metrics.csv
+  writeExtendedMetrics: 0
   logPathOnStart: 1
   episodeRunning: 0
   resultWritten: 0
@@ -8627,6 +8634,100 @@ MonoBehaviour:
   bossDeathCount: 0
   damageEvents: 0
   activeDangerZoneCountAtEnd: 0
+--- !u!114 &843131472
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 843131463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ac732d2bba510a4e8797dba34def090, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScriptedPlayerMode
+  enableScriptedPlayer: 1
+  playerPolicy: 1
+  playerSpawner: {fileID: 0}
+  logSetup: 1
+  applied: 0
+--- !u!114 &843131473
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 843131463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02b3623d95ce6fa4ca45fbb33c818c30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ExperimentBatchRunner
+  enableBatch: 1
+  episodesPerAlgorithm: 30
+  algorithms: 000000000100000002000000
+  baseSeed: 1000
+  seedStride: 1
+  pairSeedsAcrossAlgorithms: 1
+  restartDelay: 2
+  episodeTimeLimit: 600
+  timeScale: 2
+  stopWhenComplete: 1
+  logProgress: 1
+  currentEpisodeNumber: 0
+  totalEpisodes: 0
+  currentAlgorithmLabel: 
+  currentSeed: 0
+--- !u!114 &843131474
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 843131463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ede821d836c63d24a9914435205b3bc9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GraphStateLogger
+  enableLogging: 1
+  snapshotInterval: 0.25
+  logOnlyDuringEpisode: 1
+  logPathOnStart: 1
+  outputFolderName: GraphLogs
+  maxNodes: 24
+  writtenSnapshotCount: 0
+  currentFilePath: 
+--- !u!114 &843131475
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 843131463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e84c24278661c24892f6a032588d7f4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GnnModelRunner
+  models:
+  - mode: 3
+    modelAsset: {fileID: 5022602860645237092, guid: 266ef534ba07cc94b83009ceb88cd886, type: 3}
+    manifestAsset: {fileID: 4900000, guid: 1aa0236fb1856374a885919199bf0e1e, type: 3}
+    graphInput: 0
+  - mode: 4
+    modelAsset: {fileID: 5022602860645237092, guid: 5eb58d743e3431b42b7753107e3b8b9f, type: 3}
+    manifestAsset: {fileID: 4900000, guid: 4513977a253494e4daad8cdda6fbbfe3, type: 3}
+    graphInput: 1
+  - mode: 5
+    modelAsset: {fileID: 5022602860645237092, guid: 9d0c2098316cafb42b721d49c50e3ab7, type: 3}
+    manifestAsset: {fileID: 4900000, guid: edb5eba4c52c3114a9fabeb66412258e, type: 3}
+    graphInput: 2
+  backend: 512
+  inferenceInterval: 0.2
+  readyModelCount: 0
+  snapshotVersion: 0
+  inferenceCount: 0
 --- !u!1 &844036503
 GameObject:
   m_ObjectHideFlags: 0
@@ -39063,8 +39164,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e791f78b376daeb4684e3b747923494b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 20000
-  currentHealth: 20000
+  maxHealth: 30000
+  currentHealth: 30000
   startWithFullHealth: 1
   ignoreDamageAfterDeath: 1
   destroyOnDeath: 0
@@ -39121,7 +39222,7 @@ MonoBehaviour:
     animatorStateName: Attack1
     durationOverride: 0
     impactNormalizedTime: 0.45
-    damage: 30
+    damage: 60
     range: 5
     hitRadius: 3
     hitAngle: 140
@@ -39144,7 +39245,7 @@ MonoBehaviour:
     animatorStateName: Attack2
     durationOverride: 0
     impactNormalizedTime: 0.45
-    damage: 30
+    damage: 60
     range: 5
     hitRadius: 3
     hitAngle: 140
@@ -39170,9 +39271,6 @@ MonoBehaviour:
   walkForwardClip: {fileID: -5905181282639440617, guid: c365d9a5788b0d6448745d3ed948c8e7, type: 3}
   walkForwardLeftClip: {fileID: -3670400173067981265, guid: 36256f8a1bed8da49a7c2316c2c1be7d, type: 3}
   walkForwardRightClip: {fileID: -9104983908162641172, guid: 9b19cb62b110ad944992130c52d4009c, type: 3}
-  walkBackwardClip: {fileID: -4642253998736162685, guid: fef0a95276e1f864691f756fa688f2a3, type: 3}
-  walkBackwardLeftClip: {fileID: -1793111495435092542, guid: 32cf1ce00bf1768448110da9cfa7493a, type: 3}
-  walkBackwardRightClip: {fileID: -4774861858254249718, guid: 5477f5d0e15632a428b2cb8542609f6c, type: 3}
   moveClipSpeed: 1
   defaultAttackDuration: 1.2
   drawGizmos: 1
@@ -39227,7 +39325,7 @@ MonoBehaviour:
     cooldownAfter: 1.5
     autoStretchAnimationToWarning: 1
     postImpactRecovery: 0.35
-    damage: 60
+    damage: 90
     shape: 0
     originPoint: {fileID: 77852178}
     localOffset: {x: 0, y: 0, z: 0}
@@ -39278,7 +39376,7 @@ MonoBehaviour:
     cooldownAfter: 1.5
     autoStretchAnimationToWarning: 1
     postImpactRecovery: 0.35
-    damage: 60
+    damage: 90
     shape: 0
     originPoint: {fileID: 77852178}
     localOffset: {x: 0, y: 0, z: 0}
@@ -39329,7 +39427,7 @@ MonoBehaviour:
     cooldownAfter: 1.5
     autoStretchAnimationToWarning: 1
     postImpactRecovery: 0.35
-    damage: 50
+    damage: 80
     shape: 1
     originPoint: {fileID: 1794549116}
     localOffset: {x: 0, y: 0, z: 0}
@@ -39380,7 +39478,7 @@ MonoBehaviour:
     cooldownAfter: 1.5
     autoStretchAnimationToWarning: 1
     postImpactRecovery: 0.35
-    damage: 50
+    damage: 80
     shape: 1
     originPoint: {fileID: 124339855}
     localOffset: {x: 0, y: 0, z: 0}
@@ -39431,7 +39529,7 @@ MonoBehaviour:
     cooldownAfter: 1.5
     autoStretchAnimationToWarning: 1
     postImpactRecovery: 0.35
-    damage: 70
+    damage: 100
     shape: 0
     originPoint: {fileID: 0}
     localOffset: {x: 0, y: 0, z: 0}
@@ -39482,7 +39580,7 @@ MonoBehaviour:
     cooldownAfter: 1.5
     autoStretchAnimationToWarning: 1
     postImpactRecovery: 0.35
-    damage: 60
+    damage: 100
     shape: 2
     originPoint: {fileID: 398245981}
     localOffset: {x: 0, y: 0, z: 0}
@@ -39553,7 +39651,7 @@ MonoBehaviour:
     randomLightningWaveInterval: 0.25
     randomLightningSpreadRadius: 8
     randomLightningWarningTime: 1
-    randomLightningDamage: 80
+    randomLightningDamage: 120
     randomLightningRadius: 1.6
     randomLightningInterval: 0.35
     randomLightningVFXPrefab: {fileID: 2640264786997359090, guid: f45936d2fc589e1438de95c19def3155, type: 3}
@@ -39566,7 +39664,7 @@ MonoBehaviour:
     dotZoneWarningTime: 0.9
     dotZoneDuration: 3
     dotZoneTickInterval: 0.5
-    dotZoneTickDamage: 40
+    dotZoneTickDamage: 70
     dotZoneInterval: 0.4
     dotZoneVFXPrefab: {fileID: 5397553525635539876, guid: bc73c5eacea9d2f4d800d57b00e7af76, type: 3}
     trackingDuration: 3
@@ -39574,7 +39672,7 @@ MonoBehaviour:
     trackingDamage: 35
     trackingImpactDuration: 3
     trackingTickInterval: 0.5
-    trackingTickDamage: 50
+    trackingTickDamage: 80
     trackingWarningVFXPrefab: {fileID: 4651796348975898018, guid: f3ef92c57f128134e9d1c641b77584ca, type: 3}
     trackingImpactVFXPrefab: {fileID: 8401081134333623335, guid: 60470a0c7cd75df4f88c910615d4fc98, type: 3}
     lightningVFXOffset: {x: 0, y: 0.15, z: 0}
@@ -39652,12 +39750,12 @@ MonoBehaviour:
   groundRayStartHeight: 8
   groundRayDistance: 30
   slimeLayerName: Boss
-  slimeMaxHealth: 300
+  slimeMaxHealth: 500
   slimeExplodeAfterSeconds: 10
   slimeExplosionDamage: 25
   slimeExplosionRadius: 2.5
   slimeDotRadius: 2
-  slimeDotTickDamage: 8
+  slimeDotTickDamage: 30
   slimeDotTickInterval: 0.5
   slimeDotDuration: -1
   slimeChaseParty: 1
@@ -43278,6 +43376,53 @@ RectTransform:
   m_AnchoredPosition: {x: 10, y: -20}
   m_SizeDelta: {x: 120, y: 16}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &1954121968
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1954121969}
+  - component: {fileID: 1954121970}
+  m_Layer: 0
+  m_Name: ArenaBounds
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1954121969
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1954121968}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 4, y: -18.72083, z: 2.949}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1954121970
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1954121968}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94e1bb9e76f097d42a930c40c5f69810, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ArenaBounds
+  halfWidth: 20
+  halfDepth: 15
+  referenceDistance: 0
 --- !u!1001 &2016357053
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -43521,6 +43666,7 @@ SceneRoots:
   - {fileID: 1036658893}
   - {fileID: 1760446155}
   - {fileID: 843131465}
+  - {fileID: 1954121969}
   - {fileID: 1128304507}
   - {fileID: 1547040932}
   - {fileID: 188928681}

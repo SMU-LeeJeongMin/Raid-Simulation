@@ -96,8 +96,30 @@ public class SlimeAddEnemy : MonoBehaviour
 
     public bool IsResolved => resolved || this == null;
 
+    // ---------- 정책 판단 및 그래프 스냅샷용 상태 노출 ----------
+
+    // 생존 여부 (넉다운 처리 중이거나 사망하면 false)
+    public bool IsAlive => !resolved && health != null && !health.IsDead;
+
+    // 폭발까지 남은 시간 (초). 폭발 타이머 미사용 시 무한대
+    public float ExplosionTimeRemaining =>
+        explodeWhenTimerEnds ? Mathf.Max(0f, spawnTime + explodeAfterSeconds - Time.time) : float.PositiveInfinity;
+
+    // 폭발까지 남은 시간 비율 (1 = 방금 소환, 0 = 폭발 직전)
+    public float ExplosionTimeRatio =>
+        explodeWhenTimerEnds && explodeAfterSeconds > 0f
+            ? Mathf.Clamp01((spawnTime + explodeAfterSeconds - Time.time) / explodeAfterSeconds)
+            : 1f;
+
+    // 현재 추적 중인 파티원 (없으면 null)
+    public PlayerStatus CurrentTarget => currentTarget;
+
+    // 폭발 시 지속 DOT 장판을 남기는지 여부
+    public bool CreatesPersistentZone => persistentZoneRadius > 0f && persistentZoneTickDamage > 0f;
+
     private void Awake()
     {
+        CombatRegistry.Register(this);
         ResolveReferences();
     }
 
@@ -730,6 +752,8 @@ public class SlimeAddEnemy : MonoBehaviour
 
     private void OnDestroy()
     {
+        CombatRegistry.Unregister(this);
+
         if (knockdownRoutine != null)
         {
             StopCoroutine(knockdownRoutine);

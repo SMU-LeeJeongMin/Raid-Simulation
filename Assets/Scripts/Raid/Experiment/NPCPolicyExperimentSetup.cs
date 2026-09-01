@@ -44,7 +44,8 @@ public class NPCPolicyExperimentSetup : MonoBehaviour
         NPCSimpleFSMController[] controllers = FindObjectsByType<NPCSimpleFSMController>(FindObjectsSortMode.None);
         for (int i = 0; i < controllers.Length; i++)
         {
-            if (controllers[i] != null)
+            // 자동 플레이어의 정책은 실험 조건과 무관하게 고정 유지 (ScriptedPlayerMode가 관리)
+            if (controllers[i] != null && !controllers[i].isScriptedPlayer)
                 controllers[i].aiMode = aiMode;
         }
     }

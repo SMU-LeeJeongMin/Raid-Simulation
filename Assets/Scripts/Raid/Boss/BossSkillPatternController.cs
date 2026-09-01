@@ -266,6 +266,14 @@ public class BossSkillPatternController : MonoBehaviour
     public bool IsFlying => flying;
     public bool IsInSpecialPattern => inSpecialPattern;
     public bool IsInPhase2 => inPhase2;
+
+    // ---------- 정책 판단 및 그래프 스냅샷용 상태 노출 ----------
+
+    // 현재 실행 중인 패턴 이름 (없으면 빈 문자열)
+    public string CurrentPatternName => currentPattern ?? string.Empty;
+
+    // 추적 낙뢰 진행 여부 (산개 행동 판단용)
+    public bool IsTrackingLightningActive { get; private set; }
     public bool IsEngaged => engaged;
 
     private void Awake()
@@ -382,6 +390,7 @@ public class BossSkillPatternController : MonoBehaviour
         inPhase2 = false;
         flying = false;
         currentPattern = string.Empty;
+        IsTrackingLightningActive = false;
 
         enabled = false;
     }
@@ -957,6 +966,7 @@ public class BossSkillPatternController : MonoBehaviour
         inSpecialPattern = false;
         inPhase2 = false;
         currentPattern = string.Empty;
+        IsTrackingLightningActive = false;
     }
 
     private IEnumerator ExecuteRandomLightningStrikes()
@@ -1075,8 +1085,13 @@ public class BossSkillPatternController : MonoBehaviour
             StartCoroutine(TrackingLightningForTarget(target, () => activeRoutines--));
         }
 
+        // 추적 낙뢰 진행 표시 (NPC 산개 행동 판단용)
+        IsTrackingLightningActive = true;
+
         while (activeRoutines > 0)
             yield return null;
+
+        IsTrackingLightningActive = false;
     }
 
     private IEnumerator TrackingLightningForTarget(PlayerStatus trackedTarget, System.Action onComplete)

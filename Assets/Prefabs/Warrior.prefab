@@ -1646,6 +1646,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   triggerInteraction: 2
+  skipFlyingBossTarget: 1
   fallbackAttackHeight: 0.8
   logAttack: 1
   drawAttackGizmo: 1
@@ -1674,8 +1675,8 @@ MonoBehaviour:
   classInfo: {fileID: 2150990327585149132}
   createHealthIfMissing: 1
   applyHealthOnAwake: 1
-  maxHealth: 2000
-  startingHealth: 2000
+  maxHealth: 1000
+  startingHealth: 1000
   startWithFullHealth: 1
   ignoreDamageAfterDeath: 1
   destroyOnDeath: 0
@@ -1727,7 +1728,7 @@ MonoBehaviour:
   ignoreDamageAfterDeath: 1
   destroyOnDeath: 0
   destroyDelay: 3
-  logDamage: 0
+  damageImmune: 0
   onHealthChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -1758,7 +1759,6 @@ MonoBehaviour:
   regenerate: 1
   regenPerSecond: 8
   regenDelayAfterUse: 0.5
-  logChanges: 0
 --- !u!114 &3752566315694508173
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1774,7 +1774,6 @@ MonoBehaviour:
   VFXDatabase: {fileID: 11400000, guid: 5d2b3fb21f792fa4b8a47ac846d3a806, type: 2}
   classInfo: {fileID: 2150990327585149132}
   fallbackTargetHeight: 1.1
-  logVFX: 0
 --- !u!114 &-1966097934974018367
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1797,12 +1796,12 @@ MonoBehaviour:
   mana: {fileID: -8181291190016967546}
   ultimateGauge: {fileID: 6257220964526020626}
   VFXPlayer: {fileID: -1904015669931751755}
+  blockOffensiveSkillsWhileBossFlying: 1
   useKeyboardInput: 1
   ignoreInputWhenPointerIsOverUI: 1
   skill1Key: 42
   skill2Key: 43
   ultimateKey: 44
-  logSkill: 1
   forceOneShotSkillAnimation: 1
   findAnimationClipByStateName: 1
   warnWhenSkillClipMissing: 1
@@ -1830,7 +1829,6 @@ MonoBehaviour:
   classInfo: {fileID: 2150990327585149132}
   fallbackCasterHeight: 0.9
   fallbackTargetHeight: 1.1
-  logVFX: 1
 --- !u!114 &6257220964526020626
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1846,7 +1844,7 @@ MonoBehaviour:
   maxGauge: 100
   currentGauge: 0
   startFullForTesting: 1
-  logChanges: 1
+  consumeTolerance: 0.01
 --- !u!114 &507953123089811989
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1861,7 +1859,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ShieldResource
   currentShield: 0
   shieldExpireTime: 0
-  logChanges: 1
 --- !u!1 &1199782892718570
 GameObject:
   m_ObjectHideFlags: 0

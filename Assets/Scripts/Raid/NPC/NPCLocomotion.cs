@@ -15,6 +15,8 @@ public class NPCLocomotion
     private Vector3 desiredMoveDirection;
     private Vector3 desiredDestination;
     private bool hasDestination;
+    private bool hasFacingOverride;
+    private Vector3 facingOverridePosition;
     private float currentStoppingDistance;
     private Vector3 lastAgentPosition;
     private float stuckTimer;
@@ -154,7 +156,15 @@ public class NPCLocomotion
             direction = Transform.forward;
 
         direction.Normalize();
-        Vector3 destination = position + direction * Mathf.Max(desiredSeparation, owner.keepDistanceFromBoss);
+
+        // 이미 기준점에서 목표 간격보다 멀리 있으면 기준점 쪽으로 되돌아가지 않고
+        // 바깥 방향으로 한 걸음 더 이동 (기준점 방향으로 도망치는 오동작 방지)
+        float currentSeparation = NPCSimpleFSMController.FlatDistance(Transform.position, position);
+        float targetSeparation = Mathf.Max(desiredSeparation, owner.keepDistanceFromBoss);
+        if (currentSeparation >= targetSeparation)
+            targetSeparation = currentSeparation + 1f;
+
+        Vector3 destination = position + direction * targetSeparation;
         desiredMoveDirection = direction;
         desiredDestination = destination;
         currentStoppingDistance = 0.15f;
@@ -179,6 +189,13 @@ public class NPCLocomotion
         if (playerTarget == null)
             return;
 
+        // 자동 플레이어처럼 자기 자신이 기준점이면 대형 유지 대신 정지 (후진 반복 방지)
+        if (playerTarget == Transform)
+        {
+            ClearMovement();
+            return;
+        }
+
         Vector3 targetPosition = playerTarget.position + playerTarget.rotation * owner.formationOffset;
         float distance = NPCSimpleFSMController.FlatDistance(Transform.position, targetPosition);
 
@@ -198,6 +215,15 @@ public class NPCLocomotion
     {
         desiredMoveDirection = Vector3.zero;
         hasDestination = false;
+        hasFacingOverride = false;
+    }
+
+    // 이동 중에도 지정 지점을 계속 바라보게 지시.
+    // 미지정 시 기존처럼 이동 속도 방향으로 회전 (퇴각 시 보스에게 등을 돌리는 현상의 보정)
+    public void FaceWhileMoving(Vector3 position)
+    {
+        hasFacingOverride = true;
+        facingOverridePosition = position;
     }
 
     // ---------- 이동 실행 (매 프레임) ----------
@@ -215,7 +241,18 @@ public class NPCLocomotion
         if (hasDestination)
         {
             Vector3 destination;
-            bool foundDestination = TryGetReachableNavDestination(desiredDestination, out destination);
+            bool foundDestination = TryGetNavDestination(desiredDestination, requireCompletePath: true, out destination);
+
+            // 완전 경로가 없으면 부분 경로라도 허용하여 도달 가능한 지점까지 접근 (제자리 멈춤 방지)
+            if (!foundDestination)
+                foundDestination = TryGetNavDestination(desiredDestination, requireCompletePath: false, out destination);
+
+            // 목적지 주변에 NavMesh가 없으면 진행 방향의 근거리 지점으로 직선 폴백
+            if (!foundDestination && desiredMoveDirection.sqrMagnitude > 0.0001f)
+            {
+                Vector3 nearStep = Transform.position + desiredMoveDirection * 1.5f;
+                foundDestination = TryGetNavDestination(nearStep, requireCompletePath: false, out destination);
+            }
 
             if (!foundDestination && owner.playerTarget != null)
                 foundDestination = TryFindAlternateFormationDestination(out destination);
@@ -253,12 +290,89 @@ public class NPCLocomotion
         }
 
         if (moving && velocity.sqrMagnitude > 0.01f)
-            RotateToward(velocity.normalized);
+        {
+            Vector3 moveDirection = velocity.normalized;
+            if (hasFacingOverride && ShouldHoldFacingWhileMoving(moveDirection))
+                RotateToward(facingOverridePosition - Transform.position);
+            else
+                RotateToward(moveDirection);
+        }
 
         owner.UpdateMotionAnimation(moving);
     }
 
+    // 이동 중 주시 유지 여부 판단.
+    // 이동 방향이 주시 방향과 크게 어긋나면(뒷걸음) 몸을 돌려 이동 (문워크 방지).
+    // 도착 후에는 정책의 FacePosition이 다시 보스를 바라보게 함
+    private bool ShouldHoldFacingWhileMoving(Vector3 moveDirection)
+    {
+        if (!owner.turnAroundWhenMovingBackward)
+            return true;
+
+        Vector3 faceDirection = facingOverridePosition - Transform.position;
+        faceDirection.y = 0f;
+        moveDirection.y = 0f;
+
+        if (faceDirection.sqrMagnitude < 0.0001f || moveDirection.sqrMagnitude < 0.0001f)
+            return false;
+
+        return Vector3.Angle(faceDirection, moveDirection) < owner.backpedalTurnAngle;
+    }
+
     public bool TryGetReachableNavDestination(Vector3 requestedDestination, out Vector3 destination)
+    {
+        return TryGetNavDestination(requestedDestination, requireCompletePath: true, out destination);
+    }
+
+    // 부분 경로까지 허용한 목적지 산출 (후퇴 가능성 검사 등 실행 가능성 판단용)
+    public bool TryGetAnyNavDestination(Vector3 requestedDestination, out Vector3 destination)
+    {
+        return TryGetNavDestination(requestedDestination, requireCompletePath: false, out destination);
+    }
+
+    // 요청 지점을 향한 경로가 실제로 도달하는 끝 지점 산출.
+    // 장애물 건너편의 연결되지 않은 NavMesh 섬에 지점이 잡히는 경우,
+    // 부분 경로의 마지막 지점(벽 앞)이 반환되므로 도달 가능성 판단이 정확해짐
+    public bool TryGetReachableEndpoint(Vector3 requestedDestination, out Vector3 endpoint)
+    {
+        endpoint = Transform.position;
+
+        if (!NavMesh.SamplePosition(requestedDestination, out NavMeshHit hit, Mathf.Max(0.1f, owner.destinationSampleRadius), owner.navMeshAreaMask))
+            return false;
+
+        if (Agent == null || !Agent.enabled || !Agent.isOnNavMesh)
+        {
+            endpoint = hit.position;
+            return true;
+        }
+
+        bool hasPath;
+        try
+        {
+            hasPath = Agent.CalculatePath(hit.position, reusablePath);
+        }
+        catch (System.Exception exception)
+        {
+            NavMeshState = "CalculatePath failed: " + exception.GetType().Name;
+            return false;
+        }
+
+        if (!hasPath || reusablePath.status == NavMeshPathStatus.PathInvalid)
+            return false;
+
+        Vector3[] corners = reusablePath.corners;
+        if (corners == null || corners.Length == 0)
+        {
+            endpoint = hit.position;
+            return reusablePath.status == NavMeshPathStatus.PathComplete;
+        }
+
+        endpoint = corners[corners.Length - 1];
+        return true;
+    }
+
+    // NavMesh 위 목적지 산출. requireCompletePath가 false면 부분 경로도 허용
+    private bool TryGetNavDestination(Vector3 requestedDestination, bool requireCompletePath, out Vector3 destination)
     {
         destination = requestedDestination;
 
@@ -281,7 +395,13 @@ public class NPCLocomotion
             return false;
         }
 
-        return hasPath && reusablePath.status == NavMeshPathStatus.PathComplete;
+        if (!hasPath)
+            return false;
+
+        if (reusablePath.status == NavMeshPathStatus.PathComplete)
+            return true;
+
+        return !requireCompletePath && reusablePath.status == NavMeshPathStatus.PathPartial;
     }
 
     private bool TryFindAlternateFormationDestination(out Vector3 destination)
@@ -349,7 +469,10 @@ public class NPCLocomotion
         }
 
         if (moving)
-            RotateToward(desiredMoveDirection);
+        {
+            bool holdFacing = hasFacingOverride && ShouldHoldFacingWhileMoving(desiredMoveDirection);
+            RotateToward(holdFacing ? facingOverridePosition - Transform.position : desiredMoveDirection);
+        }
 
         owner.UpdateMotionAnimation(moving);
     }
