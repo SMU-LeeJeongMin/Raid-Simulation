@@ -32,8 +32,9 @@ public class NpcFighterPolicy : INpcRolePolicy
 
         // 패턴 인지 모드: 보스가 공격할 가치가 없는 상태(무적)이고 슬라임이 있으면 슬라임 우선
         // BasicFSM은 전술 검사를 쓰지 않으므로 기존처럼 무적 보스를 계속 공격 (기준선 유지)
+        // 슬라임 생존 여부는 거리와 무관하게 판단 (Mask의 슬라임 행동은 거리로 배타 분리되므로 직접 조회)
         if (npc.IsPatternAware() && npc.prioritizeSlimesWhenBossImmune
-            && NpcActionMask.IsAvailable(npc, NpcAction.AttackSlime, includeTacticalChecks: true)
+            && SlimeTargetSelector.AnyAlive()
             && !NpcActionMask.IsBossTacticallyAttackable(npc))
         {
             return ThinkAttackSlime(npc, desiredDistance, tank);

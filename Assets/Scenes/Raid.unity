@@ -8663,7 +8663,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02b3623d95ce6fa4ca45fbb33c818c30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ExperimentBatchRunner
-  enableBatch: 1
+  enableBatch: 0
   episodesPerAlgorithm: 30
   algorithms: 000000000100000002000000
   baseSeed: 1000
@@ -8712,16 +8712,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GnnModelRunner
   models:
   - mode: 3
-    modelAsset: {fileID: 5022602860645237092, guid: 266ef534ba07cc94b83009ceb88cd886, type: 3}
-    manifestAsset: {fileID: 4900000, guid: 1aa0236fb1856374a885919199bf0e1e, type: 3}
+    modelAsset: {fileID: 5022602860645237092, guid: 2585c30fd22279947be9421eaebdb1b6, type: 3}
+    manifestAsset: {fileID: 4900000, guid: 00a3fdae25465784c91a20e4eb78e42e, type: 3}
     graphInput: 0
   - mode: 4
-    modelAsset: {fileID: 5022602860645237092, guid: 5eb58d743e3431b42b7753107e3b8b9f, type: 3}
-    manifestAsset: {fileID: 4900000, guid: 4513977a253494e4daad8cdda6fbbfe3, type: 3}
+    modelAsset: {fileID: 5022602860645237092, guid: 3b4f58f2c99b2b64ca1005ce76653d3f, type: 3}
+    manifestAsset: {fileID: 4900000, guid: dba3d93b49229224c877f54946b4d306, type: 3}
     graphInput: 1
   - mode: 5
-    modelAsset: {fileID: 5022602860645237092, guid: 9d0c2098316cafb42b721d49c50e3ab7, type: 3}
-    manifestAsset: {fileID: 4900000, guid: edb5eba4c52c3114a9fabeb66412258e, type: 3}
+    modelAsset: {fileID: 5022602860645237092, guid: e95b1f2733312214996b57307593ec6e, type: 3}
+    manifestAsset: {fileID: 4900000, guid: 266d1b639e465e94f859a08e5c0b1386, type: 3}
     graphInput: 2
   backend: 512
   inferenceInterval: 0.2

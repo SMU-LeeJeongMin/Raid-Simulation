@@ -47,6 +47,7 @@ public class NpcUtilityPolicy : INpcRolePolicy
 
         public bool canRetreat;
         public float manaRatio;
+        public bool saveManaForUltimate;
 
         public PlayerStatus lowestAlly;
         public float lowestAllyRatio;
@@ -109,6 +110,20 @@ public class NpcUtilityPolicy : INpcRolePolicy
         Context context = new Context();
 
         context.manaRatio = npc.status != null && npc.status.Mana != null ? npc.status.Mana.Normalized : 1f;
+
+        // 궁극기 마나 아끼기: 게이지가 거의 찼는데 마나가 궁극기 비용에 못 미치면
+        // 일반 스킬 사용을 억제하여 마나를 모음 (마나 운용 패턴의 교사 시연)
+        context.saveManaForUltimate = false;
+        if (npc.skillController != null && npc.status != null && npc.status.Mana != null)
+        {
+            PlayerSkillDefinition ultimate = npc.skillController.GetSkillDefinitionForUI(PlayerSkillSlot.Ultimate);
+            if (ultimate != null
+                && npc.skillController.GetUltimateGaugeNormalized() >= 0.85f
+                && npc.status.Mana.CurrentMana < ultimate.manaCost)
+            {
+                context.saveManaForUltimate = true;
+            }
+        }
         context.hasBoss = npc.boss != null;
         if (context.hasBoss)
         {
@@ -199,9 +214,15 @@ public class NpcUtilityPolicy : INpcRolePolicy
 
             case NpcAction.AttackBossSkill1:
             case NpcAction.AttackBossSkill2:
+            {
                 if (!context.bossAttackable || !IsInAttackWindow(npc, context))
                     return 0f;
-                return 0.55f * BossWeight * ManaFactor(context.manaRatio);
+
+                float skillScore = 0.6f * BossWeight * ManaFactor(context.manaRatio);
+
+                // 궁극기 준비 임박 시 일반 스킬을 기본 공격 아래로 낮춰 마나 보존
+                return context.saveManaForUltimate ? skillScore * 0.6f : skillScore;
+            }
 
             case NpcAction.AttackBossBasic:
                 if (!context.bossAttackable || !IsInAttackWindow(npc, context))
@@ -243,12 +264,14 @@ public class NpcUtilityPolicy : INpcRolePolicy
         }
     }
 
-    // 마나 여유도 반응 곡선: 20% 이하면 0, 70% 이상이면 1
-    // 스킬 점수(0.55)가 기본 공격(0.5)을 넘으려면 마나가 약 65% 이상이어야 하므로
+    // 마나 여유도 반응 곡선: 20% 이하면 0, 60% 이상이면 1
+    // 스킬 점수(0.6)가 기본 공격(0.5)을 넘으려면 마나가 약 53% 이상이어야 함.
+    // 이전 임계(약 65%)는 메이지의 전투 중 마나 평형(약 45%)보다 높아
+    // 개전 직후 외에는 스킬이 거의 선택되지 않는 문제의 원인이었으므로 완화.
     // 마나가 마르면 자동으로 기본 공격으로 전환되어 자원을 회복
     private static float ManaFactor(float manaRatio)
     {
-        return Mathf.Clamp01((manaRatio - 0.2f) / 0.5f);
+        return Mathf.Clamp01((manaRatio - 0.2f) / 0.4f);
     }
 
     private float SlimeScore(Context context)

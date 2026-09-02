@@ -89,9 +89,25 @@ public static class NpcActionMask
             case NpcAction.ShieldParty:
                 return CanUseSupportSkill(npc, PlayerSkillSlot.Skill2);
 
+            // 슬라임 행동도 보스 공격과 같이 거리로 배타 분리
+            // (근접 상태에서 MoveToSlime만 반복하며 공격하지 않는 문제 방지)
             case NpcAction.AttackSlime:
+            {
+                SlimeAddEnemy slime = SlimeTargetSelector.FindMostUrgent(npc.transform.position);
+                if (slime == null)
+                    return false;
+                return NPCSimpleFSMController.FlatDistance(npc.transform.position, slime.transform.position)
+                    <= npc.DesiredCombatDistance;
+            }
+
             case NpcAction.MoveToSlime:
-                return SlimeTargetSelector.AnyAlive();
+            {
+                SlimeAddEnemy slime = SlimeTargetSelector.FindMostUrgent(npc.transform.position);
+                if (slime == null)
+                    return false;
+                return NPCSimpleFSMController.FlatDistance(npc.transform.position, slime.transform.position)
+                    > npc.DesiredCombatDistance;
+            }
 
             case NpcAction.SpreadFromParty:
                 return npc.bossSkillPattern != null && npc.bossSkillPattern.IsTrackingLightningActive;
