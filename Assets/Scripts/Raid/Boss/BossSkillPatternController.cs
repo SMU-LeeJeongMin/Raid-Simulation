@@ -816,6 +816,14 @@ public class BossSkillPatternController : MonoBehaviour
         float elapsed = 0f;
         bool didFirstTick = false;
 
+        // 브레스가 실제로 피해를 주는 구간에도 위험 범위를 유지
+        // (예고 장판만 등록하면 예고 종료 직후 NPC가 안전하다고 판단해 재진입하는 문제의 원인)
+        // 스윕 전체가 지나가는 각도 + 순간 피해 각도를 덮는 부채꼴로 등록
+        float breathCoverAngle = Mathf.Clamp(sweepAngle + Mathf.Max(0f, pattern.fireBreathDamageAngle), 1f, 360f);
+        DangerZoneHandle breathZone = RegisterTemporaryConeDangerZone(
+            "FireBreath_Active", origin, lockedForward, pattern.length, breathCoverAngle,
+            activeDuration, 0f, pattern.damage, DangerZoneCategory.ActiveDamage);
+
         while (elapsed < activeDuration)
         {
             elapsed += Time.deltaTime;
@@ -834,6 +842,10 @@ public class BossSkillPatternController : MonoBehaviour
                 fireVFX.transform.position = origin + pattern.patternVFXOffset;
                 fireVFX.transform.rotation = Quaternion.LookRotation(currentForward, Vector3.up) * Quaternion.Euler(pattern.patternVFXEuler);
             }
+
+            // 보스가 움직여도 위험 범위가 브레스 시작점을 따라가도록 갱신
+            if (breathZone != null)
+                breathZone.transform.position = new Vector3(origin.x, GetGroundY(origin), origin.z);
 
             tickTimer += Time.deltaTime;
             if (!didFirstTick || tickTimer >= Mathf.Max(0.05f, pattern.fireBreathTickInterval))
@@ -866,6 +878,15 @@ public class BossSkillPatternController : MonoBehaviour
 
         if (pattern.projectileVFXPrefab != null)
         {
+            // 투사체가 경로를 지나가는 동안 직선 구간을 위험 범위로 유지
+            // (예고 종료 후 경로에 재진입하여 투사체에 맞는 문제 방지)
+            float travelTime = pattern.projectileSpeed > 0.01f
+                ? Mathf.Min(pattern.projectileLifetime, pattern.length / pattern.projectileSpeed)
+                : pattern.projectileLifetime;
+            RegisterTemporaryRectangleDangerZone(
+                "LineOrb_Active", origin, forward, pattern.length, pattern.width,
+                travelTime, pattern.damage, 0f, DangerZoneCategory.ActiveDamage);
+
             SpawnLineProjectile(pattern, origin, forward);
         }
         else
@@ -1236,6 +1257,41 @@ public class BossSkillPatternController : MonoBehaviour
         if (duration > 0f)
             Destroy(zoneObject, duration + 0.1f);
         return handle;
+    }
+
+    // 실제 피해 구간 동안 유지되는 부채꼴 위험 범위 등록 (예고 종료 후 재진입 피해 방지)
+    private DangerZoneHandle RegisterTemporaryConeDangerZone(string zoneName, Vector3 position, Vector3 forward, float length, float angle, float duration, float damage, float tickDamage, DangerZoneCategory category)
+    {
+        GameObject zoneObject = new GameObject(zoneName);
+        zoneObject.transform.position = new Vector3(position.x, GetGroundY(position), position.z);
+        zoneObject.transform.rotation = FlatLookRotation(forward);
+        DangerZoneHandle handle = zoneObject.AddComponent<DangerZoneHandle>();
+        handle.ConfigureCone(zoneName, category, length, angle, duration, damage, tickDamage, duration <= 0f);
+        if (duration > 0f)
+            Destroy(zoneObject, duration + 0.1f);
+        return handle;
+    }
+
+    // 실제 피해 구간 동안 유지되는 직사각형 위험 범위 등록 (origin에서 forward 방향으로 length)
+    private DangerZoneHandle RegisterTemporaryRectangleDangerZone(string zoneName, Vector3 origin, Vector3 forward, float length, float width, float duration, float damage, float tickDamage, DangerZoneCategory category)
+    {
+        GameObject zoneObject = new GameObject(zoneName);
+        zoneObject.transform.position = new Vector3(origin.x, GetGroundY(origin), origin.z);
+        zoneObject.transform.rotation = FlatLookRotation(forward);
+        DangerZoneHandle handle = zoneObject.AddComponent<DangerZoneHandle>();
+        handle.ConfigureRectangle(zoneName, category, length, width, duration, damage, tickDamage, duration <= 0f);
+        if (duration > 0f)
+            Destroy(zoneObject, duration + 0.1f);
+        return handle;
+    }
+
+    // 수평면 기준 바라보기 회전 (방향이 퇴화하면 월드 전방 사용)
+    private static Quaternion FlatLookRotation(Vector3 forward)
+    {
+        forward.y = 0f;
+        if (forward.sqrMagnitude < 0.0001f)
+            forward = Vector3.forward;
+        return Quaternion.LookRotation(forward.normalized, Vector3.up);
     }
 
     private IEnumerator MoveBossVertical(Vector3 targetPosition, float duration)

@@ -82,12 +82,22 @@ public static class NpcActionMask
             case NpcAction.RegroupDuringBossFly:
                 return npc.bossSkillPattern != null && npc.bossSkillPattern.IsFlying;
 
+            // 지원 행동은 해당 슬롯의 스킬이 실제로 지원 효과(힐, 실드)일 때만 후보가 됨
+            // (공격 스킬을 가진 직업이 지원 행동 후보를 받아 실행 실패로 폴백하는 낭비 방지)
             case NpcAction.MoveToAllyAndHeal:
-                return CanUseSupportSkill(npc, PlayerSkillSlot.Skill1);
+                return IsSupportSlot(npc, PlayerSkillSlot.Skill1)
+                    && CanUseSupportSkill(npc, PlayerSkillSlot.Skill1);
 
+            // 위험 아군 실드는 위험 지역 안의 아군이 실제로 존재해야 실행이 성립
+            // (대상 없이 후보로 허용하면 실행 단계에서 반드시 실패하므로 규칙상 불가로 판정)
             case NpcAction.ShieldDangerAlly:
+                return IsSupportSlot(npc, PlayerSkillSlot.Skill2)
+                    && CanUseSupportSkill(npc, PlayerSkillSlot.Skill2)
+                    && NpcHealerPolicy.FindMostThreatenedAlly(npc) != null;
+
             case NpcAction.ShieldParty:
-                return CanUseSupportSkill(npc, PlayerSkillSlot.Skill2);
+                return IsSupportSlot(npc, PlayerSkillSlot.Skill2)
+                    && CanUseSupportSkill(npc, PlayerSkillSlot.Skill2);
 
             // 슬라임 행동도 보스 공격과 같이 거리로 배타 분리
             // (근접 상태에서 MoveToSlime만 반복하며 공격하지 않는 문제 방지)
@@ -192,5 +202,15 @@ public static class NpcActionMask
             return false;
 
         return npc.skillController.CanUseSkillForUI(slot, checkTargetRange: false, out _);
+    }
+
+    // 해당 슬롯의 스킬이 지원 효과(힐, 실드 계열)인지 (직업별 스킬 구성 기준)
+    private static bool IsSupportSlot(NPCSimpleFSMController npc, PlayerSkillSlot slot)
+    {
+        if (npc.skillController == null)
+            return false;
+
+        PlayerSkillDefinition definition = npc.skillController.GetSkillDefinitionForUI(slot);
+        return definition != null && GnnSchema.IsSupportEffect(definition.effectType);
     }
 }

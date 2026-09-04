@@ -106,10 +106,11 @@ public static class NpcActionExecutor
                 if (ally == null)
                     return false;
 
-                if (NpcHealerPolicy.MoveNearAllyIfNeeded(npc, ally))
+                // 단일 힐의 설계: 시전 거리까지 다가간 뒤 그 아군을 대상으로 시전
+                if (NpcHealerPolicy.MoveNearAllyIfNeeded(npc, ally, npc.healerHealCastDistance))
                     return true;
 
-                return NpcHealerPolicy.TryUseHealerSkill(npc, useShieldSkill: false);
+                return NpcHealerPolicy.TryUseHealerSkill(npc, useShieldSkill: false, ally);
             }
 
             case NpcAction.ShieldDangerAlly:

@@ -530,6 +530,10 @@ public static class GraphSnapshotBuilder
         {
             NpcAction action = controller.CurrentPolicyAction;
             node.policy_action_id = (int)action;
+
+            // DAgger 라벨: 이 상태에서 교사(Utility)가 고를 행동.
+            // 학습 모델이 조종한 판의 상태를 교사 행동으로 재라벨링하는 데 사용 (Ross et al. 2011)
+            node.teacher_action_id = controller.ComputeTeacherAdviceId();
             node.activity_id = dead ? GnnSchema.ActivityDead
                 : node.is_casting == 1 ? GnnSchema.ActivityCast
                 : NpcActions.GetActivityId(action);

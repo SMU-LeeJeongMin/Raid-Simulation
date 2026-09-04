@@ -6646,7 +6646,6 @@ MonoBehaviour:
   triggerInteraction: 2
   skipFlyingBossTarget: 1
   fallbackAttackHeight: 0.8
-  logAttack: 1
   drawAttackGizmo: 1
   drawHorizontalAutoTargetGizmo: 1
   externalActionLock: 0
@@ -6720,8 +6719,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e791f78b376daeb4684e3b747923494b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 800
-  currentHealth: 800
+  maxHealth: 900
+  currentHealth: 900
   startWithFullHealth: 1
   ignoreDamageAfterDeath: 1
   destroyOnDeath: 0
@@ -6841,7 +6840,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerUltimateGauge
   maxGauge: 100
   currentGauge: 0
-  startFullForTesting: 1
+  startFullForTesting: 0
   consumeTolerance: 0.01
 --- !u!114 &-3618118825840565144
 MonoBehaviour:

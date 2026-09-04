@@ -8663,9 +8663,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02b3623d95ce6fa4ca45fbb33c818c30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ExperimentBatchRunner
-  enableBatch: 0
-  episodesPerAlgorithm: 30
-  algorithms: 000000000100000002000000
+  enableBatch: 1
+  episodesPerAlgorithm: 10
+  algorithms: 02000000
   baseSeed: 1000
   seedStride: 1
   pairSeedsAcrossAlgorithms: 1
@@ -8712,16 +8712,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GnnModelRunner
   models:
   - mode: 3
-    modelAsset: {fileID: 5022602860645237092, guid: 2585c30fd22279947be9421eaebdb1b6, type: 3}
-    manifestAsset: {fileID: 4900000, guid: 00a3fdae25465784c91a20e4eb78e42e, type: 3}
+    modelAsset: {fileID: 5022602860645237092, guid: 5fd734bdc3619694a9892d0394750999, type: 3}
+    manifestAsset: {fileID: 4900000, guid: a57239aac9cb6ff4093f32d9c82fa489, type: 3}
     graphInput: 0
   - mode: 4
-    modelAsset: {fileID: 5022602860645237092, guid: 3b4f58f2c99b2b64ca1005ce76653d3f, type: 3}
-    manifestAsset: {fileID: 4900000, guid: dba3d93b49229224c877f54946b4d306, type: 3}
+    modelAsset: {fileID: 5022602860645237092, guid: ee8b3e01e54617048bafaa0fa56d3cc9, type: 3}
+    manifestAsset: {fileID: 4900000, guid: 41c15808e185da44e8091cf87f04f610, type: 3}
     graphInput: 1
   - mode: 5
-    modelAsset: {fileID: 5022602860645237092, guid: e95b1f2733312214996b57307593ec6e, type: 3}
-    manifestAsset: {fileID: 4900000, guid: 266d1b639e465e94f859a08e5c0b1386, type: 3}
+    modelAsset: {fileID: 5022602860645237092, guid: e0e131e47fff5034888bc173ef8e07e3, type: 3}
+    manifestAsset: {fileID: 4900000, guid: fe5a29c4fe5618f43b27eeed7e7199f4, type: 3}
     graphInput: 2
   backend: 512
   inferenceInterval: 0.2
@@ -39164,8 +39164,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e791f78b376daeb4684e3b747923494b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 30000
-  currentHealth: 30000
+  maxHealth: 70000
+  currentHealth: 70000
   startWithFullHealth: 1
   ignoreDamageAfterDeath: 1
   destroyOnDeath: 0
@@ -39325,7 +39325,7 @@ MonoBehaviour:
     cooldownAfter: 1.5
     autoStretchAnimationToWarning: 1
     postImpactRecovery: 0.35
-    damage: 90
+    damage: 80
     shape: 0
     originPoint: {fileID: 77852178}
     localOffset: {x: 0, y: 0, z: 0}
@@ -39376,7 +39376,7 @@ MonoBehaviour:
     cooldownAfter: 1.5
     autoStretchAnimationToWarning: 1
     postImpactRecovery: 0.35
-    damage: 90
+    damage: 80
     shape: 0
     originPoint: {fileID: 77852178}
     localOffset: {x: 0, y: 0, z: 0}
@@ -39427,7 +39427,7 @@ MonoBehaviour:
     cooldownAfter: 1.5
     autoStretchAnimationToWarning: 1
     postImpactRecovery: 0.35
-    damage: 80
+    damage: 70
     shape: 1
     originPoint: {fileID: 1794549116}
     localOffset: {x: 0, y: 0, z: 0}
@@ -39478,7 +39478,7 @@ MonoBehaviour:
     cooldownAfter: 1.5
     autoStretchAnimationToWarning: 1
     postImpactRecovery: 0.35
-    damage: 80
+    damage: 70
     shape: 1
     originPoint: {fileID: 124339855}
     localOffset: {x: 0, y: 0, z: 0}
@@ -39529,7 +39529,7 @@ MonoBehaviour:
     cooldownAfter: 1.5
     autoStretchAnimationToWarning: 1
     postImpactRecovery: 0.35
-    damage: 100
+    damage: 90
     shape: 0
     originPoint: {fileID: 0}
     localOffset: {x: 0, y: 0, z: 0}
@@ -39580,7 +39580,7 @@ MonoBehaviour:
     cooldownAfter: 1.5
     autoStretchAnimationToWarning: 1
     postImpactRecovery: 0.35
-    damage: 100
+    damage: 90
     shape: 2
     originPoint: {fileID: 398245981}
     localOffset: {x: 0, y: 0, z: 0}
@@ -39651,7 +39651,7 @@ MonoBehaviour:
     randomLightningWaveInterval: 0.25
     randomLightningSpreadRadius: 8
     randomLightningWarningTime: 1
-    randomLightningDamage: 120
+    randomLightningDamage: 110
     randomLightningRadius: 1.6
     randomLightningInterval: 0.35
     randomLightningVFXPrefab: {fileID: 2640264786997359090, guid: f45936d2fc589e1438de95c19def3155, type: 3}

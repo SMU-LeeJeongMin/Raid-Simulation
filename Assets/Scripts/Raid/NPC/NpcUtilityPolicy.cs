@@ -103,6 +103,32 @@ public class NpcUtilityPolicy : INpcRolePolicy
         return NpcAction.FollowPlayer;
     }
 
+    // 실행 없이 현재 상태에서 교사(Utility)가 고를 최선 행동을 계산 (DAgger 라벨 수집용).
+    // Think와 동일한 후보 수집과 점수 계산을 사용하되 실행과 라벨 갱신은 하지 않으므로
+    // 학습 모델이 조종 중인 상태에서도 부작용 없이 호출 가능
+    public NpcAction AdviseBestAction(NPCSimpleFSMController npc)
+    {
+        int count = NpcActionMask.CollectAvailable(npc, includeTacticalChecks: true, candidates);
+        if (count == 0)
+            return NpcAction.FollowPlayer;
+
+        Context context = BuildContext(npc);
+
+        NpcAction best = NpcAction.FollowPlayer;
+        float bestScore = 0f;
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            float score = Score(npc, candidates[i], context);
+            if (score > bestScore)
+            {
+                bestScore = score;
+                best = candidates[i];
+            }
+        }
+
+        return best;
+    }
+
     // ---------- 상황 요약 ----------
 
     private Context BuildContext(NPCSimpleFSMController npc)

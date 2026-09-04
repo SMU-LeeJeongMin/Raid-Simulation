@@ -42,8 +42,9 @@ public class NpcHealerPolicy : INpcRolePolicy
 
         if (lowAlly != null && lowRatio <= npc.healerLowHpThreshold)
         {
-            bool movedToAlly = MoveNearAllyIfNeeded(npc, lowAlly);
-            bool usedHeal = !movedToAlly && TryUseHealerSkill(npc, useShieldSkill: false);
+            // 단일 힐은 시전 거리까지 접근 후 그 아군을 대상으로 시전
+            bool movedToAlly = MoveNearAllyIfNeeded(npc, lowAlly, npc.healerHealCastDistance);
+            bool usedHeal = !movedToAlly && TryUseHealerSkill(npc, useShieldSkill: false, lowAlly);
 
             if (movedToAlly || usedHeal)
             {
@@ -141,13 +142,20 @@ public class NpcHealerPolicy : INpcRolePolicy
     // 아군이 힐 사거리 밖이면 접근 이동 수행 후 true 반환
     public static bool MoveNearAllyIfNeeded(NPCSimpleFSMController npc, PlayerStatus ally)
     {
+        return MoveNearAllyIfNeeded(npc, ally, npc.healerFollowDistance);
+    }
+
+    // 지정 거리까지 아군에게 접근. 단일 힐은 시전 거리(healerHealCastDistance)를 사용하여
+    // "다가가서 힐하는" 설계를 실행 규칙으로 보장
+    public static bool MoveNearAllyIfNeeded(NPCSimpleFSMController npc, PlayerStatus ally, float approachDistance)
+    {
         if (ally == null)
             return false;
 
         float distance = NPCSimpleFSMController.FlatDistance(npc.transform.position, ally.transform.position);
-        if (distance > npc.healerFollowDistance)
+        if (distance > approachDistance)
         {
-            npc.MoveToward(ally.transform.position, Mathf.Min(1.0f, npc.healerFollowDistance * 0.25f));
+            npc.MoveToward(ally.transform.position, Mathf.Min(1.0f, approachDistance * 0.25f));
             return true;
         }
 
@@ -164,7 +172,7 @@ public class NpcHealerPolicy : INpcRolePolicy
     }
 
     // 스킬1(힐) 또는 스킬2(실드) 사용 시도 (행동 쿨다운 공유)
-    public static bool TryUseHealerSkill(NPCSimpleFSMController npc, bool useShieldSkill)
+    public static bool TryUseHealerSkill(NPCSimpleFSMController npc, bool useShieldSkill, PlayerStatus intendedTarget = null)
     {
         if (!npc.IsActionReady)
             return false;
@@ -174,6 +182,14 @@ public class NpcHealerPolicy : INpcRolePolicy
         if (npc.skillController == null)
             return false;
 
-        return useShieldSkill ? npc.skillController.TryUseSkill2() : npc.skillController.TryUseSkill1();
+        // 다가간 그 아군에게 효과가 들어가도록 의도 대상 지정
+        // (미지정 시 스킬 기본 규칙인 "가장 가까운 다친 아군" 사용)
+        npc.skillController.SetSupportTargetOverride(intendedTarget);
+
+        bool used = useShieldSkill ? npc.skillController.TryUseSkill2() : npc.skillController.TryUseSkill1();
+        if (!used)
+            npc.skillController.SetSupportTargetOverride(null);
+
+        return used;
     }
 }

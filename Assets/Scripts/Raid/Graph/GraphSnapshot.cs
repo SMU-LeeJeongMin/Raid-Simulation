@@ -59,6 +59,7 @@ public class GraphNodeData
     public float ultimate_ratio;
     public int is_casting;
     public int policy_action_id;
+    public int teacher_action_id = -1; // DAgger 라벨: 이 상태에서 교사(Utility)가 고를 행동 (-1이면 무효)
     public int[] action_mask;          // NpcAction 0~12의 실행 가능 여부 (전술 검사 포함)
     public int action_mask_valid;
     public int skill1_ready;           // v1 확장: SKILL 노드 도입 전의 캐릭터 수준 요약

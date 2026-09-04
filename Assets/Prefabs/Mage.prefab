@@ -377,7 +377,6 @@ MonoBehaviour:
   triggerInteraction: 2
   skipFlyingBossTarget: 1
   fallbackAttackHeight: 0.8
-  logAttack: 1
   drawAttackGizmo: 1
   drawHorizontalAutoTargetGizmo: 1
   externalActionLock: 0
@@ -572,7 +571,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerUltimateGauge
   maxGauge: 100
   currentGauge: 0
-  startFullForTesting: 1
+  startFullForTesting: 0
   consumeTolerance: 0.01
 --- !u!114 &-2466677879128845277
 MonoBehaviour:

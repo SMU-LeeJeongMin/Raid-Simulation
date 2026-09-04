@@ -71,6 +71,8 @@ public class NPCSimpleFSMController : MonoBehaviour
     public float meleeDistance = 2.4f;
     public float rangedDistance = 5.5f;
     public float healerFollowDistance = 6f;
+    [Tooltip("단일 힐의 시전 접근 거리. 힐러는 대상 아군에게 이 거리까지 다가간 뒤 시전 (다가가서 힐하는 설계의 보장)")]
+    public float healerHealCastDistance = 3f;
     public float keepDistanceFromBoss = 3.0f;
 
     [Header("Boss Distance")]
@@ -351,6 +353,22 @@ public class NPCSimpleFSMController : MonoBehaviour
 
     // 현재 정책이 만들어질 때의 aiMode (모드 변경 시 정책 재생성 판단용)
     private NPCFSMMode policyBuiltForMode;
+
+    // DAgger 라벨용 교사 조언자: 어떤 모드로 조종 중이든 "교사(Utility)라면 지금 뭘 골랐을까"를 계산.
+    // 그래프 스냅샷에 teacher_action_id로 기록되어 학습 모델 롤아웃 상태의 재라벨링에 사용
+    private NpcUtilityPolicy teacherAdvisor;
+    private NPCRole teacherAdvisorRole;
+
+    public int ComputeTeacherAdviceId()
+    {
+        if (teacherAdvisor == null || teacherAdvisorRole != role)
+        {
+            teacherAdvisor = new NpcUtilityPolicy(role == NPCRole.Tank, role == NPCRole.Healer);
+            teacherAdvisorRole = role;
+        }
+
+        return (int)teacherAdvisor.AdviseBestAction(this);
+    }
 
     // 역할 판정 후 해당 역할과 모드의 의사결정 정책 생성
     private void ResolveRole()

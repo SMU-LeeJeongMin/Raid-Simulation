@@ -426,9 +426,32 @@ public class PlayerSkillController : MonoBehaviour
         }
     }
 
+    // NPC 지원 스킬의 의도 대상. 힐러가 다가간 그 아군에게 효과가 들어가도록 지정하며,
+    // 미지정(사람 조작 포함) 시 기본 규칙인 "가장 가까운 다친 아군"을 사용
+    private PlayerStatus supportTargetOverride;
+
+    public void SetSupportTargetOverride(PlayerStatus ally)
+    {
+        supportTargetOverride = ally;
+    }
+
+    // 의도 대상의 1회 소비 (효과 적용 시점에 유효하지 않으면 기본 규칙으로 폴백)
+    private PlayerStatus ConsumeSupportTargetOverride()
+    {
+        PlayerStatus target = supportTargetOverride;
+        supportTargetOverride = null;
+
+        if (target == null || target.Health == null || target.Health.IsDead)
+            return null;
+
+        return target;
+    }
+
     private void ApplyHealNearestAlly(PlayerSkillDefinition skill)
     {
-        PlayerStatus ally = FindNearestAlly(true);
+        PlayerStatus ally = ConsumeSupportTargetOverride();
+        if (ally == null)
+            ally = FindNearestAlly(true);
         if (ally == null)
             return;
 
