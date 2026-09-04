@@ -236,6 +236,44 @@ public class BossSkillPatternController : MonoBehaviour
     public bool disableRootMotion = true;
     public float defaultAnimationDuration = 1.5f;
 
+    [Header("One Shot Mechanic (즉사기)")]
+    [Tooltip("보스 HP가 임계 이하로 내려가면 스폰 지점으로 복귀해 기를 모은 뒤 전장 전체 즉사기 발사. 벽 뒤에 숨어야 회피 가능")]
+    public bool enableOneShotMechanic = true;
+    [Range(0.05f, 0.95f)] public float oneShotHealthRatio = 0.2f;
+    public float oneShotReturnDuration = 1.1f;
+    [Tooltip("스폰 지점 복귀 도약의 최고 높이 (2페이즈 비행처럼 빠르게 뛰어오르는 연출)")]
+    public float oneShotLeapHeight = 5f;
+    public float oneShotChargeTime = 7f;
+    public float oneShotZoneRadius = 60f;
+    public float oneShotDamage = 999999f;
+    [Tooltip("기 모으기 애니메이션 클립 (지정 시 상태 이름보다 우선, 프리팹처럼 드래그)")]
+    public AnimationClip oneShotStunnedClip;
+    public string oneShotStunnedStateName = "Stunned Loop";
+    [Tooltip("발사 애니메이션 클립 (지정 시 상태 이름보다 우선)")]
+    public AnimationClip oneShotBuffClip;
+    public string oneShotBuffStateName = "Buff";
+    public float oneShotBuffDuration = 5f;
+    [Tooltip("발사 이펙트가 보스에서 파티 시작 진영 방향으로 날아가는 거리")]
+    public float oneShotBlastTravelDistance = 35f;
+    [Tooltip("발사 이펙트의 이동 시간. 0이면 발사(Buff) 시간과 동일하게 자동 설정")]
+    public float oneShotBlastTravelDuration = 0f;
+    public string oneShotWarningMessage = "A deadly attack is coming... Hide behind the walls!";
+    public GameObject oneShotChargeVFXPrefab;
+    public Vector3 oneShotChargeVFXOffset = new Vector3(0f, 1.5f, 0f);
+    public GameObject oneShotBlastVFXPrefab;
+    public Vector3 oneShotBlastVFXScale = Vector3.one;
+
+    [Header("One Shot Walls")]
+    [Tooltip("미지정 시 런타임에 기본 큐브 벽 생성")]
+    public GameObject oneShotWallPrefab;
+    public int oneShotWallCount = 2;
+    public Vector3 oneShotWallSize = new Vector3(4.5f, 2.5f, 0.9f);
+    public float oneShotWallMinDistanceFromBoss = 10f;
+    public float oneShotWallMaxDistanceFromBoss = 18f;
+    public float oneShotWallMinSeparation = 6f;
+    [Tooltip("보스에서 파티 방향을 기준으로 벽이 흩어질 수 있는 각도 범위")]
+    public float oneShotWallSpreadAngle = 50f;
+
     [Header("Debug")]
     public bool logPattern = true;
     public bool drawGizmos = true;
@@ -249,6 +287,13 @@ public class BossSkillPatternController : MonoBehaviour
 
     private float nextTargetFindTime;
     private bool phase2Triggered;
+    private bool oneShotTriggered;
+    private Vector3 initialSpawnPosition;
+    private Vector3 initialPartyCenter;
+    private bool initialPartyCenterCaptured;
+    private Coroutine oneShotRoutine;
+    private DangerZoneHandle oneShotZone;
+    private readonly List<GameObject> oneShotWalls = new List<GameObject>();
     private int phase1PatternsSinceFireBreath;
     private Coroutine patternRoutine;
     private Coroutine phase2PriorityRoutine;
@@ -279,6 +324,12 @@ public class BossSkillPatternController : MonoBehaviour
     private void Awake()
     {
         CombatRegistry.Register(this);
+
+        // 즉사기 복귀 지점: 씬 시작 시의 보스 위치 (스폰 포인트)
+        initialSpawnPosition = transform.position;
+
+        // 에피소드 반복(씬 재로드) 시 이전 판의 안전 지점 힌트 제거
+        DangerZoneRegistry.ClearSafeHints();
 
         if (health == null)
             health = GetComponent<Health>();
@@ -353,11 +404,52 @@ public class BossSkillPatternController : MonoBehaviour
         TryFindPlayerIfNeeded();
         UpdateEngageState();
         KeepLoopingPhaseClipIfNeeded();
+
+        // 파티의 시작 진영(스폰 지점 중심) 기록: 즉사기 벽 배치의 기준 방향.
+        // 전투 중 파티가 보스에 붙어 있어도 벽은 항상 플레이어 진영 쪽에 생성
+        if (!initialPartyCenterCaptured)
+            TryCaptureInitialPartyCenter();
+    }
+
+    private void TryCaptureInitialPartyCenter()
+    {
+        IReadOnlyList<PlayerStatus> statuses = CombatRegistry.PlayerStatuses;
+        if (statuses == null || statuses.Count == 0)
+            return;
+
+        Vector3 sum = Vector3.zero;
+        int count = 0;
+        for (int i = 0; i < statuses.Count; i++)
+        {
+            PlayerStatus status = statuses[i];
+            if (status == null)
+                continue;
+
+            sum += status.transform.position;
+            count++;
+        }
+
+        if (count == 0)
+            return;
+
+        initialPartyCenter = sum / count;
+        initialPartyCenterCaptured = true;
     }
 
     private void OnHealthChanged(Health changedHealth, float current, float max, float normalized)
     {
-        if (bossDead || phase2Triggered || changedHealth == null || changedHealth.IsDead)
+        if (bossDead || changedHealth == null || changedHealth.IsDead)
+            return;
+
+        // 즉사기: 임계 이하에서 1회 발동 (2페이즈 진행 중이면 종료 후 시작)
+        if (enableOneShotMechanic && !oneShotTriggered && normalized <= oneShotHealthRatio)
+        {
+            oneShotTriggered = true;
+            oneShotRoutine = StartCoroutine(OneShotRoutine());
+            return;
+        }
+
+        if (phase2Triggered)
             return;
 
         if (normalized <= phase2HealthRatio)
@@ -368,6 +460,14 @@ public class BossSkillPatternController : MonoBehaviour
     {
         bossDead = true;
         phase2Triggered = true;
+
+        // 즉사기 진행 중 사망 시 벽, 위험 지역, 경고 문구 정리
+        if (oneShotRoutine != null)
+        {
+            StopCoroutine(oneShotRoutine);
+            oneShotRoutine = null;
+        }
+        CleanupOneShot();
 
         if (patternRoutine != null)
         {
@@ -1292,6 +1392,328 @@ public class BossSkillPatternController : MonoBehaviour
         if (forward.sqrMagnitude < 0.0001f)
             forward = Vector3.forward;
         return Quaternion.LookRotation(forward.normalized, Vector3.up);
+    }
+
+    // ---------- 즉사기 (One Shot Mechanic) ----------
+
+    private IEnumerator OneShotRoutine()
+    {
+        // 2페이즈(비행) 진행 중이면 종료까지 대기
+        while (inPhase2 || flying)
+            yield return null;
+
+        if (bossDead || health == null || health.IsDead)
+            yield break;
+
+        inSpecialPattern = true;
+        currentPattern = "OneShot_Mechanic";
+        SetBasicPatternEnabled(false);
+
+        if (patternRoutine != null)
+        {
+            StopCoroutine(patternRoutine);
+            patternRoutine = null;
+        }
+
+        DestroyActiveTelegraphs();
+        StopClip();
+
+        // 충전 구간 무적: 모든 정책이 공격 대신 회피에 집중하는 순수 기믹 구간
+        health.SetDamageImmune(true);
+
+        // 1. 스폰 지점 복귀: 2페이즈 비행처럼 도약 연출 (뛰어올라 포물선으로 착지)
+        Vector3 returnPoint = new Vector3(initialSpawnPosition.x, GetGroundY(initialSpawnPosition), initialSpawnPosition.z);
+        PlayPhaseClip(flyPhase.flyUpClip, flyPhase.flyUpStateName, Mathf.Max(0.1f, oneShotReturnDuration));
+        yield return MoveBossLeap(returnPoint, Mathf.Max(0.2f, oneShotReturnDuration), Mathf.Max(0f, oneShotLeapHeight));
+        PlayPhaseClip(flyPhase.landClip, flyPhase.landStateName, 0.35f);
+
+        // 착지 후 파티 방향을 바라보고 기 모으기 시작
+        Vector3 facing = GetPartyCenter() - transform.position;
+        transform.rotation = FlatLookRotation(facing);
+
+        // 2. 기 모으기: Stunned Loop 반복 + 충전 이펙트 + 경고 문구 + 벽 생성 + 전장 위험 지역
+        yield return new WaitForSeconds(0.35f);
+        PlayLoopingPhaseClip(oneShotStunnedClip, oneShotStunnedStateName);
+
+        GameObject chargeVFX = null;
+        if (oneShotChargeVFXPrefab != null)
+        {
+            chargeVFX = SpawnVFX(oneShotChargeVFXPrefab, transform.position + oneShotChargeVFXOffset,
+                transform.rotation, Vector3.one, oneShotChargeTime + 1f);
+
+            // 충전 이펙트가 짧은 1회성 파티클이어도 기 모으기 시간 내내 유지되도록
+            // 모든 파티클을 반복 재생으로 전환 (발사 시점에 제거되므로 시간이 정확히 일치)
+            if (chargeVFX != null)
+            {
+                ParticleSystem[] particles = chargeVFX.GetComponentsInChildren<ParticleSystem>(true);
+                for (int i = 0; i < particles.Length; i++)
+                {
+                    ParticleSystem.MainModule main = particles[i].main;
+                    main.loop = true;
+                }
+            }
+        }
+
+        OneShotWarningUI.Show(oneShotWarningMessage, oneShotChargeTime);
+        SpawnOneShotWalls();
+        oneShotZone = RegisterOneShotDangerZone();
+
+        yield return new WaitForSeconds(Mathf.Max(0.5f, oneShotChargeTime));
+
+        // 3. Buff 애니메이션과 함께 발사: 벽 그림자 밖의 모든 파티원 즉사
+        StopClip();
+        PlayClipOrState(oneShotBuffClip, oneShotBuffStateName, Mathf.Max(0.1f, oneShotBuffDuration));
+
+        if (chargeVFX != null)
+            Destroy(chargeVFX);
+
+        // 발사 이펙트: 보스에서 파티 시작 진영 방향으로 날아가는 연출
+        if (oneShotBlastVFXPrefab != null)
+        {
+            Vector3 blastDirection = (initialPartyCenterCaptured ? initialPartyCenter : GetPartyCenter()) - transform.position;
+            StartCoroutine(BlastTravelRoutine(blastDirection));
+        }
+
+        ApplyOneShotDamage(oneShotZone);
+
+        if (logPattern)
+            Debug.Log("[BossSkillPattern] 즉사기 발사 완료", this);
+
+        yield return new WaitForSeconds(Mathf.Max(0.1f, oneShotBuffDuration));
+
+        // 4. 정리 후 전투 재개
+        CleanupOneShot();
+
+        if (!bossDead && (health == null || !health.IsDead))
+        {
+            SetBasicPatternEnabled(true);
+            patternRoutine = StartCoroutine(PatternLoop(true));
+        }
+
+        oneShotRoutine = null;
+    }
+
+    private void SpawnOneShotWalls()
+    {
+        ClearOneShotWalls();
+
+        // 벽 배치 기준: 보스 스폰 지점에서 파티의 시작 진영(플레이어 스폰 쪽) 방향.
+        // 현재 파티 위치를 쓰면 즉사기 시작 때 파티가 보스에 붙어 있어 방향이
+        // 퇴화하거나 보스 뒤쪽을 가리키는 문제가 있으므로 시작 진영을 기준으로 고정
+        Vector3 anchor = initialPartyCenterCaptured ? initialPartyCenter : GetPartyCenter();
+        Vector3 baseDirection = anchor - transform.position;
+        baseDirection.y = 0f;
+        if (baseDirection.sqrMagnitude < 0.01f)
+            baseDirection = -transform.forward;
+        baseDirection.Normalize();
+
+        float halfSpread = Mathf.Clamp(oneShotWallSpreadAngle, 10f, 180f) * 0.5f;
+
+        // 파티 방향 축을 기준으로 좌우 대칭 배치 (2개면 왼쪽과 오른쪽에 하나씩 보장,
+        // 개수가 늘면 좌우로 균등 분배). 각도와 거리에는 판마다 랜덤 변동
+        int count = Mathf.Max(1, oneShotWallCount);
+        for (int i = 0; i < count; i++)
+        {
+            float side = count == 1 ? 0f : Mathf.Lerp(-1f, 1f, i / (float)(count - 1));
+            float yaw = side * UnityEngine.Random.Range(halfSpread * 0.35f, halfSpread);
+            float distance = UnityEngine.Random.Range(oneShotWallMinDistanceFromBoss,
+                Mathf.Max(oneShotWallMinDistanceFromBoss + 1f, oneShotWallMaxDistanceFromBoss));
+
+            // 경기장 밖 방지: 후보가 NavMesh 위가 아니면 각도를 중앙 축 쪽으로
+            // 줄여가며 재시도 (최종적으로 중앙 축 위 지점 사용)
+            Vector3 position = transform.position + baseDirection * distance;
+            float[] yawScales = { 1f, 0.6f, 0.3f, 0f };
+            for (int s = 0; s < yawScales.Length; s++)
+            {
+                Vector3 direction = Quaternion.AngleAxis(yaw * yawScales[s], Vector3.up) * baseDirection;
+                Vector3 candidate = transform.position + direction * distance;
+
+                if (UnityEngine.AI.NavMesh.SamplePosition(candidate, out UnityEngine.AI.NavMeshHit hit, 2.5f, UnityEngine.AI.NavMesh.AllAreas))
+                {
+                    position = hit.position;
+                    break;
+                }
+            }
+
+            CreateOneShotWall(position);
+
+            if (logPattern)
+                Debug.Log($"[BossSkillPattern] 즉사기 벽 생성: {position} (yaw {yaw:0.0}, distance {distance:0.0})", this);
+        }
+    }
+
+    private void CreateOneShotWall(Vector3 position)
+    {
+        Vector3 groundPosition = new Vector3(position.x, GetGroundY(position), position.z);
+        Vector3 toBoss = transform.position - groundPosition;
+        toBoss.y = 0f;
+        Quaternion rotation = FlatLookRotation(toBoss);
+
+        GameObject wall;
+        if (oneShotWallPrefab != null)
+        {
+            wall = Instantiate(oneShotWallPrefab, groundPosition, rotation);
+        }
+        else
+        {
+            wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wall.name = "OneShotWall";
+            wall.transform.SetPositionAndRotation(groundPosition + Vector3.up * (oneShotWallSize.y * 0.5f), rotation);
+            wall.transform.localScale = oneShotWallSize;
+        }
+
+        if (wall.GetComponentInChildren<OneShotWallMarker>() == null)
+            wall.AddComponent<OneShotWallMarker>();
+
+        // NPC 경로가 벽을 통과하지 않도록 NavMesh 장애물로 등록
+        UnityEngine.AI.NavMeshObstacle obstacle = wall.GetComponent<UnityEngine.AI.NavMeshObstacle>();
+        if (obstacle == null)
+            obstacle = wall.AddComponent<UnityEngine.AI.NavMeshObstacle>();
+        obstacle.carving = true;
+
+        oneShotWalls.Add(wall);
+
+        // 벽 뒤(보스 반대 방향) 그림자 지점을 안전 지점 힌트로 등록
+        Vector3 awayFromBoss = (groundPosition - transform.position);
+        awayFromBoss.y = 0f;
+        awayFromBoss.Normalize();
+        Vector3 hint = groundPosition + awayFromBoss * (oneShotWallSize.z * 0.5f + 2f);
+        DangerZoneRegistry.AddSafeHint(new Vector3(hint.x, GetGroundY(hint), hint.z));
+    }
+
+    private DangerZoneHandle RegisterOneShotDangerZone()
+    {
+        GameObject zoneObject = new GameObject("OneShot_Zone");
+        zoneObject.transform.position = new Vector3(transform.position.x, GetGroundY(transform.position), transform.position.z);
+
+        DangerZoneHandle handle = zoneObject.AddComponent<DangerZoneHandle>();
+        handle.losOrigin = transform;
+        handle.ConfigureCircle("OneShot_Zone", DangerZoneCategory.Telegraph,
+            Mathf.Max(10f, oneShotZoneRadius),
+            oneShotChargeTime + Mathf.Max(0.5f, oneShotBuffDuration) + 0.5f,
+            oneShotDamage, 0f, false);
+
+        return handle;
+    }
+
+    private void ApplyOneShotDamage(DangerZoneHandle zone)
+    {
+        if (zone == null)
+            return;
+
+        IReadOnlyList<PlayerStatus> statuses = CombatRegistry.PlayerStatuses;
+        for (int i = 0; i < statuses.Count; i++)
+        {
+            PlayerStatus status = statuses[i];
+            if (!PartyTargetUtility.IsValidPlayerTarget(status))
+                continue;
+
+            // 벽 그림자 안(ContainsPoint false)이면 생존, 밖이면 즉사
+            if (zone.ContainsPoint(status.transform.position))
+                DamagePlayer(status, oneShotDamage);
+        }
+    }
+
+    private void CleanupOneShot()
+    {
+        if (oneShotZone != null)
+        {
+            Destroy(oneShotZone.gameObject);
+            oneShotZone = null;
+        }
+
+        ClearOneShotWalls();
+        DangerZoneRegistry.ClearSafeHints();
+        OneShotWarningUI.Hide();
+
+        if (health != null)
+            health.SetDamageImmune(false);
+
+        currentPattern = string.Empty;
+        inSpecialPattern = false;
+    }
+
+    private void ClearOneShotWalls()
+    {
+        for (int i = 0; i < oneShotWalls.Count; i++)
+        {
+            if (oneShotWalls[i] != null)
+                Destroy(oneShotWalls[i]);
+        }
+
+        oneShotWalls.Clear();
+    }
+
+    private Vector3 GetPartyCenter()
+    {
+        IReadOnlyList<PlayerStatus> statuses = CombatRegistry.PlayerStatuses;
+        Vector3 sum = Vector3.zero;
+        int count = 0;
+
+        for (int i = 0; i < statuses.Count; i++)
+        {
+            PlayerStatus status = statuses[i];
+            if (!PartyTargetUtility.IsValidPlayerTarget(status))
+                continue;
+
+            sum += status.transform.position;
+            count++;
+        }
+
+        return count > 0 ? sum / count : transform.position - transform.forward * 10f;
+    }
+
+    // 발사 이펙트 이동: 보스 위치에서 지정 방향으로 직선 비행 후 자동 소멸
+    private IEnumerator BlastTravelRoutine(Vector3 direction)
+    {
+        direction.y = 0f;
+        if (direction.sqrMagnitude < 0.01f)
+            direction = transform.forward;
+        direction.Normalize();
+
+        Vector3 start = transform.position + Vector3.up * 1f;
+        float travelDuration = oneShotBlastTravelDuration > 0f
+            ? Mathf.Max(0.2f, oneShotBlastTravelDuration)
+            : Mathf.Max(0.5f, oneShotBuffDuration);
+        GameObject vfx = SpawnVFX(oneShotBlastVFXPrefab, start, FlatLookRotation(direction),
+            oneShotBlastVFXScale, travelDuration + 1.5f);
+        if (vfx == null)
+            yield break;
+
+        float elapsed = 0f;
+        while (elapsed < travelDuration && vfx != null)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / travelDuration);
+            vfx.transform.position = start + direction * (Mathf.Max(1f, oneShotBlastTravelDistance) * t);
+            yield return null;
+        }
+    }
+
+    // 포물선 도약 이동: 수평은 부드럽게, 수직은 사인 곡선의 점프 아치 (즉사기 복귀 연출)
+    private IEnumerator MoveBossLeap(Vector3 targetPosition, float duration, float leapHeight)
+    {
+        Vector3 start = transform.position;
+
+        Vector3 travel = targetPosition - start;
+        travel.y = 0f;
+        if (travel.sqrMagnitude > 0.01f)
+            transform.rotation = FlatLookRotation(travel);
+
+        duration = Mathf.Max(0.2f, duration);
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            float smooth = Mathf.SmoothStep(0f, 1f, t);
+            Vector3 position = Vector3.Lerp(start, targetPosition, smooth);
+            position.y += Mathf.Sin(t * Mathf.PI) * leapHeight;
+            transform.position = position;
+            yield return null;
+        }
+
+        transform.position = targetPosition;
     }
 
     private IEnumerator MoveBossVertical(Vector3 targetPosition, float duration)

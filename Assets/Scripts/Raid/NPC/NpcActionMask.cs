@@ -76,8 +76,10 @@ public static class NpcActionMask
             case NpcAction.AttackBossUltimate:
                 return IsBossAttackPossible(npc, includeTacticalChecks) && CanCastSkillNow(npc, PlayerSkillSlot.Ultimate);
 
+            // 위험 지역 안이거나, 벽 그림자 덕분에만 안전한 위치(대피 유지 필요)면 후보
             case NpcAction.MoveToSafePosition:
-                return DangerZoneRegistry.IsPointInAnyZone(npc.transform.position, npc.dangerCheckPadding);
+                return DangerZoneRegistry.IsPointInAnyZone(npc.transform.position, npc.dangerCheckPadding)
+                    || DangerZoneRegistry.IsPointShadowProtected(npc.transform.position, npc.dangerCheckPadding);
 
             case NpcAction.RegroupDuringBossFly:
                 return npc.bossSkillPattern != null && npc.bossSkillPattern.IsFlying;

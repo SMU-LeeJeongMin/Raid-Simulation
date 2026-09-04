@@ -8663,7 +8663,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02b3623d95ce6fa4ca45fbb33c818c30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ExperimentBatchRunner
-  enableBatch: 1
+  enableBatch: 0
   episodesPerAlgorithm: 10
   algorithms: 02000000
   baseSeed: 1000
@@ -39698,6 +39698,32 @@ MonoBehaviour:
   useDirectClipPlayback: 1
   disableRootMotion: 1
   defaultAnimationDuration: 1.2
+  enableOneShotMechanic: 1
+  oneShotHealthRatio: 0.9
+  oneShotReturnDuration: 2
+  oneShotLeapHeight: 5
+  oneShotChargeTime: 7
+  oneShotZoneRadius: 60
+  oneShotDamage: 999999
+  oneShotStunnedClip: {fileID: -7911758173983779324, guid: 6cda1a29e901a1247a4568a1f196c04b, type: 3}
+  oneShotStunnedStateName: Stunned Loop
+  oneShotBuffClip: {fileID: -4104987972923307702, guid: b3071f91ca21d7c429a7239ed5d3e881, type: 3}
+  oneShotBuffStateName: Buff
+  oneShotBuffDuration: 5
+  oneShotBlastTravelDistance: 35
+  oneShotBlastTravelDuration: 0
+  oneShotWarningMessage: A deadly attack is coming... Hide behind the walls!
+  oneShotChargeVFXPrefab: {fileID: 8080220756891693389, guid: 54b09689e58510c41b69bd7aab1e1629, type: 3}
+  oneShotChargeVFXOffset: {x: 0, y: -1, z: 0}
+  oneShotBlastVFXPrefab: {fileID: 1992138048286698606, guid: 540041ce16ade314fa1fd2c50e2c6c3b, type: 3}
+  oneShotBlastVFXScale: {x: 6, y: -0.5, z: 1}
+  oneShotWallPrefab: {fileID: 1030987807, guid: abc00000000010725567580850172936, type: 3}
+  oneShotWallCount: 2
+  oneShotWallSize: {x: 4.5, y: 2.5, z: 2}
+  oneShotWallMinDistanceFromBoss: 10
+  oneShotWallMaxDistanceFromBoss: 18
+  oneShotWallMinSeparation: 6
+  oneShotWallSpreadAngle: 50
   logPattern: 1
   drawGizmos: 1
   engaged: 0
@@ -39725,7 +39751,6 @@ MonoBehaviour:
   - 0.8
   - 0.6
   - 0.4
-  - 0.2
   makeBossDamageImmune: 1
   disableBossPatternControllers: 1
   preSummonBuffClip: {fileID: -4104987972923307702, guid: b3071f91ca21d7c429a7239ed5d3e881, type: 3}

@@ -2,6 +2,7 @@
 // 평소에는 플레이어를 따라다니고, 전투 상태가 되면 보스를 공격
 // 이동 실행은 NPCLocomotion, 역할별 의사결정은 INpcRolePolicy 구현 클래스가 담당
 
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -555,6 +556,17 @@ public class NPCSimpleFSMController : MonoBehaviour
     {
         if (!DangerZoneRegistry.IsPointInAnyZone(transform.position, dangerCheckPadding))
         {
+            // 벽 그림자 덕분에만 안전한 위치(즉사기 차폐 지대)에서는 제자리 대기 유지.
+            // 여기서 대피 상태를 풀면 다른 행동(보스 접근 등)으로 그림자를 벗어나
+            // 발사 순간 노출되는 경계 왕복이 생기므로, 위험이 끝날 때까지 홀드
+            if (DangerZoneRegistry.IsPointShadowProtected(transform.position, dangerCheckPadding))
+            {
+                hasCommittedSafeDestination = false;
+                ClearMovement();
+                SetStateLabel(reason + ": HoldBehindWall");
+                return true;
+            }
+
             hasCommittedSafeDestination = false;
             return false;
         }
@@ -598,6 +610,11 @@ public class NPCSimpleFSMController : MonoBehaviour
         if (!DangerZoneRegistry.IsPointInAnyZone(current, dangerCheckPadding))
             return false;
 
+        // 등록된 안전 지점 힌트 우선 검토 (즉사기 벽 그림자처럼 좁은 안전 지대는
+        // 원형 표본 추출이 놓칠 수 있으므로 기믹이 등록한 지점을 먼저 확인)
+        if (TryPickSafeHint(current, out safeDestination))
+            return true;
+
         // 기본 반경에서 못 찾으면 반경을 단계적으로 넓혀 재탐색 (맵 끝의 넓은 장판 대응)
         int maxMultiplier = Mathf.Max(1, safeSearchMaxRadiusMultiplier);
         for (int multiplier = 1; multiplier <= maxMultiplier; multiplier++)
@@ -607,6 +624,47 @@ public class NPCSimpleFSMController : MonoBehaviour
         }
 
         return false;
+    }
+
+    // 안전 지점 힌트 중 실제로 안전하고 도달 가능한 가장 가까운 지점 선택
+    private bool TryPickSafeHint(Vector3 current, out Vector3 safeDestination)
+    {
+        safeDestination = current;
+
+        IReadOnlyList<Vector3> hints = DangerZoneRegistry.SafeHints;
+        if (hints == null || hints.Count == 0)
+            return false;
+
+        float exitPadding = dangerCheckPadding + Mathf.Max(0f, safeExitMargin);
+        float bestDistance = float.PositiveInfinity;
+        bool found = false;
+
+        for (int i = 0; i < hints.Count; i++)
+        {
+            Vector3 candidate = hints[i];
+            if (DangerZoneRegistry.IsPointInAnyZone(candidate, exitPadding))
+                continue;
+
+            Vector3 navDestination = candidate;
+            if (Locomotion.UsingNavMesh && navMeshAgent != null && navMeshAgent.enabled && navMeshAgent.isOnNavMesh)
+            {
+                if (!Locomotion.TryGetReachableNavDestination(candidate, out navDestination))
+                    continue;
+
+                if (DangerZoneRegistry.IsPointInAnyZone(navDestination, exitPadding))
+                    continue;
+            }
+
+            float distance = FlatDistance(current, navDestination);
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                safeDestination = navDestination;
+                found = true;
+            }
+        }
+
+        return found;
     }
 
     private bool TryFindSafeDestinationWithinRadius(Vector3 current, float maxRadius, out Vector3 safeDestination)

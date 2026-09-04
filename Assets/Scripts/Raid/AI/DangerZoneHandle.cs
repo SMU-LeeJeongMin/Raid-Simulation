@@ -64,6 +64,13 @@ public class DangerZoneHandle : MonoBehaviour
     public bool persistent;
     public float duration = 1f;
 
+    [Header("Line of Sight Exclusion")]
+    [Tooltip("설정 시 이 지점에서 차폐물(OneShotWallMarker)에 가려진 위치는 안전으로 판정 (즉사기 벽 숨기 기믹)")]
+    public Transform losOrigin;
+    public float losCastHeight = 1f;
+
+    private static readonly RaycastHit[] losHits = new RaycastHit[16];
+
     private float endTime;
     private bool registered;
 
@@ -167,6 +174,17 @@ public class DangerZoneHandle : MonoBehaviour
 
     public bool ContainsPoint(Vector3 worldPoint, float padding = 0f)
     {
+        // 차폐 제외: 시선 원점에서 벽에 가려진 위치는 범위 안이라도 안전
+        if (losOrigin != null && IsShadowedFromOrigin(worldPoint))
+            return false;
+
+        return ContainsPointIgnoringShadow(worldPoint, padding);
+    }
+
+    // 차폐를 무시한 순수 도형 포함 판정.
+    // "그림자 덕분에만 안전한 위치"의 식별(대피 유지 판단)에 사용
+    public bool ContainsPointIgnoringShadow(Vector3 worldPoint, float padding = 0f)
+    {
         Vector3 origin = transform.position;
         Vector3 flatDelta = worldPoint - origin;
         flatDelta.y = 0f;
@@ -202,6 +220,31 @@ public class DangerZoneHandle : MonoBehaviour
 
                 float a = Vector3.Angle(coneForward, flatDelta.normalized);
                 return a <= angle * 0.5f;
+        }
+
+        return false;
+    }
+
+    // 시선 원점과 지점 사이에 차폐 벽(OneShotWallMarker)이 있는지 (낮은 높이의 수평 레이캐스트)
+    private bool IsShadowedFromOrigin(Vector3 point)
+    {
+        Vector3 from = losOrigin.position;
+        from.y = point.y + Mathf.Max(0.1f, losCastHeight);
+        Vector3 to = point;
+        to.y = from.y;
+
+        Vector3 delta = to - from;
+        float distance = delta.magnitude;
+        if (distance < 0.01f)
+            return false;
+
+        int count = Physics.RaycastNonAlloc(from, delta / distance, losHits, distance,
+            Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide);
+        for (int i = 0; i < count; i++)
+        {
+            if (losHits[i].collider != null
+                && losHits[i].collider.GetComponentInParent<OneShotWallMarker>() != null)
+                return true;
         }
 
         return false;
