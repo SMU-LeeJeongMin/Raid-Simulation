@@ -39699,7 +39699,7 @@ MonoBehaviour:
   disableRootMotion: 1
   defaultAnimationDuration: 1.2
   enableOneShotMechanic: 1
-  oneShotHealthRatio: 0.9
+  oneShotHealthRatio: 0.2
   oneShotReturnDuration: 2
   oneShotLeapHeight: 5
   oneShotChargeTime: 7
