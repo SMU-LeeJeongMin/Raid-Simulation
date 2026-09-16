@@ -102,7 +102,10 @@ public static class NpcActionExecutor
 
             case NpcAction.MoveToAllyAndHeal:
             {
-                PlayerStatus ally = NpcHealerPolicy.FindLowestHpAlly(out _);
+                // 조율자의 보호 지시가 있으면 그 대상을 우선 (없으면 기본 규칙)
+                PlayerStatus ally = CommandBoard.GetProtectTarget(npc);
+                if (ally == null)
+                    ally = NpcHealerPolicy.FindLowestHpAlly(out _);
                 if (ally == null)
                     return false;
 
@@ -127,7 +130,9 @@ public static class NpcActionExecutor
 
             case NpcAction.ShieldParty:
             {
-                PlayerStatus lowest = NpcHealerPolicy.FindLowestHpAlly(out _);
+                PlayerStatus lowest = CommandBoard.GetProtectTarget(npc);
+                if (lowest == null)
+                    lowest = NpcHealerPolicy.FindLowestHpAlly(out _);
                 if (lowest == null)
                     return false;
 

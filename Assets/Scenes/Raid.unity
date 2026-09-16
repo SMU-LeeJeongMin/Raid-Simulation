@@ -2095,6 +2095,60 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 564323923}
   m_CullTransparentMesh: 1
+--- !u!1 &567182598
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 567182600}
+  - component: {fileID: 567182599}
+  m_Layer: 0
+  m_Name: RaidCoordinator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &567182599
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 567182598}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a245bedcc34eed5488a8d9ba5568c191, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RaidCoordinator
+  mode: 1
+  evaluateInterval: 3
+  reevaluateOnPhaseChange: 1
+  episodeTimeLimit: 600
+  paceMargin: 1.15
+  protectHpThreshold: 0.5
+  defensivePartyHpThreshold: 0.4
+  slimeHandlerCount: 1
+  logCommands: 0
+  lastDecisionSummary: 
+--- !u!4 &567182600
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 567182598}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -9.5, y: -21.12, z: 3.1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &580753898
 GameObject:
   m_ObjectHideFlags: 0
@@ -8576,7 +8630,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3dbd5ca80252db24686765ed0be67b2b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NPCPolicyExperimentSetup
-  aiMode: 2
+  aiMode: 5
   partySpawner: {fileID: 843131469}
   metricsLogger: {fileID: 843131471}
   applyOnAwake: 1
@@ -8611,6 +8665,7 @@ MonoBehaviour:
   healResponseWindow: 5
   autoBind: 1
   rebindInterval: 1
+  customOutputRoot: D:\Raid Simulation
   fileName: raid_episode_metrics.csv
   writeExtendedMetrics: 0
   logPathOnStart: 1
@@ -8663,10 +8718,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02b3623d95ce6fa4ca45fbb33c818c30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ExperimentBatchRunner
-  enableBatch: 0
+  enableBatch: 1
   episodesPerAlgorithm: 10
-  algorithms: 02000000
-  baseSeed: 1000
+  algorithms: 050000000500000002000000
+  coordinatorModes: 000000000100000000000000
+  baseSeed: 53000
   seedStride: 1
   pairSeedsAcrossAlgorithms: 1
   restartDelay: 2
@@ -8690,10 +8746,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ede821d836c63d24a9914435205b3bc9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GraphStateLogger
-  enableLogging: 1
+  enableLogging: 0
   snapshotInterval: 0.25
   logOnlyDuringEpisode: 1
   logPathOnStart: 1
+  customOutputRoot: D:\Raid Simulation
   outputFolderName: GraphLogs
   maxNodes: 24
   writtenSnapshotCount: 0
@@ -8712,16 +8769,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GnnModelRunner
   models:
   - mode: 3
-    modelAsset: {fileID: 5022602860645237092, guid: 5fd734bdc3619694a9892d0394750999, type: 3}
-    manifestAsset: {fileID: 4900000, guid: a57239aac9cb6ff4093f32d9c82fa489, type: 3}
+    modelAsset: {fileID: 5022602860645237092, guid: 0e2284478b5c42b49a2e92ca31435f1e, type: 3}
+    manifestAsset: {fileID: 4900000, guid: 46e90767897311b46948d4cb3ce8838e, type: 3}
     graphInput: 0
   - mode: 4
-    modelAsset: {fileID: 5022602860645237092, guid: ee8b3e01e54617048bafaa0fa56d3cc9, type: 3}
-    manifestAsset: {fileID: 4900000, guid: 41c15808e185da44e8091cf87f04f610, type: 3}
+    modelAsset: {fileID: 5022602860645237092, guid: 22f31f7f47d3dae40b995d4aa38f6b16, type: 3}
+    manifestAsset: {fileID: 4900000, guid: 7b89392f3937b8d40a9adb3fd58a13fd, type: 3}
     graphInput: 1
   - mode: 5
-    modelAsset: {fileID: 5022602860645237092, guid: e0e131e47fff5034888bc173ef8e07e3, type: 3}
-    manifestAsset: {fileID: 4900000, guid: fe5a29c4fe5618f43b27eeed7e7199f4, type: 3}
+    modelAsset: {fileID: 5022602860645237092, guid: 67554abca30dc25488ecef02379e1cf7, type: 3}
+    manifestAsset: {fileID: 4900000, guid: 76d75f71a1974904c9eb48a2d30d8ccb, type: 3}
     graphInput: 2
   backend: 512
   inferenceInterval: 0.2
@@ -39427,7 +39484,7 @@ MonoBehaviour:
     cooldownAfter: 1.5
     autoStretchAnimationToWarning: 1
     postImpactRecovery: 0.35
-    damage: 70
+    damage: 100
     shape: 1
     originPoint: {fileID: 1794549116}
     localOffset: {x: 0, y: 0, z: 0}
@@ -39478,7 +39535,7 @@ MonoBehaviour:
     cooldownAfter: 1.5
     autoStretchAnimationToWarning: 1
     postImpactRecovery: 0.35
-    damage: 70
+    damage: 100
     shape: 1
     originPoint: {fileID: 124339855}
     localOffset: {x: 0, y: 0, z: 0}
@@ -39529,7 +39586,7 @@ MonoBehaviour:
     cooldownAfter: 1.5
     autoStretchAnimationToWarning: 1
     postImpactRecovery: 0.35
-    damage: 90
+    damage: 120
     shape: 0
     originPoint: {fileID: 0}
     localOffset: {x: 0, y: 0, z: 0}
@@ -39580,7 +39637,7 @@ MonoBehaviour:
     cooldownAfter: 1.5
     autoStretchAnimationToWarning: 1
     postImpactRecovery: 0.35
-    damage: 90
+    damage: 100
     shape: 2
     originPoint: {fileID: 398245981}
     localOffset: {x: 0, y: 0, z: 0}
@@ -39651,7 +39708,7 @@ MonoBehaviour:
     randomLightningWaveInterval: 0.25
     randomLightningSpreadRadius: 8
     randomLightningWarningTime: 1
-    randomLightningDamage: 110
+    randomLightningDamage: 120
     randomLightningRadius: 1.6
     randomLightningInterval: 0.35
     randomLightningVFXPrefab: {fileID: 2640264786997359090, guid: f45936d2fc589e1438de95c19def3155, type: 3}
@@ -39664,7 +39721,7 @@ MonoBehaviour:
     dotZoneWarningTime: 0.9
     dotZoneDuration: 3
     dotZoneTickInterval: 0.5
-    dotZoneTickDamage: 70
+    dotZoneTickDamage: 80
     dotZoneInterval: 0.4
     dotZoneVFXPrefab: {fileID: 5397553525635539876, guid: bc73c5eacea9d2f4d800d57b00e7af76, type: 3}
     trackingDuration: 3
@@ -43691,6 +43748,7 @@ SceneRoots:
   - {fileID: 1036658893}
   - {fileID: 1760446155}
   - {fileID: 843131465}
+  - {fileID: 567182600}
   - {fileID: 1954121969}
   - {fileID: 1128304507}
   - {fileID: 1547040932}

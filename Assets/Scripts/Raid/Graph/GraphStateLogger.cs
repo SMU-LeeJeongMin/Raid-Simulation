@@ -24,7 +24,9 @@ public class GraphStateLogger : MonoBehaviour
     public bool logPathOnStart = true;
 
     [Header("Output")]
-    [Tooltip("persistentDataPath 아래 저장 폴더 이름")]
+    [Tooltip("저장 루트 절대 경로 (예: D:\\Raid Simulation). 비우면 기본 persistentDataPath 사용")]
+    public string customOutputRoot = "";
+    [Tooltip("저장 루트 아래 폴더 이름")]
     public string outputFolderName = "GraphLogs";
     [Tooltip("스냅샷 노드 수 상한. 학습 모델의 고정 입력 크기와 같은 값을 사용해야 수집 데이터와 추론 조건이 일치")]
     [Min(8)] public int maxNodes = 40;
@@ -43,7 +45,7 @@ public class GraphStateLogger : MonoBehaviour
     private void Awake()
     {
         if (logPathOnStart)
-            Debug.Log($"[GraphStateLogger] Output folder: {Path.Combine(Application.persistentDataPath, outputFolderName)}", this);
+            Debug.Log($"[GraphStateLogger] Output folder: {Path.Combine(ResolveOutputRoot(), outputFolderName)}", this);
     }
 
     private void OnEnable()
@@ -107,13 +109,31 @@ public class GraphStateLogger : MonoBehaviour
         return GraphSnapshotBuilder.Build(episodeId, algorithm, tickCounter, Time.time - episodeStartTime, null, maxNodes);
     }
 
+    // 저장 루트 결정: 지정 경로가 있으면 생성 후 사용, 실패 시 기본 경로로 폴백
+    private string ResolveOutputRoot()
+    {
+        if (string.IsNullOrWhiteSpace(customOutputRoot))
+            return Application.persistentDataPath;
+
+        try
+        {
+            Directory.CreateDirectory(customOutputRoot);
+            return customOutputRoot;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[GraphStateLogger] 지정 저장 경로 사용 불가, 기본 경로로 폴백: {customOutputRoot} ({e.Message})", this);
+            return Application.persistentDataPath;
+        }
+    }
+
     private void OpenWriterForEpisode(string episodeId, string algorithm)
     {
         CloseWriter();
 
         try
         {
-            string folder = Path.Combine(Application.persistentDataPath, outputFolderName);
+            string folder = Path.Combine(ResolveOutputRoot(), outputFolderName);
             Directory.CreateDirectory(folder);
 
             string safeAlgorithm = string.IsNullOrWhiteSpace(algorithm) ? "unknown" : algorithm;

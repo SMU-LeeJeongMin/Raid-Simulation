@@ -38,8 +38,9 @@ public class NPCPolicyExperimentSetup : MonoBehaviour
         if (partySpawner != null)
             partySpawner.defaultAIMode = aiMode;
 
+        // 배치 진행 중이면 조율자 결합 라벨을 우선 (지연 재적용이 라벨을 덮어쓰는 문제 방지)
         if (metricsLogger != null)
-            metricsLogger.algorithmName = aiMode.ToString();
+            metricsLogger.algorithmName = ExperimentBatchRunner.ActiveConditionLabel ?? aiMode.ToString();
 
         NPCSimpleFSMController[] controllers = FindObjectsByType<NPCSimpleFSMController>(FindObjectsSortMode.None);
         for (int i = 0; i < controllers.Length; i++)

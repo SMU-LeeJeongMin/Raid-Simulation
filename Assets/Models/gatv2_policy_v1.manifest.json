@@ -1,0 +1,135 @@
+{
+  "schema_version": "GNN_SCHEMA_V1",
+  "model": "GATV2",
+  "model_file": "gatv2_policy_v1.onnx",
+  "graph_input": "directed_edge_features",
+  "max_nodes": 40,
+  "feature_dim": 75,
+  "num_actions": 17,
+  "num_relations": 11,
+  "edge_feature_dim": 20,
+  "edge_scalar_names": [
+    "distance_ratio",
+    "distance_valid",
+    "in_range",
+    "line_of_sight",
+    "is_current_target",
+    "is_aggro_target",
+    "time_to_effect_ratio",
+    "time_to_effect_valid",
+    "edge_active"
+  ],
+  "onehot_blocks": [
+    {
+      "field": "node_type_id",
+      "size": 6,
+      "start": 1
+    },
+    {
+      "field": "class_id",
+      "size": 5,
+      "start": 0
+    },
+    {
+      "field": "role_id",
+      "size": 4,
+      "start": 0
+    },
+    {
+      "field": "activity_id",
+      "size": 9,
+      "start": 0
+    },
+    {
+      "field": "skill_slot_id",
+      "size": 4,
+      "start": 0
+    },
+    {
+      "field": "effect_type_id",
+      "size": 6,
+      "start": 0
+    },
+    {
+      "field": "target_scope_id",
+      "size": 4,
+      "start": 0
+    }
+  ],
+  "scalar_features": [
+    "hp_ratio",
+    "hp_valid",
+    "mp_ratio",
+    "shield_ratio",
+    "ultimate_ratio",
+    "is_alive",
+    "is_targetable",
+    "is_invulnerable",
+    "is_moving",
+    "is_casting",
+    "speed_ratio",
+    "has_target",
+    "pos_x_norm",
+    "pos_z_norm",
+    "position_valid",
+    "dir_x",
+    "dir_z",
+    "explosion_time_ratio",
+    "time_remaining_ratio",
+    "time_remaining_valid",
+    "skill1_ready",
+    "skill2_ready",
+    "ultimate_ready",
+    "is_flying",
+    "is_add_phase",
+    "pattern_active",
+    "radius_ratio",
+    "is_persistent",
+    "blocks_boss_damage",
+    "remaining_count_ratio",
+    "mana_cost_ratio",
+    "cooldown_ratio",
+    "cooldown_valid",
+    "cast_time_ratio",
+    "skill_ready",
+    "requires_ultimate",
+    "duration_ratio"
+  ],
+  "action_names": [
+    "None",
+    "FollowPlayer",
+    "MoveToBoss",
+    "MoveToSafePosition",
+    "KeepDistance",
+    "RegroupDuringBossFly",
+    "MoveToAllyAndHeal",
+    "ShieldDangerAlly",
+    "ShieldParty",
+    "AttackBoss",
+    "AttackSlime",
+    "MoveToSlime",
+    "SpreadFromParty",
+    "AttackBossBasic",
+    "AttackBossSkill1",
+    "AttackBossSkill2",
+    "AttackBossUltimate"
+  ],
+  "teacher_algorithms": [
+    "Utility"
+  ],
+  "dagger_algorithms": [
+    "GCN",
+    "RGCN",
+    "GAT"
+  ],
+  "dagger_episode_count": 0,
+  "weight_by_outcome": false,
+  "class_weight_power": 0.5,
+  "self_action_features_masked_for_characters": [
+    "activity_id",
+    "has_target",
+    "is_moving",
+    "speed_ratio"
+  ],
+  "val_masked_accuracy": 0.9166463464195724
+}

@@ -23,6 +23,9 @@ public class ExperimentBatchRunner : MonoBehaviour
     [Tooltip("순서대로 실행할 알고리즘 목록. 각 알고리즘마다 episodesPerAlgorithm회 실행")]
     public NPCFSMMode[] algorithms = { NPCFSMMode.BasicFSM, NPCFSMMode.PatternAwareFSM };
 
+    [Tooltip("algorithms와 같은 길이의 조율자 모드 목록. 비우거나 짧으면 해당 조건은 None(조율 없음)")]
+    public CoordinatorMode[] coordinatorModes;
+
     [Header("Seed")]
     public int baseSeed = 1000;
     [Min(1)] public int seedStride = 1;
@@ -50,12 +53,18 @@ public class ExperimentBatchRunner : MonoBehaviour
     private static bool batchActive;
     private static int episodeCounter;
 
+    // 배치 진행 중의 조건 라벨 (조율자 결합 라벨).
+    // NPCPolicyExperimentSetup의 지연 재적용이 로거의 algorithmName을 aiMode 이름으로
+    // 되돌리는 것을 막기 위한 공유 지점 (null이면 배치 비활성 = aiMode 이름 사용)
+    public static string ActiveConditionLabel { get; private set; }
+
     // 재생 시작 시 정적 상태 초기화 (에디터의 Domain Reload 비활성 설정에서도 이전 배치 상태가 남지 않도록)
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetStaticState()
     {
         batchActive = false;
         episodeCounter = 0;
+        ActiveConditionLabel = null;
     }
 
     private RaidMetricsLogger logger;
@@ -122,7 +131,16 @@ public class ExperimentBatchRunner : MonoBehaviour
             ? baseSeed + runIndex * seedStride
             : baseSeed + episodeCounter * seedStride;
 
-        currentAlgorithmLabel = algorithm.ToString();
+        // 조건별 조율자 모드 결정 (목록이 짧거나 비어 있으면 None = 조율 없음)
+        CoordinatorMode coordinatorMode = coordinatorModes != null && algorithmIndex < coordinatorModes.Length
+            ? coordinatorModes[algorithmIndex]
+            : CoordinatorMode.None;
+
+        // 조건 라벨: 조율자가 있으면 "GATv2FSM+RuleCoord" 형태로 결과 CSV에서 구분
+        currentAlgorithmLabel = coordinatorMode == CoordinatorMode.None
+            ? algorithm.ToString()
+            : algorithm.ToString() + "+" + coordinatorMode + "Coord";
+        ActiveConditionLabel = currentAlgorithmLabel;
 
         // 실험 셋업에 알고리즘 적용 (스포너, 로거, 기존 NPC 일괄 반영)
         NPCPolicyExperimentSetup setup = FindFirstObjectByType<NPCPolicyExperimentSetup>();
@@ -132,13 +150,20 @@ public class ExperimentBatchRunner : MonoBehaviour
             setup.Apply();
         }
 
+        // 씬의 조율자에 이번 조건의 모드 주입 (None이면 지시 발행 없이 기존 거동과 동일)
+        RaidCoordinator coordinator = FindFirstObjectByType<RaidCoordinator>();
+        if (coordinator != null)
+            coordinator.mode = coordinatorMode;
+        else if (coordinatorMode != CoordinatorMode.None)
+            Debug.LogWarning("[ExperimentBatchRunner] 조율자 모드가 지정되었으나 씬에 RaidCoordinator가 없음", this);
+
         // 로거에 seed와 알고리즘 주입 후 에피소드 재시작 (Awake 순서 무관하게 수렴)
         logger = FindFirstObjectByType<RaidMetricsLogger>();
         if (logger != null)
         {
             logger.seed = currentSeed;
             logger.applySeedOnEpisodeStart = true;
-            logger.algorithmName = algorithm.ToString();
+            logger.algorithmName = currentAlgorithmLabel;
             logger.StartEpisode();
         }
         else

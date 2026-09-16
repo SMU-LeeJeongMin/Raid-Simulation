@@ -56,7 +56,9 @@ public class NpcGnnPolicy : INpcRolePolicy
             if (!NpcActionMask.IsAvailable(npc, action, includeTacticalChecks: true))
                 continue;
 
-            ranked.Add(new ScoredAction { action = action, logit = logits[(int)action] });
+            // 파티 지시의 편향 반영: 로짓에 ln(계수) 가산 (Utility의 곱과 순위 이동이 등가)
+            float biased = logits[(int)action] + NpcCommandBias.LogitBias(npc, action);
+            ranked.Add(new ScoredAction { action = action, logit = biased });
         }
 
         if (ranked.Count == 0)

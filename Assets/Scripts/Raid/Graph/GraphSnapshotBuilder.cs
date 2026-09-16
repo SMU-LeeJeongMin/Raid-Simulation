@@ -534,6 +534,11 @@ public static class GraphSnapshotBuilder
             // DAgger 라벨: 이 상태에서 교사(Utility)가 고를 행동.
             // 학습 모델이 조종한 판의 상태를 교사 행동으로 재라벨링하는 데 사용 (Ross et al. 2011)
             node.teacher_action_id = controller.ComputeTeacherAdviceId();
+
+            // 조율자 지시 기록 (RL 조율자의 학습 데이터 재구성용)
+            node.command_id = CommandBoard.CommandId(controller);
+            PlayerStatus protectTarget = CommandBoard.GetProtectTarget(controller);
+            node.command_target_class_id = protectTarget != null ? ResolveClassId(protectTarget) : 0;
             node.activity_id = dead ? GnnSchema.ActivityDead
                 : node.is_casting == 1 ? GnnSchema.ActivityCast
                 : NpcActions.GetActivityId(action);

@@ -83,6 +83,9 @@ public class NpcUtilityPolicy : INpcRolePolicy
             if (score <= 0f)
                 continue;
 
+            // 파티 지시의 편향 반영 (지시 없음이면 1.0, Arbiter 규칙은 NpcCommandBias 참조)
+            score *= NpcCommandBias.Factor(npc, candidates[i]);
+
             scored.Add(new ScoredAction { action = candidates[i], score = score });
         }
 

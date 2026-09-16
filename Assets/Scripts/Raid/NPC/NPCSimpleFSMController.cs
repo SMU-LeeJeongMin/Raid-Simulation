@@ -749,6 +749,10 @@ public class NPCSimpleFSMController : MonoBehaviour
         nextSkillTime = Time.time + Mathf.Max(0.2f, skillInterval);
     }
 
+    // 조율자(RaidCoordinator)가 역할 기반 지시 배분에 사용하는 공개 역할 조회
+    public bool IsHealerRole => role == NPCRole.Healer;
+    public bool IsTankRole => role == NPCRole.Tank;
+
     // 역할별 교전 거리 (근접 역할은 밀착, 그 외는 사거리 유지). 행동 Mask의 거리 조건에 사용
     public float DesiredCombatDistance => role == NPCRole.Tank ? meleeDistance : rangedDistance;
 

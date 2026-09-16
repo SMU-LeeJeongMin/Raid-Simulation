@@ -40,6 +40,8 @@ public class RaidMetricsLogger : MonoBehaviour
     public float rebindInterval = 1f;
 
     [Header("Output")]
+    [Tooltip("저장 폴더 절대 경로 (예: D:\\Raid Simulation). 비우면 기본 persistentDataPath 사용")]
+    public string customOutputRoot = "";
     public string fileName = "raid_episode_metrics.csv";
     [Tooltip("핵심 5지표 외 확장 지표까지 기록할지 여부. 확장 기록은 파일명에 _extended가 붙어 핵심 파일과 분리됨 (컬럼 구성이 달라 같은 파일에 섞이면 안 됨)")]
     public bool writeExtendedMetrics = false;
@@ -135,7 +137,7 @@ public class RaidMetricsLogger : MonoBehaviour
 
     private void Awake()
     {
-        outputPath = Path.Combine(Application.persistentDataPath, ResolveOutputFileName());
+        outputPath = Path.Combine(ResolveOutputRoot(), ResolveOutputFileName());
 
         // 인스펙터에서 id를 비워둔 경우 에피소드 시작마다 자동 생성
         autoGenerateEpisodeId = string.IsNullOrWhiteSpace(episodeId);
@@ -729,7 +731,7 @@ public class RaidMetricsLogger : MonoBehaviour
         activeDangerZoneCountAtEnd = DangerZoneRegistry.Count;
 
         // 기록 직전에 경로 재계산 (실행 중 writeExtendedMetrics 변경 반영)
-        outputPath = Path.Combine(Application.persistentDataPath, ResolveOutputFileName());
+        outputPath = Path.Combine(ResolveOutputRoot(), ResolveOutputFileName());
 
         string playerClass = ResolvePlayerClass();
         float elapsed = Time.time - episodeStartTime;
@@ -825,6 +827,24 @@ public class RaidMetricsLogger : MonoBehaviour
     }
 
     // 확장 기록이 켜진 경우 파일명에 _extended를 붙여 핵심 파일과 분리
+    // 저장 루트 결정: 지정 경로가 있으면 생성 후 사용, 실패 시 기본 경로로 폴백
+    private string ResolveOutputRoot()
+    {
+        if (string.IsNullOrWhiteSpace(customOutputRoot))
+            return Application.persistentDataPath;
+
+        try
+        {
+            Directory.CreateDirectory(customOutputRoot);
+            return customOutputRoot;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[RaidMetricsLogger] 지정 저장 경로 사용 불가, 기본 경로로 폴백: {customOutputRoot} ({e.Message})", this);
+            return Application.persistentDataPath;
+        }
+    }
+
     private string ResolveOutputFileName()
     {
         if (!writeExtendedMetrics)
