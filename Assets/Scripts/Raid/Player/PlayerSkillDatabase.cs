@@ -324,7 +324,7 @@ public class PlayerSkillDatabase : ScriptableObject
                 animatorStateName = "ATK1",
                 actionDuration = 0.85f,
                 effectDelayNormalized = 0.45f,
-                healAmount = 80f,
+                healAmount = 180f,
                 castVFXAutoDestroyDelay = 2f,
                 allyVFXAutoDestroyDelay = 3f
             },
@@ -357,7 +357,7 @@ public class PlayerSkillDatabase : ScriptableObject
                 animatorStateName = "ATK3",
                 actionDuration = 5f,
                 effectDelayNormalized = 0.05f,
-                tickHealAmount = 80f,
+                tickHealAmount = 120f,
                 duration = 5f,
                 tickInterval = 1f,
                 lockBasicAttackDuringSkill = true,

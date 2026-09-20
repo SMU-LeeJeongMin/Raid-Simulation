@@ -39,19 +39,32 @@ public class RaidCoordinator : MonoBehaviour
     [Tooltip("타임아웃 궤적 판정: 보스 진행도 < 경과 비율 x 이 계수면 화력 집중")]
     public float paceMargin = 1.15f;
     [Range(0.05f, 0.95f)] public float protectHpThreshold = 0.5f;
-    // v1.1: 0.4 -> 0.25. 수비 대기가 너무 자주 걸려 화력을 깎아 먹는 문제의 완화
-    // (전멸을 타임아웃으로 바꿀 뿐 클리어로 전환하지 못함)
-    [Range(0.05f, 0.95f)] public float defensivePartyHpThreshold = 0.25f;
+    // v1 값으로 고정 (규칙 조율의 기준선). 수동 튜닝은 v1.1 실험으로 종료
+    [Range(0.05f, 0.95f)] public float defensivePartyHpThreshold = 0.4f;
     [Min(1)] public int slimeHandlerCount = 1;
+
+    [Header("RL Data Collection")]
+    [Tooltip("Rule 모드에서 각 NPC의 지시를 이 확률로 무작위 지시로 교체. RL 학습용 롤아웃 수집 전용 (평가와 본실험은 0 유지)")]
+    [Range(0f, 1f)] public float explorationEpsilon = 0f;
+
+    [Header("RL Mode")]
+    [Tooltip("학습된 조율자 정책 (coordinator_policy.onnx, COORD_RL_V1). RL 모드에서만 사용")]
+    public Unity.InferenceEngine.ModelAsset coordinatorModel;
 
     [Header("Debug")]
     public bool logCommands = false;
     [SerializeField] private string lastDecisionSummary;
+    [SerializeField] private int exploredCommandCount; // 이번 에피소드에서 탐험으로 교체된 지시 수
 
     private float nextEvaluateTime;
     private bool lastBossAttackable = true;
     private bool lastSlimesAlive;
     private bool lastOneShotActive;
+
+    // RL 추론 상태
+    private Unity.InferenceEngine.Worker coordinatorWorker;
+    private readonly float[] obsBuffer = new float[CoordinatorObservation.Dim];
+    private bool warnedNoModel;
 
     private readonly List<NPCSimpleFSMController> npcs = new List<NPCSimpleFSMController>(4);
     private readonly HashSet<NPCSimpleFSMController> issuedThisTick = new HashSet<NPCSimpleFSMController>();
@@ -68,6 +81,8 @@ public class RaidCoordinator : MonoBehaviour
             Instance = null;
 
         CommandBoard.ClearAll();
+        coordinatorWorker?.Dispose();
+        coordinatorWorker = null;
     }
 
     private void Update()
@@ -95,7 +110,93 @@ public class RaidCoordinator : MonoBehaviour
         lastSlimesAlive = slimesAlive;
         lastBossAttackable = bossAttackable;
 
+        if (mode == CoordinatorMode.RL && TryEvaluateRL())
+            return;
+
         Evaluate(oneShotActive, slimesAlive, bossAttackable);
+    }
+
+    // ---------- RL 조율 (2단계) ----------
+
+    // 학습된 정책으로 NPC별 지시 결정. 모델 미준비 시 false 반환 후 규칙으로 폴백 (1회 경고)
+    private bool TryEvaluateRL()
+    {
+        if (coordinatorWorker == null)
+        {
+            if (coordinatorModel == null)
+            {
+                if (!warnedNoModel)
+                {
+                    warnedNoModel = true;
+                    Debug.LogWarning("[RaidCoordinator] RL 모드이나 coordinatorModel이 비어 있음. 규칙 조율로 폴백", this);
+                }
+                return false;
+            }
+
+            try
+            {
+                Unity.InferenceEngine.Model model = Unity.InferenceEngine.ModelLoader.Load(coordinatorModel);
+                coordinatorWorker = new Unity.InferenceEngine.Worker(model, Unity.InferenceEngine.BackendType.CPU);
+            }
+            catch (System.Exception exception)
+            {
+                if (!warnedNoModel)
+                {
+                    warnedNoModel = true;
+                    Debug.LogError($"[RaidCoordinator] 조율자 모델 로드 실패: {exception.Message}. 규칙 조율로 폴백", this);
+                }
+                return false;
+            }
+        }
+
+        issuedThisTick.Clear();
+
+        for (int i = 0; i < npcs.Count; i++)
+        {
+            NPCSimpleFSMController npc = npcs[i];
+            CoordinatorObservation.Fill(obsBuffer, npc, npcs, episodeTimeLimit);
+
+            int best = 0;
+            try
+            {
+                using (var input = new Unity.InferenceEngine.Tensor<float>(
+                    new Unity.InferenceEngine.TensorShape(1, CoordinatorObservation.Dim), obsBuffer))
+                {
+                    coordinatorWorker.SetInput("coordinator_obs", input);
+                    coordinatorWorker.Schedule();
+
+                    using (var output = (coordinatorWorker.PeekOutput("command_q")
+                        as Unity.InferenceEngine.Tensor<float>).ReadbackAndClone())
+                    {
+                        float[] qValues = output.DownloadToArray();
+                        float bestQ = float.NegativeInfinity;
+                        for (int a = 0; a < qValues.Length && a < 5; a++)
+                        {
+                            if (qValues[a] > bestQ)
+                            {
+                                bestQ = qValues[a];
+                                best = a;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogError($"[RaidCoordinator] RL 추론 실패: {exception.Message}. 규칙 조율로 폴백", this);
+                coordinatorWorker.Dispose();
+                coordinatorWorker = null;
+                return false;
+            }
+
+            NpcCommandType type = (NpcCommandType)best;
+            PlayerStatus target = type == NpcCommandType.ProtectAlly
+                ? NpcHealerPolicy.FindLowestHpAlly(out _) : null;
+            Issue(npc, type, target);
+        }
+
+        lastDecisionSummary = "RL policy";
+        return true;
     }
 
     // ---------- 규칙 조율 v1 ----------
@@ -192,11 +293,24 @@ public class RaidCoordinator : MonoBehaviour
 
     private void Issue(NPCSimpleFSMController npc, NpcCommandType type, PlayerStatus target = null)
     {
+        // 입실론 탐험: 조율자의 지시를 확률적으로 무작위 지시로 교체 (RL 학습 데이터의 행동 다양성 확보).
+        // Rule과 RL 모드 모두 적용 (2회차 이후의 정책 반복은 현재 RL 정책 + 탐험으로 수집).
+        // 지시는 편향일 뿐이라 Mask와 안전 행동은 여전히 불가침 (탐험이 생존 로직을 깨지 않음).
+        // 지시와 결과는 스냅샷의 command_id 계열 필드로 기록되므로 별도 로그 불필요
+        bool explored = false;
+        if (mode != CoordinatorMode.None && explorationEpsilon > 0f && Random.value < explorationEpsilon)
+        {
+            type = (NpcCommandType)Random.Range(0, 5);
+            target = type == NpcCommandType.ProtectAlly ? NpcHealerPolicy.FindLowestHpAlly(out _) : null;
+            explored = true;
+            exploredCommandCount++;
+        }
+
         CommandBoard.Issue(npc, type, target);
         issuedThisTick.Add(npc);
 
         if (logCommands)
-            Debug.Log($"[RaidCoordinator] {npc.name} <- {type}{(target != null ? " (" + target.name + ")" : "")}", this);
+            Debug.Log($"[RaidCoordinator] {npc.name} <- {type}{(target != null ? " (" + target.name + ")" : "")}{(explored ? " [explore]" : "")}", this);
     }
 
     private void IssueRemaining(NpcCommandType type, string summary)

@@ -1,0 +1,49 @@
+{
+  "version": "COORD_RL_V1",
+  "obs_dim": 23,
+  "num_commands": 5,
+  "command_names": [
+    "Free",
+    "FocusBoss",
+    "HandleSlimes",
+    "ProtectAlly",
+    "HoldDefensive"
+  ],
+  "decision_interval": 3.0,
+  "gamma": 0.97,
+  "obs_fields": [
+    "boss_hp",
+    "time",
+    "party_avg_hp",
+    "party_min_hp",
+    "alive_ratio",
+    "slime_norm",
+    "boss_invuln",
+    "boss_flying",
+    "healer_npc",
+    "zone_norm",
+    "npc_hp",
+    "npc_mp",
+    "npc_ult",
+    "npc_shield",
+    "is_healer",
+    "is_tank",
+    "dist_boss",
+    "is_casting",
+    "prev_cmd_free",
+    "prev_cmd_focus",
+    "prev_cmd_slime",
+    "prev_cmd_protect",
+    "prev_cmd_hold"
+  ],
+  "reward": {
+    "boss": 5.0,
+    "death": -1.5,
+    "damage": -0.5,
+    "clear": 3.0,
+    "wipe": -3.0,
+    "timeout": 0.0
+  },
+  "train_episodes": 80,
+  "train_transitions": 25155
+}

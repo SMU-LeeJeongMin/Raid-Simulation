@@ -46,13 +46,14 @@ public static class NpcCommandBias
             case NpcCommandType.FocusBoss:
                 switch (group)
                 {
-                    // v1.1: 화력 편향 강화 (1.35 -> 1.8). v1은 GAT의 판단을 뒤집기에 부족
-                    // (healer 블록에서 전멸은 줄었으나 화력 전환 실패로 타임아웃 증가)
-                    case ActionGroup.BossAttack: return 1.8f;
-                    case ActionGroup.BossApproach: return 1.5f;
+                    // v1 값으로 고정 (규칙 조율의 기준선).
+                    // v1.1의 강화 시도(1.8)는 healer 블록에서 전멸 증가로 악화 확인,
+                    // 10판 블록의 판별력 한계도 확인되어 수동 튜닝 중단 (이후는 RL 조율자)
+                    case ActionGroup.BossAttack: return 1.35f;
+                    case ActionGroup.BossApproach: return 1.25f;
                     case ActionGroup.Slime: return 0.6f;
                     case ActionGroup.Support: return 0.8f;
-                    case ActionGroup.Formation: return 0.6f;
+                    case ActionGroup.Formation: return 0.7f;
                 }
                 break;
 

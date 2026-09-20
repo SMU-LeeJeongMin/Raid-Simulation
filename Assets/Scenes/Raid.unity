@@ -2124,7 +2124,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a245bedcc34eed5488a8d9ba5568c191, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RaidCoordinator
-  mode: 1
+  mode: 2
   evaluateInterval: 3
   reevaluateOnPhaseChange: 1
   episodeTimeLimit: 600
@@ -2132,8 +2132,11 @@ MonoBehaviour:
   protectHpThreshold: 0.5
   defensivePartyHpThreshold: 0.4
   slimeHandlerCount: 1
+  explorationEpsilon: 0.2
+  coordinatorModel: {fileID: 5022602860645237092, guid: 7bf3767dfc96d074da3792399bc24790, type: 3}
   logCommands: 0
   lastDecisionSummary: 
+  exploredCommandCount: 0
 --- !u!4 &567182600
 Transform:
   m_ObjectHideFlags: 0
@@ -8719,15 +8722,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ExperimentBatchRunner
   enableBatch: 1
-  episodesPerAlgorithm: 10
-  algorithms: 050000000500000002000000
-  coordinatorModes: 000000000100000000000000
-  baseSeed: 53000
+  episodesPerAlgorithm: 30
+  algorithms: 05000000
+  coordinatorModes: 02000000
+  baseSeed: 83000
   seedStride: 1
   pairSeedsAcrossAlgorithms: 1
   restartDelay: 2
   episodeTimeLimit: 600
-  timeScale: 2
+  timeScale: 3
   stopWhenComplete: 1
   logProgress: 1
   currentEpisodeNumber: 0
@@ -8746,7 +8749,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ede821d836c63d24a9914435205b3bc9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GraphStateLogger
-  enableLogging: 0
+  enableLogging: 1
   snapshotInterval: 0.25
   logOnlyDuringEpisode: 1
   logPathOnStart: 1
