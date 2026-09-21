@@ -31,8 +31,11 @@ public class RaidCoordinator : MonoBehaviour
 
     [Header("Evaluation")]
     [Min(0.5f)] public float evaluateInterval = 3f;
-    [Tooltip("국면 전환(보스 무적, 슬라임, 즉사기) 감지 시 즉시 재평가")]
+    [Tooltip("국면 전환(보스 무적, 슬라임, 즉사기, 아군 위험) 감지 시 즉시 재평가")]
     public bool reevaluateOnPhaseChange = true;
+
+    [Tooltip("파티 최저 체력이 이 값 아래로 내려가는 순간 즉시 재평가. 0이면 사용 안 함")]
+    [Range(0f, 0.95f)] public float lowHpTriggerThreshold = 0.5f;
 
     [Header("Rule Parameters")]
     public float episodeTimeLimit = 600f;
@@ -55,7 +58,9 @@ public class RaidCoordinator : MonoBehaviour
     public bool logCommands = false;
     [SerializeField] private string lastDecisionSummary;
     [SerializeField] private int exploredCommandCount; // 이번 에피소드에서 탐험으로 교체된 지시 수
+    [SerializeField] private int lowHpTriggerCount;    // 아군 위험 감지로 즉시 재평가한 횟수
 
+    private bool lastLowHp;
     private float nextEvaluateTime;
     private bool lastBossAttackable = true;
     private bool lastSlimesAlive;
@@ -98,17 +103,31 @@ public class RaidCoordinator : MonoBehaviour
         bool slimesAlive = SlimeTargetSelector.AnyAlive();
         bool bossAttackable = NpcActionMask.IsBossTacticallyAttackable(npcs[0]);
 
+        // 아군 위험 진입: 최저 체력이 임계선을 처음 밑돈 순간만 트리거 (회복은 다음 주기에 반영).
+        // 상태 갱신이 평가 시점에만 일어나므로 위험이 지속되는 동안 반복 발동하지 않음
+        bool lowHp = lowHpTriggerThreshold > 0f && GetPartyMinHp() < lowHpTriggerThreshold;
+
         bool phaseChanged = oneShotActive != lastOneShotActive
             || slimesAlive != lastSlimesAlive
-            || bossAttackable != lastBossAttackable;
+            || bossAttackable != lastBossAttackable
+            || (lowHp && !lastLowHp);
 
         if (Time.time < nextEvaluateTime && !(reevaluateOnPhaseChange && phaseChanged))
             return;
+
+        // 주기 도래 전에 아군 위험으로 앞당겨진 평가인지 기록 (디버그용)
+        if (Time.time < nextEvaluateTime && lowHp && !lastLowHp)
+        {
+            lowHpTriggerCount++;
+            if (logCommands)
+                Debug.Log("[RaidCoordinator] 아군 위험 감지로 즉시 재평가", this);
+        }
 
         nextEvaluateTime = Time.time + evaluateInterval;
         lastOneShotActive = oneShotActive;
         lastSlimesAlive = slimesAlive;
         lastBossAttackable = bossAttackable;
+        lastLowHp = lowHp;
 
         if (mode == CoordinatorMode.RL && TryEvaluateRL())
             return;
@@ -386,6 +405,26 @@ public class RaidCoordinator : MonoBehaviour
         }
 
         return count > 0 ? sum / count : 1f;
+    }
+
+    // 생존 캐릭터 중 최저 체력 비율 (즉시 재평가 트리거의 입력)
+    private static float GetPartyMinHp()
+    {
+        IReadOnlyList<PlayerStatus> statuses = CombatRegistry.PlayerStatuses;
+        float min = 1f;
+        bool any = false;
+
+        for (int i = 0; i < statuses.Count; i++)
+        {
+            PlayerStatus status = statuses[i];
+            if (status == null || status.Health == null || status.Health.IsDead || status.Health.MaxHealth <= 0f)
+                continue;
+
+            min = Mathf.Min(min, status.Health.CurrentHealth / status.Health.MaxHealth);
+            any = true;
+        }
+
+        return any ? min : 1f;
     }
 
     // 즉사기 충전 여부: 시선 차폐 판정을 가진 위험 지역의 존재로 감지
