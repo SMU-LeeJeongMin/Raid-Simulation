@@ -2133,8 +2133,22 @@ MonoBehaviour:
   protectHpThreshold: 0.5
   defensivePartyHpThreshold: 0.4
   slimeHandlerCount: 1
+  commandSet: 2
+  ruleVersion: 2
+  cautionHpNoHealer: 0.7
+  cautionHpWithHealer: 0.3
+  cautionDuringFlyNoHealer: 1
+  slimeHandlerCountV2: 3
+  useProtectV2: 0
+  useFocusV2: 0
+  protectHpThresholdV2: 0.4
   explorationEpsilon: 0
-  coordinatorModel: {fileID: 5022602860645237092, guid: 7bf3767dfc96d074da3792399bc24790, type: 3}
+  explorationHoldDecisions: 1
+  coordinatorModel: {fileID: 5022602860645237092, guid: 867b8125afb002a46920188fdfa60437, type: 3}
+  commandStrength: 1
+  logDecisions: 1
+  decisionLogRoot: D:\Raid Simulation
+  decisionLogFile: "coordinator_decisions_7\uB2E8\uACC4_RL\uBCF8\uC2E4\uD5D8.csv"
   logCommands: 0
   lastDecisionSummary: 
   exploredCommandCount: 0
@@ -8495,6 +8509,7 @@ GameObject:
   - component: {fileID: 843131473}
   - component: {fileID: 843131474}
   - component: {fileID: 843131475}
+  - component: {fileID: 843131476}
   m_Layer: 0
   m_Name: RaidGameManager
   m_TagString: Untagged
@@ -8662,6 +8677,8 @@ MonoBehaviour:
   writeOnPartyWipe: 1
   recordOnlyTerminalOutcomes: 1
   requiredPartyMemberCountForWipe: 4
+  endOnNpcWipeWhenPlayerHealer: 1
+  requiredNpcCountForNpcWipe: 3
   writeOnPlayerDeath: 0
   writeOnApplicationQuit: 1
   writeOnTimeout: 0
@@ -8671,7 +8688,7 @@ MonoBehaviour:
   autoBind: 1
   rebindInterval: 1
   customOutputRoot: D:\Raid Simulation
-  fileName: raid_episode_metrics.csv
+  fileName: "raid_episode_metrics_7\uB2E8\uACC4_RL\uBCF8\uC2E4\uD5D8.csv"
   writeExtendedMetrics: 0
   logPathOnStart: 1
   episodeRunning: 0
@@ -8724,10 +8741,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ExperimentBatchRunner
   enableBatch: 1
-  episodesPerAlgorithm: 30
-  algorithms: 05000000
-  coordinatorModes: 00000000
-  baseSeed: 92000
+  episodesPerAlgorithm: 75
+  algorithms: 04000000
+  coordinatorModes: 02000000
+  conditionLabels:
+  - RGCNv2d
+  baseSeed: 93000
   seedStride: 1
   pairSeedsAcrossAlgorithms: 1
   restartDelay: 2
@@ -8756,8 +8775,9 @@ MonoBehaviour:
   logOnlyDuringEpisode: 1
   logPathOnStart: 1
   customOutputRoot: D:\Raid Simulation
-  outputFolderName: GraphLogs
-  maxNodes: 24
+  outputFolderName: "GraphLogs_7\uB2E8\uACC4_RL\uBCF8\uC2E4\uD5D8"
+  maxNodes: 40
+  recordTeacherAdvice: 0
   writtenSnapshotCount: 0
   currentFilePath: 
 --- !u!114 &843131475
@@ -8773,23 +8793,47 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GnnModelRunner
   models:
-  - mode: 3
-    modelAsset: {fileID: 5022602860645237092, guid: 0e2284478b5c42b49a2e92ca31435f1e, type: 3}
-    manifestAsset: {fileID: 4900000, guid: 46e90767897311b46948d4cb3ce8838e, type: 3}
-    graphInput: 0
-  - mode: 4
-    modelAsset: {fileID: 5022602860645237092, guid: 22f31f7f47d3dae40b995d4aa38f6b16, type: 3}
-    manifestAsset: {fileID: 4900000, guid: 7b89392f3937b8d40a9adb3fd58a13fd, type: 3}
-    graphInput: 1
   - mode: 5
-    modelAsset: {fileID: 5022602860645237092, guid: bf2d4c20f823cdc46bc228ee792347f0, type: 3}
-    manifestAsset: {fileID: 4900000, guid: 2ac941f6fc92c9342a53266e75d96552, type: 3}
+    modelAsset: {fileID: 5022602860645237092, guid: bd8741b24f618aa4db0b5e1e04d0f463, type: 3}
+    manifestAsset: {fileID: 4900000, guid: 1bd0b97ded07dfa45af003eb7199f922, type: 3}
+    graphInput: 2
+  - mode: 3
+    modelAsset: {fileID: 5022602860645237092, guid: ce399b1b9c1c0424dbece6ea21f489e0, type: 3}
+    manifestAsset: {fileID: 4900000, guid: 0e612e792c9ad5c4fbca78ce16d184ef, type: 3}
+    graphInput: 2
+  - mode: 4
+    modelAsset: {fileID: 5022602860645237092, guid: 4274dad2f7c3b594c9ee358cb3e8017f, type: 3}
+    manifestAsset: {fileID: 4900000, guid: cf67c4401afadc7408b1874e718bc676, type: 3}
+    graphInput: 2
+  - mode: 7
+    modelAsset: {fileID: 5022602860645237092, guid: a8665aeb951acf04bbdf1f045d1dac9d, type: 3}
+    manifestAsset: {fileID: 4900000, guid: 8bd3f0413f4a6144392a4a2311b17baa, type: 3}
     graphInput: 2
   backend: 512
   inferenceInterval: 0.2
   readyModelCount: 0
   snapshotVersion: 0
   inferenceCount: 0
+--- !u!114 &843131476
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 843131463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e51fc18731896d45830828c831cfe19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DecisionLatencyProbe
+  enableProbe: 0
+  maxSamples: 400000
+  fileName: decision_latency.csv
+  outputRootOverride: D:\Raid Simulation\Decision_latency
+  logPathOnStart: 1
+  sampleCount: 0
+  writtenCount: 0
+  outputPath: 
 --- !u!1 &844036503
 GameObject:
   m_ObjectHideFlags: 0

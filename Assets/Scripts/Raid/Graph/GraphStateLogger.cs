@@ -31,6 +31,11 @@ public class GraphStateLogger : MonoBehaviour
     [Tooltip("스냅샷 노드 수 상한. 학습 모델의 고정 입력 크기와 같은 값을 사용해야 수집 데이터와 추론 조건이 일치")]
     [Min(8)] public int maxNodes = 40;
 
+    [Header("Teacher Label")]
+    [Tooltip("교사(Utility) 조언을 teacher_action_id로 기록할지 여부. 교사 없는 실험에서는 반드시 꺼 둘 것. "
+        + "끄면 스냅샷마다 캐릭터 4인의 Utility 점수 계산이 사라져 스냅샷 비용이 약 29퍼센트 줄어듦")]
+    public bool recordTeacherAdvice = false;
+
     [Header("Runtime Debug")]
     [SerializeField] private int writtenSnapshotCount;
     [SerializeField] private string currentFilePath;
@@ -44,6 +49,9 @@ public class GraphStateLogger : MonoBehaviour
 
     private void Awake()
     {
+        // 교사 조언 기록 여부를 전역에 반영 (GraphSnapshotBuilder와 GnnModelRunner 경로 모두에 적용)
+        NPCSimpleFSMController.RecordTeacherAdvice = recordTeacherAdvice;
+
         if (logPathOnStart)
             Debug.Log($"[GraphStateLogger] Output folder: {Path.Combine(ResolveOutputRoot(), outputFolderName)}", this);
     }

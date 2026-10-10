@@ -26,6 +26,10 @@ public class RaidMetricsLogger : MonoBehaviour
     [Tooltip("켜두면 보스 사망 또는 파티 전멸처럼 전투가 실제로 끝난 경우에만 CSV를 기록합니다. ApplicationQuit/Timeout/Player 단독 사망은 기록하지 않습니다.")]
     public bool recordOnlyTerminalOutcomes = true;
     [Min(1)] public int requiredPartyMemberCountForWipe = 4;
+    [Tooltip("플레이어가 힐러일 때 NPC가 모두 사망하면 판 종료 (종료 사유 npc_wipe). 힐러 플레이어 혼자 남으면 보스 딜이 사실상 0이라 시간 초과까지 기다리는 낭비 방지용")]
+    public bool endOnNpcWipeWhenPlayerHealer = true;
+    [Tooltip("npc_wipe 판정에 필요한 최소 NPC 수 (NPC 등록 전 조기 판정 방지)")]
+    [Min(1)] public int requiredNpcCountForNpcWipe = 3;
     public bool writeOnPlayerDeath = false;
     public bool writeOnApplicationQuit = false;
     public bool writeOnTimeout = false;
@@ -667,6 +671,13 @@ public class RaidMetricsLogger : MonoBehaviour
                 return;
             }
 
+            // 힐러 플레이어 단독 생존 상태는 클리어 불가이므로 NPC 전멸 시점에 종료
+            if (endOnNpcWipeWhenPlayerHealer && IsNPC(status) && IsPlayerHealer() && AreAllNpcsDead())
+            {
+                FinishEpisode(false, "npc_wipe");
+                return;
+            }
+
             if (!recordOnlyTerminalOutcomes && !IsNPC(status) && writeOnPlayerDeath)
                 FinishEpisode(false, "player_dead");
         }
@@ -704,6 +715,36 @@ public class RaidMetricsLogger : MonoBehaviour
         }
 
         return trackedCount >= Mathf.Max(1, requiredPartyMemberCountForWipe) && aliveCount == 0;
+    }
+
+    // 플레이어 직업이 힐러인지 여부
+    private bool IsPlayerHealer()
+    {
+        return string.Equals(ResolvePlayerClass(), "healer", StringComparison.OrdinalIgnoreCase);
+    }
+
+    // 등록된 NPC가 최소 수 이상이고 전원 사망 상태인지 여부 (플레이어 제외)
+    private bool AreAllNpcsDead()
+    {
+        RefreshPartyHealthSet();
+
+        int trackedNpcCount = 0;
+        int aliveNpcCount = 0;
+        foreach (Health health in partyHealths)
+        {
+            if (health == null)
+                continue;
+
+            PlayerStatus status = health.GetComponent<PlayerStatus>();
+            if (!IsNPC(status))
+                continue;
+
+            trackedNpcCount++;
+            if (!health.IsDead)
+                aliveNpcCount++;
+        }
+
+        return trackedNpcCount >= Mathf.Max(1, requiredNpcCountForNpcWipe) && aliveNpcCount == 0;
     }
 
     private void RefreshPartyHealthSet()
@@ -770,7 +811,7 @@ public class RaidMetricsLogger : MonoBehaviour
         Add("player_class", Escape(playerClass));
         Add("seed", seed >= 0 ? FormatInt(seed) : "");
         Add("player_controller_mode", Escape(ScriptedPlayerMode.PlayerControllerModeName));
-        // 종료 사유 (boss_dead, party_wipe, timeout 등). 타임아웃 에피소드를 분석에서 거르는 기준
+        // 종료 사유 (boss_dead, party_wipe, npc_wipe, timeout 등). 타임아웃 에피소드를 분석에서 거르는 기준
         Add("end_reason", Escape(endReason));
 
         // ---------- 핵심 5지표 (알고리즘 비교의 판단 기준) ----------

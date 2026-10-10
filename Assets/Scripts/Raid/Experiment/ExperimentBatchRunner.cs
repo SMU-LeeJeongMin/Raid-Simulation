@@ -26,6 +26,9 @@ public class ExperimentBatchRunner : MonoBehaviour
     [Tooltip("algorithms와 같은 길이의 조율자 모드 목록. 비우거나 짧으면 해당 조건은 None(조율 없음)")]
     public CoordinatorMode[] coordinatorModes;
 
+    [Tooltip("algorithms와 같은 길이의 조건 이름 목록. 값이 있으면 CSV의 algorithm과 그래프 로그 파일명에 모드 이름 대신 사용 (예: 같은 구조의 λ 후보를 GAT_l2_10처럼 구분). 비우면 모드 이름 사용")]
+    public string[] conditionLabels;
+
     [Header("Seed")]
     public int baseSeed = 1000;
     [Min(1)] public int seedStride = 1;
@@ -136,10 +139,14 @@ public class ExperimentBatchRunner : MonoBehaviour
             ? coordinatorModes[algorithmIndex]
             : CoordinatorMode.None;
 
-        // 조건 라벨: 조율자가 있으면 "GATv2FSM+RuleCoord" 형태로 결과 CSV에서 구분
+        // 조건 라벨: 조건 이름이 지정되면 모드 이름 대신 사용, 조율자가 있으면 "GAT+RuleCoord" 형태로 결과 CSV에서 구분
+        string baseLabel = conditionLabels != null && algorithmIndex < conditionLabels.Length
+            && !string.IsNullOrWhiteSpace(conditionLabels[algorithmIndex])
+            ? conditionLabels[algorithmIndex].Trim()
+            : algorithm.ToString();
         currentAlgorithmLabel = coordinatorMode == CoordinatorMode.None
-            ? algorithm.ToString()
-            : algorithm.ToString() + "+" + coordinatorMode + "Coord";
+            ? baseLabel
+            : baseLabel + "+" + coordinatorMode + "Coord";
         ActiveConditionLabel = currentAlgorithmLabel;
 
         // 실험 셋업에 알고리즘 적용 (스포너, 로거, 기존 NPC 일괄 반영)

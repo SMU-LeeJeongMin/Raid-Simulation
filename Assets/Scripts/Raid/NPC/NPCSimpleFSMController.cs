@@ -14,7 +14,9 @@ public enum NPCFSMMode
     Utility,
     GCN,
     RGCN,
-    GAT
+    GAT,
+    RandomPolicy,         // 교사 없는 데이터 수집용 무작위 정책 (열거자 끝에 추가하여 기존 직렬화 값 유지)
+    MLP                   // 그래프를 쓰지 않는 학습형 기준선 (3단계 행동 AI 비교용, 끝에 추가)
 }
 
 public class NPCSimpleFSMController : MonoBehaviour
@@ -360,8 +362,17 @@ public class NPCSimpleFSMController : MonoBehaviour
     private NpcUtilityPolicy teacherAdvisor;
     private NPCRole teacherAdvisorRole;
 
+    // 교사(Utility) 조언을 스냅샷에 기록할지 여부. 기본은 꺼짐.
+    // 교사 없는 실험에서는 꺼 두어야 하며, 끄면 파이프라인에서 Utility 호출이 완전히 사라지고
+    // 스냅샷 생성 비용도 약 29퍼센트 줄어듦 (캐릭터 4인 × 42마이크로초).
+    // GraphStateLogger의 Record Teacher Advice 체크박스가 이 값을 설정함.
+    public static bool RecordTeacherAdvice;
+
     public int ComputeTeacherAdviceId()
     {
+        if (!RecordTeacherAdvice)
+            return -1;
+
         if (teacherAdvisor == null || teacherAdvisorRole != role)
         {
             teacherAdvisor = new NpcUtilityPolicy(role == NPCRole.Tank, role == NPCRole.Healer);
@@ -398,8 +409,15 @@ public class NPCSimpleFSMController : MonoBehaviour
             return;
         }
 
+        if (aiMode == NPCFSMMode.RandomPolicy)
+        {
+            rolePolicy = new NpcRandomPolicy(role == NPCRole.Tank, role == NPCRole.Healer);
+            return;
+        }
+
         // 학습 모델 조건은 모두 같은 정책 클래스를 사용하고, 어떤 모델로 추론할지는 aiMode로 구분
-        if (aiMode == NPCFSMMode.GCN || aiMode == NPCFSMMode.RGCN || aiMode == NPCFSMMode.GAT)
+        if (aiMode == NPCFSMMode.GCN || aiMode == NPCFSMMode.RGCN || aiMode == NPCFSMMode.GAT
+            || aiMode == NPCFSMMode.MLP)
         {
             rolePolicy = new NpcGnnPolicy(role == NPCRole.Tank, role == NPCRole.Healer);
             return;
@@ -443,7 +461,15 @@ public class NPCSimpleFSMController : MonoBehaviour
         }
     }
 
+    // 판단 1회의 실제 소요 시간 계측 지점 (DecisionLatencyProbe가 꺼져 있으면 오버헤드 없음)
     private void Think()
+    {
+        long probeStart = DecisionLatencyProbe.Begin();
+        ThinkInternal();
+        DecisionLatencyProbe.End(DecisionLatencyProbe.KindDecision, probeStart, aiMode.ToString());
+    }
+
+    private void ThinkInternal()
     {
         ClearMovement();
 

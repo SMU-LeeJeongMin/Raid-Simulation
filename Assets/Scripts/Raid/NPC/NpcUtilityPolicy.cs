@@ -111,6 +111,14 @@ public class NpcUtilityPolicy : INpcRolePolicy
     // 학습 모델이 조종 중인 상태에서도 부작용 없이 호출 가능
     public NpcAction AdviseBestAction(NPCSimpleFSMController npc)
     {
+        long probeStart = DecisionLatencyProbe.Begin();
+        NpcAction result = AdviseBestActionInternal(npc);
+        DecisionLatencyProbe.End(DecisionLatencyProbe.KindUtility, probeStart);
+        return result;
+    }
+
+    private NpcAction AdviseBestActionInternal(NPCSimpleFSMController npc)
+    {
         int count = NpcActionMask.CollectAvailable(npc, includeTacticalChecks: true, candidates);
         if (count == 0)
             return NpcAction.FollowPlayer;

@@ -233,7 +233,11 @@ public class GnnModelRunner : MonoBehaviour
         lastSnapshotTime = Time.time;
 
         // 상한을 넘는 상황(장판 다수 등)에서도 중요 노드만 남겨 최신 그래프로 추론
+        long probeStart = DecisionLatencyProbe.Begin();
         GraphSnapshot snapshot = GraphSnapshotBuilder.Build(string.Empty, string.Empty, 0, 0f, characterIndexMap, MaxNodes);
+        DecisionLatencyProbe.End(DecisionLatencyProbe.KindSnapshot, probeStart, null,
+            snapshot.nodes.Count, snapshot.edges.Count);
+
         if (snapshot.nodes.Count == 0)
             return;
 
@@ -248,10 +252,21 @@ public class GnnModelRunner : MonoBehaviour
         Unity.InferenceEngine.Tensor<float> graphTensor = null;
         Unity.InferenceEngine.Tensor<float> edgeTensor = null;
 
+        int probeNodes = cachedSnapshot != null ? cachedSnapshot.nodes.Count : 0;
+        int probeEdges = cachedSnapshot != null ? cachedSnapshot.edges.Count : 0;
+
+        // 인코딩과 추론을 따로 계측 (인코딩은 CPU 버퍼 채우기, 추론은 백엔드 실행과 결과 회수)
+        long encodeStart = DecisionLatencyProbe.Begin();
+        float[] encodedFeatures = EncodeFor(slot);
+        DecisionLatencyProbe.End(DecisionLatencyProbe.KindEncode, encodeStart,
+            slot.mode.ToString(), probeNodes, probeEdges);
+
+        long inferStart = DecisionLatencyProbe.Begin();
+
         try
         {
             using (Unity.InferenceEngine.Tensor<float> features = new Unity.InferenceEngine.Tensor<float>(
-                new Unity.InferenceEngine.TensorShape(1, MaxNodes, GnnFeatureEncoder.FeatureDim), EncodeFor(slot)))
+                new Unity.InferenceEngine.TensorShape(1, MaxNodes, GnnFeatureEncoder.FeatureDim), encodedFeatures))
             {
                 slot.worker.SetInput("node_features", features);
 
@@ -293,6 +308,8 @@ public class GnnModelRunner : MonoBehaviour
         {
             graphTensor?.Dispose();
             edgeTensor?.Dispose();
+            DecisionLatencyProbe.End(DecisionLatencyProbe.KindInfer, inferStart,
+                slot.mode.ToString(), probeNodes, probeEdges);
         }
     }
 

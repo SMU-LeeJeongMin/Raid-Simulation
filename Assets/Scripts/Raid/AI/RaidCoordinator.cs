@@ -21,6 +21,16 @@ public enum CoordinatorMode
 /// 2. 슬라임 생존 + 보스 무적: 힐러 아닌 NPC 중 슬라임과 가까운 순으로 전담 지정
 /// 3. 아군 HP 임계 이하 + NPC 힐러 존재: 힐러에게 보호 지시
 /// 4. 화력 페이스 판정: 타임아웃 궤적이면 화력 집중, 파티 소모전이면 수비 대기
+///
+/// 규칙 v2 (7단계 진단 반영, RGCN 하위 정책 기준).
+/// - v1은 Utility와 FSM 기준으로 만든 규칙이라 RGCN 위에서 전사 블록 지연(평균 +45초, 시간 초과 0 → 8),
+///   힐러 블록 무효(1% → 4%)
+/// - 경계 태세(HoldDefensive v2)를 파티 평균 체력이 아닌 NPC 개인 상태로 발행.
+///   NPC 힐러가 없으면 체력 0.7 미만 또는 보스 비행 중, 있으면 체력 0.3 미만일 때만
+/// - NPC 힐러가 없는 파티에는 화력 집중을 내리지 않음 (공격성 증가가 전멸을 앞당김)
+/// - 보호 지시 임계를 0.4로 낮춤 (불필요한 힐러 화력 손실 감소)
+/// - 쫄 단계에서 힐러 제외 NPC 전원을 슬라임 전담으로 지정 (v2c, RGCN은 쫄 단계에 플레이어 추종 47%로 슬라임 방치)
+/// - v2d: 보호 지시와 화력 집중은 기본 끔. 총책임자의 지시는 국면 단위 운영(쫄 단계 슬라임 전담, 위험 시 회피 우선, 비행 중 재집결)에 한정
 /// </summary>
 public class RaidCoordinator : MonoBehaviour
 {
@@ -46,13 +56,46 @@ public class RaidCoordinator : MonoBehaviour
     [Range(0.05f, 0.95f)] public float defensivePartyHpThreshold = 0.4f;
     [Min(1)] public int slimeHandlerCount = 1;
 
+    [Header("Rule v2 / Command Set")]
+    [Tooltip("지시 계수표 버전. 1 = v1, 2 = 경계 태세(안전 가산, 긴 시전 억제) 포함 v2")]
+    [Range(1, 2)] public int commandSet = 2;
+    [Tooltip("규칙 버전. 1 = v1 (파티 평균 기준 수비, 힐러 무관 화력 집중), 2 = NPC별 경계 태세")]
+    [Range(1, 2)] public int ruleVersion = 2;
+    [Tooltip("v2: NPC 힐러가 없는 파티에서 경계 태세를 내리는 자기 체력 기준")]
+    [Range(0.05f, 0.95f)] public float cautionHpNoHealer = 0.7f;
+    [Tooltip("v2: NPC 힐러가 있는 파티에서 경계 태세를 내리는 자기 체력 기준")]
+    [Range(0.05f, 0.95f)] public float cautionHpWithHealer = 0.3f;
+    [Tooltip("v2: NPC 힐러가 없는 파티는 보스 비행 국면 동안 전원 경계 태세")]
+    public bool cautionDuringFlyNoHealer = true;
+    [Tooltip("v2: 쫄 단계(슬라임 생존 + 보스 무적)의 슬라임 전담 인원. 힐러 제외 NPC 수보다 크면 힐러 제외 전원")]
+    [Min(1)] public int slimeHandlerCountV2 = 3;
+    [Tooltip("v2: 힐러 보호 지시 사용 여부. v1과 RL 조율 모두 NPC 힐러가 있는 전사 블록에서 단독보다 유의하게 나빴고 공통 요소가 보호 지시라 기본 끔")]
+    public bool useProtectV2 = false;
+    [Tooltip("v2: 타임아웃 궤적 화력 집중 사용 여부 (기본 끔, 지시는 국면 단위 운영에 한정)")]
+    public bool useFocusV2 = false;
+    [Tooltip("v2: 힐러 보호 지시 임계 (파티 최저 체력)")]
+    [Range(0.05f, 0.95f)] public float protectHpThresholdV2 = 0.4f;
+
     [Header("RL Data Collection")]
     [Tooltip("Rule 모드에서 각 NPC의 지시를 이 확률로 무작위 지시로 교체. RL 학습용 롤아웃 수집 전용 (평가와 본실험은 0 유지)")]
     [Range(0f, 1f)] public float explorationEpsilon = 0f;
+    [Tooltip("탐험 지시 유지 판단 수. 무작위 지시를 고르면 같은 NPC의 이후 판단에도 이 횟수만큼 같은 지시를 유지 (1 = 기존 방식, 판단 1회만 교체). 지시 1회의 효과가 작아 학습 신호가 약했던 문제 대응")]
+    [Min(1)] public int explorationHoldDecisions = 1;
 
     [Header("RL Mode")]
     [Tooltip("학습된 조율자 정책 (coordinator_policy.onnx, COORD_RL_V1). RL 모드에서만 사용")]
     public Unity.InferenceEngine.ModelAsset coordinatorModel;
+
+    [Header("Command Strength")]
+    [Tooltip("학습형 하위 정책(GNN 행동 AI)에 지시를 반영하는 세기. 지시 가산점 ln(계수)에 곱하는 배율 (1 = 기존 v1 세기, 0 = 지시 무시). Utility 등 곱셈 반영 정책에는 영향 없음")]
+    [Range(0f, 2f)] public float commandStrength = 1f;
+
+    [Header("Decision Log")]
+    [Tooltip("지시를 내릴 때마다 실제 관측 23개, 지시, 탐험 여부, RL Q 값을 CSV로 기록 (7단계 RL 재학습용)")]
+    public bool logDecisions = true;
+    [Tooltip("기록 폴더. 비우면 Application.persistentDataPath")]
+    public string decisionLogRoot = "";
+    public string decisionLogFile = "coordinator_decisions.csv";
 
     [Header("Debug")]
     public bool logCommands = false;
@@ -71,7 +114,21 @@ public class RaidCoordinator : MonoBehaviour
     private readonly float[] obsBuffer = new float[CoordinatorObservation.Dim];
     private bool warnedNoModel;
 
+    // 판단 기록 상태
+    private readonly float[] decisionObs = new float[CoordinatorObservation.Dim];
+    private float[] pendingQ;          // 직전 RL 추론의 Q 값 (규칙 판단이면 null)
+    private RaidMetricsLogger metricsLogger;
+
     private readonly List<NPCSimpleFSMController> npcs = new List<NPCSimpleFSMController>(4);
+
+    // 탐험 지시 유지 상태 (NPC별 유지 중인 무작위 지시와 남은 판단 수)
+    private struct ExploreHold
+    {
+        public NpcCommandType type;
+        public int remaining;
+    }
+    private readonly Dictionary<NPCSimpleFSMController, ExploreHold> exploreHold = new Dictionary<NPCSimpleFSMController, ExploreHold>();
+    private readonly List<NPCSimpleFSMController> staleKeys = new List<NPCSimpleFSMController>();
     private readonly HashSet<NPCSimpleFSMController> issuedThisTick = new HashSet<NPCSimpleFSMController>();
 
     private void Awake()
@@ -86,12 +143,16 @@ public class RaidCoordinator : MonoBehaviour
             Instance = null;
 
         CommandBoard.ClearAll();
+        CoordinatorDecisionLog.Close();
         coordinatorWorker?.Dispose();
         coordinatorWorker = null;
     }
 
     private void Update()
     {
+        NpcCommandBias.LogitScale = commandStrength;
+        NpcCommandBias.CommandSet = commandSet;
+
         if (mode == CoordinatorMode.None)
             return;
 
@@ -132,7 +193,10 @@ public class RaidCoordinator : MonoBehaviour
         if (mode == CoordinatorMode.RL && TryEvaluateRL())
             return;
 
-        Evaluate(oneShotActive, slimesAlive, bossAttackable);
+        if (ruleVersion >= 2)
+            EvaluateV2(oneShotActive, slimesAlive, bossAttackable);
+        else
+            Evaluate(oneShotActive, slimesAlive, bossAttackable);
     }
 
     // ---------- RL 조율 (2단계) ----------
@@ -188,6 +252,7 @@ public class RaidCoordinator : MonoBehaviour
                         as Unity.InferenceEngine.Tensor<float>).ReadbackAndClone())
                     {
                         float[] qValues = output.DownloadToArray();
+                        pendingQ = qValues;
                         float bestQ = float.NegativeInfinity;
                         for (int a = 0; a < qValues.Length && a < 5; a++)
                         {
@@ -273,11 +338,94 @@ public class RaidCoordinator : MonoBehaviour
         IssueRemaining(NpcCommandType.Free, "Normal: free");
     }
 
+    // ---------- 규칙 조율 v2 ----------
+
+    private void EvaluateV2(bool oneShotActive, bool slimesAlive, bool bossAttackable)
+    {
+        issuedThisTick.Clear();
+
+        // 1. 즉사기 충전 중: 전원 무개입 (v1과 같음)
+        if (oneShotActive)
+        {
+            IssueRemaining(NpcCommandType.Free, "v2 OneShot: all free");
+            return;
+        }
+
+        NPCSimpleFSMController healer = FindHealer();
+        bool noHealer = healer == null;
+
+        // 2. 슬라임 생존 + 보스 무적: 슬라임 전담 배분 (폭발 1회당 지속 장판이 남아 이후 피격 증가)
+        if (slimesAlive && !bossAttackable)
+        {
+            AssignSlimeHandlers(slimeHandlerCountV2);
+            IssueCaution(noHealer, false);
+            IssueRemaining(NpcCommandType.Free, "v2 AddPhase: slime handlers + caution");
+            return;
+        }
+
+        // 3. 힐러 보호: 위험 아군이 있을 때만 (임계 0.4)
+        PlayerStatus lowest = NpcHealerPolicy.FindLowestHpAlly(out float lowestRatio);
+        if (useProtectV2 && healer != null && lowest != null && lowestRatio <= protectHpThresholdV2)
+            Issue(healer, NpcCommandType.ProtectAlly, lowest);
+
+        // 4. NPC별 경계 태세
+        bool flying = npcs.Count > 0 && npcs[0].bossSkillPattern != null && npcs[0].bossSkillPattern.IsFlying;
+        IssueCaution(noHealer, flying);
+
+        // 5. 화력 페이스: 타임아웃 궤적이고 NPC 힐러가 있을 때만 화력 집중
+        float progress = 1f - GetBossHpRatio();
+        float pace = episodeTimeLimit > 0f ? Time.timeSinceLevelLoad / episodeTimeLimit : 0f;
+        if (useFocusV2 && !noHealer && bossAttackable && progress < pace * paceMargin)
+        {
+            for (int i = 0; i < npcs.Count; i++)
+            {
+                if (!issuedThisTick.Contains(npcs[i]) && !npcs[i].IsHealerRole)
+                    Issue(npcs[i], NpcCommandType.FocusBoss);
+            }
+            IssueRemaining(NpcCommandType.Free, $"v2 BehindPace: focus boss (progress {progress:0.00} < pace {pace:0.00})");
+            return;
+        }
+
+        IssueRemaining(NpcCommandType.Free, noHealer ? "v2 NoHealer: caution by hp" : "v2 Normal");
+    }
+
+    // 아직 지시를 받지 않은 NPC 중 경계 조건을 만족하는 NPC에게 경계 태세 발행
+    private void IssueCaution(bool noHealer, bool flying)
+    {
+        for (int i = 0; i < npcs.Count; i++)
+        {
+            NPCSimpleFSMController npc = npcs[i];
+            if (issuedThisTick.Contains(npc))
+                continue;
+
+            float hp = GetHpRatio(npc);
+            bool caution = noHealer
+                ? hp < cautionHpNoHealer || (cautionDuringFlyNoHealer && flying)
+                : hp < cautionHpWithHealer;
+
+            if (caution)
+                Issue(npc, NpcCommandType.HoldDefensive);
+        }
+    }
+
+    private static float GetHpRatio(NPCSimpleFSMController npc)
+    {
+        Health health = npc.health != null ? npc.health : npc.GetComponent<Health>();
+        if (health == null || health.MaxHealth <= 0f)
+            return 1f;
+        return Mathf.Clamp01(health.CurrentHealth / health.MaxHealth);
+    }
+
     // 슬라임 전담: 힐러가 아닌 NPC 중 가장 시급한 슬라임과 가까운 순으로 지정
     private void AssignSlimeHandlers()
     {
+        AssignSlimeHandlers(slimeHandlerCount);
+    }
+
+    private void AssignSlimeHandlers(int count)
+    {
         int assigned = 0;
-        while (assigned < Mathf.Max(1, slimeHandlerCount))
+        while (assigned < Mathf.Max(1, count))
         {
             NPCSimpleFSMController best = null;
             float bestDistance = float.PositiveInfinity;
@@ -317,19 +465,61 @@ public class RaidCoordinator : MonoBehaviour
         // 지시는 편향일 뿐이라 Mask와 안전 행동은 여전히 불가침 (탐험이 생존 로직을 깨지 않음).
         // 지시와 결과는 스냅샷의 command_id 계열 필드로 기록되므로 별도 로그 불필요
         bool explored = false;
-        if (mode != CoordinatorMode.None && explorationEpsilon > 0f && Random.value < explorationEpsilon)
+        if (mode != CoordinatorMode.None && explorationEpsilon > 0f
+            && exploreHold.TryGetValue(npc, out ExploreHold hold) && hold.remaining > 0)
         {
-            type = (NpcCommandType)Random.Range(0, 5);
+            // 유지 중인 탐험 지시: 남은 횟수만큼 같은 무작위 지시 반복
+            hold.remaining--;
+            exploreHold[npc] = hold;
+            type = hold.type;
             target = type == NpcCommandType.ProtectAlly ? NpcHealerPolicy.FindLowestHpAlly(out _) : null;
             explored = true;
             exploredCommandCount++;
         }
+        else if (mode != CoordinatorMode.None && explorationEpsilon > 0f && Random.value < explorationEpsilon)
+        {
+            type = (NpcCommandType)Random.Range(0, 5);
+            exploreHold[npc] = new ExploreHold { type = type, remaining = Mathf.Max(1, explorationHoldDecisions) - 1 };
+            target = type == NpcCommandType.ProtectAlly ? NpcHealerPolicy.FindLowestHpAlly(out _) : null;
+            explored = true;
+            exploredCommandCount++;
+        }
+
+        if (logDecisions)
+            LogDecision(npc, type, explored);
+        pendingQ = null;
 
         CommandBoard.Issue(npc, type, target);
         issuedThisTick.Add(npc);
 
         if (logCommands)
             Debug.Log($"[RaidCoordinator] {npc.name} <- {type}{(target != null ? " (" + target.name + ")" : "")}{(explored ? " [explore]" : "")}", this);
+    }
+
+    // 지시 반영 전 시점의 관측(직전 지시 포함)과 이번 지시를 기록
+    private void LogDecision(NPCSimpleFSMController npc, NpcCommandType type, bool explored)
+    {
+        if (metricsLogger == null)
+            metricsLogger = FindFirstObjectByType<RaidMetricsLogger>();
+
+        CoordinatorObservation.Fill(decisionObs, npc, npcs, episodeTimeLimit);
+
+        int alive = 0, total = 0;
+        IReadOnlyList<PlayerStatus> statuses = CombatRegistry.PlayerStatuses;
+        for (int i = 0; i < statuses.Count; i++)
+        {
+            PlayerStatus status = statuses[i];
+            if (status == null || status.Health == null)
+                continue;
+            total++;
+            if (!status.Health.IsDead)
+                alive++;
+        }
+
+        string episodeId = metricsLogger != null ? metricsLogger.episodeId : "";
+        string algorithm = metricsLogger != null ? metricsLogger.algorithmName : "";
+        CoordinatorDecisionLog.Write(decisionLogRoot, decisionLogFile, episodeId, algorithm, mode, npc,
+            decisionObs, type, explored, pendingQ, alive, total);
     }
 
     private void IssueRemaining(NpcCommandType type, string summary)
@@ -347,6 +537,17 @@ public class RaidCoordinator : MonoBehaviour
     {
         npcs.Clear();
         CommandBoard.CleanupDestroyed();
+
+        // 파괴된 NPC(판 재시작으로 교체된 객체)의 탐험 유지 상태 제거
+        if (exploreHold.Count > 0)
+        {
+            staleKeys.Clear();
+            foreach (var key in exploreHold.Keys)
+                if (key == null)
+                    staleKeys.Add(key);
+            for (int i = 0; i < staleKeys.Count; i++)
+                exploreHold.Remove(staleKeys[i]);
+        }
 
         IReadOnlyList<PlayerStatus> statuses = CombatRegistry.PlayerStatuses;
         for (int i = 0; i < statuses.Count; i++)
